@@ -11,6 +11,10 @@ namespace BookStore.Domain.Interfaces
     {
         
         Task<IEnumerable<Book>> GetBooksByCategoryIdAsync(int categoryId);
+        Task<(IEnumerable<Book> Items, int TotalCount)> GetPagedAsync(int page, int pageSize);
+        Task<(IEnumerable<Book> Items, int TotalCount)> GetByCategoryPagedAsync(int categoryId, int page, int pageSize);
+        Task<(IEnumerable<Book> Items, int TotalCount)> GetBySubCategoryPagedAsync(int subCategoryId, int page, int pageSize);
         Task<IEnumerable<Book>> SearchBooksAsync(string keyword);
+
     }
 }

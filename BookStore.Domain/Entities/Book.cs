@@ -25,6 +25,11 @@ namespace BookStore.Domain.Entities
         public string? UpdatedBy { get; set; }
         public int? SubCategoryId { get; set; }
         public SubCategory? SubCategory { get; set; }
+        public decimal? DiscountPrice { get; set; }
+        public DateTime? SaleEndDate { get; set; }
+        public bool IsFlashSale { get; set; } = false;
+        public int? SaleSoldCount { get; set; }
+        public int? SaleStock { get; set; }
 
     }
 }

@@ -39,14 +39,17 @@ namespace BookStore.API
                     Configuration.GetConnectionString("DefaultConnection")
                 ));
 
+
             services.AddIdentityCore<ApplicationUser>()
                     .AddEntityFrameworkStores<BookStoreDbContext>();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IBookRepository, BookRepository>();
-            
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
             services.AddScoped<BookService>();
-
+            services.AddScoped<SubCategories>();
+            services.AddScoped<CategoriesService>();
             services.AddCors(options => {
                 options.AddPolicy("AllowAngular",
                     builder => builder

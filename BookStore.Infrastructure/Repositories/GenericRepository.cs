@@ -2,6 +2,7 @@
 using BookStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookStore.Infrastructure.Repositories
@@ -40,6 +41,17 @@ namespace BookStore.Infrastructure.Repositories
             {
                 _context.Set<T>().Remove(entity);
             }
+        }
+        public async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        {
+            var query = _context.Set<T>().AsNoTracking();
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }
