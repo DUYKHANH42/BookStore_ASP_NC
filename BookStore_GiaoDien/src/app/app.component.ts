@@ -1,5 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { BookService, Book } from '../services/book.service';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { BookService } from '../services/book.service';
+import { CategoryService } from '../services/category.service';
+import { SubCategoryService } from '../services/subcategory.service';
+import { Book } from './models/book.model';
+import { Category } from './models/category.model';
+import { SubCategory } from './models/subcategory.model';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -7,14 +13,48 @@ import { BookService, Book } from '../services/book.service';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  books: Book[] = [];
+  private categoryService = inject(CategoryService);
+  private subCategoryService = inject(SubCategoryService);
 
-  constructor(private bookService: BookService) { }
+  categories: Category[] = [];
+  subCategories: SubCategory[] = [];
+  navCategories: Category[] = [];
+
+  // Trạng thái đóng mở Menu Mobile
+  isMenuOpen = false;
+
+  constructor() { }
+
+  toggleMenu() {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
 
   ngOnInit() {
-    this.bookService.getBooks().subscribe({
-      next: (data) => this.books = data,
-      error: (err: any) => console.error(err)
+    forkJoin({
+      categories: this.categoryService.getCategories(),
+      subCategories: this.subCategoryService.getSubcategories()
+    }).subscribe({
+      next: (result) => {
+        this.categories = result.categories.map(cat => ({
+          ...cat,
+          subCategories: result.subCategories.filter(sub => sub.categoryId === cat.id)
+        }));
+        this.navCategories = this.categories;
+      },
+      error: (err) => console.error('Navbar load error:', err)
     });
+  }
+
+  getCategoryIcon(name: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Văn Học': 'history_edu',
+      'Khoa Học & Công Nghệ': 'biotech',
+      'Kỹ Năng Sống': 'psychology',
+      'Kinh Tế': 'payments',
+      'Nghệ Thuật': 'palette',
+      'Sổ Tay': 'auto_stories',
+      'Văn Phòng Phẩm': 'edit_note'
+    };
+    return iconMap[name] || 'book_2';
   }
 }

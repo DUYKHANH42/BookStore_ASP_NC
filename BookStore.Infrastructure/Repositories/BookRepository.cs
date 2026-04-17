@@ -34,5 +34,28 @@ namespace BookStore.Infrastructure.Repositories
                 .Take(count)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Book>> GetAllBookAsync()
+        {
+          return await _context.Books.ToListAsync();
+        }
+
+        public async Task<(IEnumerable<Book> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        {
+            var query = _context.Books.AsNoTracking();
+            return (await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(), await query.CountAsync());
+        }
+
+        public async Task<(IEnumerable<Book> Items, int TotalCount)> GetByCategoryPagedAsync(int categoryId, int page, int pageSize)
+        {
+            var query = _context.Books.Where(b => b.CategoryId == categoryId).AsNoTracking();
+            return (await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(), await query.CountAsync());
+        }
+
+        public async Task<(IEnumerable<Book> Items, int TotalCount)> GetBySubCategoryPagedAsync(int subCategoryId, int page, int pageSize)
+        {
+            var query = _context.Books.Where(b => b.SubCategoryId == subCategoryId).AsNoTracking();
+            return (await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(), await query.CountAsync());
+        }
     }
 }
