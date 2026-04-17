@@ -1,0 +1,205 @@
+<!-- Top Navigation Bar -->
+<nav
+  class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-sm flex items-center justify-between px-8 py-4 max-w-full mx-auto">
+  <div class="flex items-center gap-8">
+    <span class="text-xl font-bold tracking-tighter text-slate-900">Literary Architect</span>
+    <div class="hidden md:flex gap-6 items-center">
+      <a class="text-blue-600 font-semibold border-b-2 border-blue-600 text-sm tracking-tight" href="#">Browse</a>
+      <a class="text-slate-600 hover:text-slate-900 transition-colors text-sm tracking-tight" href="#">Collections</a>
+      <a class="text-slate-600 hover:text-slate-900 transition-colors text-sm tracking-tight" href="#">Bestsellers</a>
+    </div>
+  </div>
+  <div class="flex-1 max-w-[600px] mx-8 hidden lg:block">
+    <div class="relative group">
+      <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+      <input
+        class="w-full bg-surface-container-highest/50 border-none rounded-full py-2.5 pl-12 pr-4 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline text-sm"
+        placeholder="Search by title, author, or ISBN..." type="text" />
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <button class="p-2 hover:bg-slate-100/50 rounded-full transition-colors relative">
+      <span class="material-symbols-outlined text-on-surface-variant">shopping_cart</span>
+      <span class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+    </button>
+    <button class="p-2 hover:bg-slate-100/50 rounded-full transition-colors">
+      <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+    </button>
+    <div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+    <button
+      class="px-5 py-2 bg-primary text-on-primary font-semibold text-sm rounded-lg hover:opacity-90 transition-all">Login</button>
+  </div>
+</nav>
+
+<main class="pt-20">
+  <!-- Hero Section -->
+  <section class="relative min-h-[716px] flex items-center justify-center overflow-hidden px-6">
+    <div class="absolute inset-0 z-0 bg-gradient-to-br from-primary-fixed to-surface opacity-40"></div>
+    <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary-container/10 rounded-full blur-3xl"></div>
+    <div class="relative z-10 max-w-4xl w-full text-center space-y-8">
+      <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-on-surface leading-[1.1]">
+        Find Your Next <br /><span class="text-primary">Great Read</span>
+      </h1>
+      <p class="text-lg md:text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+        A curated digital sanctuary for intellectuals, engineers, and creatives. Explore thousands of hand-picked
+        titles.
+      </p>
+      <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+        <div class="relative w-full max-w-md lg:hidden">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+          <input
+            class="w-full bg-surface-container-lowest border-none shadow-xl rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/20"
+            placeholder="Search bookstore..." type="text" />
+        </div>
+        <button
+          class="w-full md:w-auto px-8 py-4 bg-primary text-on-primary rounded-xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Start
+          Exploring</button>
+        <button
+          class="w-full md:w-auto px-8 py-4 bg-surface-container-highest text-primary rounded-xl font-bold text-lg hover:bg-surface-container-high transition-colors">View
+          Collections</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Books Grid -->
+  <section class="bg-surface-container-low py-24 px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-end justify-between mb-12">
+        <div class="space-y-2">
+          <span class="text-xs font-bold tracking-widest text-primary uppercase">New Arrivals</span>
+          <h2 class="text-3xl font-bold text-on-surface">Featured Books</h2>
+        </div>
+        <a class="text-primary font-bold hover:underline" href="#">See full catalog →</a>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Book Card -->
+        <div *ngFor="let book of books"
+          class="group relative flex flex-col h-full bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-xl transition-all">
+          <div class="relative mb-6 aspect-[3/4] overflow-hidden rounded-lg shadow-md">
+            <div class="w-full h-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+              <img [src]="'https://localhost:44326/uploads/' + book.imageUrl" [alt]="book.title"
+                class="w-full h-full object-cover" />
+            </div>
+            <div
+              class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button
+                class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Add
+                to Cart</button>
+            </div>
+          </div>
+          <div class="space-y-2 flex-grow">
+            <h3 class="font-extrabold text-lg line-clamp-1">{{ book.title }}</h3>
+            <p class="text-sm text-on-surface-variant font-medium">{{ book.author }}</p>
+            <div class="flex items-center gap-2">
+              <div class="flex text-tertiary">
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 0;">star</span>
+              </div>
+              <span class="text-xs text-outline">(120)</span>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <span class="text-xl font-bold text-primary">
+              {{ book.price | number:'1.0-0' }} ₫
+            </span>
+          </div>
+          <p class="text-xs text-on-surface-variant mt-2 line-clamp-2">{{ book.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Best Sellers Carousel Area -->
+  <section class="py-24 px-8 max-w-7xl mx-auto overflow-hidden">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+      <div class="space-y-2">
+        <span class="text-xs font-bold tracking-widest text-primary uppercase">Leaderboard</span>
+        <h2 class="text-3xl font-bold text-on-surface">Weekly Best Sellers</h2>
+      </div>
+    </div>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Book Card -->
+        <div *ngFor="let book of books"
+          class="group relative flex flex-col h-full bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-xl transition-all">
+          <div class="relative mb-6 aspect-[3/4] overflow-hidden rounded-lg shadow-md">
+            <div class="w-full h-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+              <img [src]="'https://localhost:44326/uploads/' + book.imageUrl" [alt]="book.title"
+                class="w-full h-full object-cover" />
+            </div>
+            <div
+              class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button
+                class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Add
+                to Cart</button>
+            </div>
+          </div>
+          <div class="space-y-2 flex-grow">
+            <h3 class="font-extrabold text-lg line-clamp-1">{{ book.title }}</h3>
+            <p class="text-sm text-on-surface-variant font-medium">{{ book.author }}</p>
+            <div class="flex items-center gap-2">
+              <div class="flex text-tertiary">
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="material-symbols-outlined text-[16px]"
+                  style="font-variation-settings: 'FILL' 0;">star</span>
+              </div>
+              <span class="text-xs text-outline">(120)</span>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <span class="text-xl font-bold text-primary">
+              {{ book.price | number:'1.0-0' }} ₫
+            </span>
+          </div>
+          <p class="text-xs text-on-surface-variant mt-2 line-clamp-2">{{ book.description }}</p>
+        </div>
+      </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="w-full py-16 px-8 bg-slate-50 border-t border-slate-200">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+    <div class="space-y-6">
+      <div class="text-lg font-bold text-slate-900 tracking-tighter">Literary Architect</div>
+      <p class="text-slate-500 text-sm leading-relaxed">The premier SaaS platform for curated intellectual exploration
+        and modern bookstore management. Built for the thinkers of tomorrow.</p>
+    </div>
+    <div class="space-y-4">
+      <h4 class="text-xs uppercase font-bold tracking-widest text-slate-900">Platform</h4>
+      <ul class="space-y-2">
+        <li><a class="text-slate-500 hover:text-primary text-sm transition-colors" href="#">Browse Library</a></li>
+        <li><a class="text-slate-500 hover:text-primary text-sm transition-colors" href="#">Gift Cards</a></li>
+        <li><a class="text-slate-500 hover:text-primary text-sm transition-colors" href="#">Membership Plans</a></li>
+      </ul>
+    </div>
+    <div class="space-y-4">
+      <h4 class="text-xs uppercase font-bold tracking-widest text-slate-900">Support</h4>
+      <ul class="space-y-2">
+        <li><a class="text-slate-500 hover:text-primary text-sm transition-colors" href="#">Shipping Information</a>
+        </li>
+        <li><a class="text-slate-500 hover:text-primary text-sm transition-colors" href="#">Return Policy</a></li>
+        <li><a class="text-slate-500 hover:text-primary text-sm transition-colors" href="#">FAQs</a></li>
+      </ul>
+    </div>
+  </div>
+  <div
+    class="max-w-7xl mx-auto pt-16 mt-16 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+    <p class="text-slate-500 text-xs uppercase tracking-widest">© 2024 Literary Architect. All rights reserved.</p>
+  </div>
+</footer>
