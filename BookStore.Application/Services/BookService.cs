@@ -1,5 +1,6 @@
 ﻿using BookStore.Application.DTO;
-using BookStore.Application.DTOs.Book; // Đảm bảo đã using namespace của DTO
+using BookStore.Application.DTOs.Book;
+using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using System;
@@ -21,37 +22,56 @@ namespace BookStore.Application.Services
         public async Task<IEnumerable<BookDto>> GetAll()
         {
             var books = await _repo.GetAllAsync();
-            return books.Select(b => MapToDto(b));
+            return books.Select(MapToDto);
         }
 
         public async Task<BookDto?> GetById(int id)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null) return null;
-
-            return MapToDto(book);
+            return book != null ? MapToDto(book) : null;
         }
 
-        public async Task<PagedResultDTO<BookDto>> GetAllPaged(int page, int pageSize)
-        => MapToPagedResult(await _repo.GetPagedAsync(page, pageSize), page, pageSize);
+        public async Task<PagedResultDTO<BookDto>> GetAllPaged(BookQueryParameters query)
+        {
+            var result = await _repo.GetFilteredPagedAsync(query);
+            return MapToPagedResult(result, query);
+        }
 
-        public async Task<PagedResultDTO<BookDto>> GetByCategoryPaged(int categoryId, int page, int pageSize)
-            => MapToPagedResult(await _repo.GetByCategoryPagedAsync(categoryId, page, pageSize), page, pageSize);
+        public async Task<PagedResultDTO<BookDto>> GetByCategoryPaged(int categoryId, BookQueryParameters query)
+        {
+            var result = await _repo.GetByCategoryPagedAsync(categoryId, query);
+            return MapToPagedResult(result, query);
+        }
 
-        public async Task<PagedResultDTO<BookDto>> GetBySubCategoryPaged(int subCategoryId, int page, int pageSize)
-            => MapToPagedResult(await _repo.GetBySubCategoryPagedAsync(subCategoryId, page, pageSize), page, pageSize);
+        public async Task<PagedResultDTO<BookDto>> GetBySubCategoryPaged(int subCategoryId, BookQueryParameters query)
+        {
+            var result = await _repo.GetBySubCategoryPagedAsync(subCategoryId, query);
+            return MapToPagedResult(result, query);
+        }
 
-        private PagedResultDTO<BookDto> MapToPagedResult((IEnumerable<Book> Items, int TotalCount) result, int page, int pageSize)
+        public async Task<IEnumerable<BookDto>> GetNewArrivals(int count)
+        {
+            var books = await _repo.GetNewArrivalsAsync(count);
+            return books.Select(MapToDto);
+        }
+
+        private PagedResultDTO<BookDto> MapToPagedResult((IEnumerable<Book> Items, int TotalCount) result, BookQueryParameters query)
         {
             return new PagedResultDTO<BookDto>
             {
-                Items = result.Items.Select(b => MapToDto(b)),
+                Items = result.Items.Select(MapToDto),
                 TotalItems = result.TotalCount,
-                TotalPages = (int)Math.Ceiling(result.TotalCount / (double)pageSize),
-                CurrentPage = page,
-                PageSize = pageSize
+                TotalPages = (int)Math.Ceiling(result.TotalCount / (double)query.PageSize),
+                CurrentPage = query.Page,
+                PageSize = query.PageSize
             };
         }
+        public async Task<PagedResultDTO<BookDto>> Search(BookQueryParameters query)
+        {
+            var result = await _repo.SearchBooksAsync(query);
+            return MapToPagedResult(result, query);
+        }
+
         private static BookDto MapToDto(Book b)
         {
             return new BookDto
@@ -69,13 +89,11 @@ namespace BookStore.Application.Services
                 IsActive = b.IsActive,
                 SKU = b.SKU,
                 SubCategoryId = b.SubCategoryId,
-
                 DiscountPrice = b.DiscountPrice,
                 SaleEndDate = b.SaleEndDate,
                 IsFlashSale = b.IsFlashSale,
                 SaleSoldCount = b.SaleSoldCount,
                 SaleStock = b.SaleStock,
-
                 CategoryName = b.Category?.Name,
                 SubCategoryName = b.SubCategory?.Name
             };

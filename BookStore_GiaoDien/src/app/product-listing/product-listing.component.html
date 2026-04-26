@@ -8,56 +8,111 @@
     <nav class="flex items-center gap-2 mb-8 text-[11px] font-black uppercase tracking-widest text-slate-400">
       <a routerLink="/" class="hover:text-blue-600 transition-colors">Trang chủ</a>
       <span class="material-symbols-outlined text-[14px]">chevron_right</span>
-      
+
       <!-- Hiện danh mục cha nếu đang ở danh mục con -->
       <ng-container *ngIf="parentCategory">
-        <a [routerLink]="['/category', parentCategory.id]" class="hover:text-blue-600 transition-colors">{{parentCategory.name}}</a>
+        <a [routerLink]="['/category', parentCategory.id]"
+          class="hover:text-blue-600 transition-colors">{{parentCategory.name}}</a>
         <span class="material-symbols-outlined text-[14px]">chevron_right</span>
       </ng-container>
 
       <span class="text-blue-600">{{title}}</span>
     </nav>
 
-    <div class="flex items-center gap-3 mb-6"><span class="w-12 h-[2px] bg-blue-600 rounded-full"></span><span class="text-xs font-black tracking-widest uppercase text-blue-600">Bộ sưu tập</span></div>
-    <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-6 text-slate-900">{{title}}</h1>
-    <p class="text-slate-500 max-w-2xl text-lg font-medium leading-relaxed">{{description}}</p>
+    <div class="flex items-center gap-3 mb-6"><span class="w-12 h-[2px] bg-blue-600 rounded-full"></span><span
+        class="text-xs font-black tracking-widest uppercase text-blue-600">Bộ sưu tập</span></div>
+    <h1 class="text-4xl md:text-6xl font-black tracking-tighter mb-6 text-slate-900 leading-tight">{{title}}</h1>
+    <p class="text-slate-500 max-w-2xl text-base font-medium leading-relaxed">{{description}}</p>
   </header>
 
   <div class="flex flex-col lg:flex-row gap-16">
     <aside class="w-full lg:w-72 space-y-12">
       <section class="glass-card p-8 border-white/40">
-        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 items-center gap-2 flex"><span class="material-symbols-outlined text-sm">filter_list</span> Danh mục liên quan</h3>
+        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 items-center gap-2 flex"><span
+            class="material-symbols-outlined text-sm">filter_list</span> Danh mục liên quan</h3>
         <div class="space-y-2">
           <div *ngFor="let sub of subCategories" class="group">
-            <a [routerLink]="['/subcategory', sub.id]" class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all hover:bg-white hover:shadow-md" [class.bg-white]="currentId === sub.id && currentType === 'subcategory'" [class.shadow-md]="currentId === sub.id && currentType === 'subcategory'">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-all" [class.bg-blue-600]="currentId === sub.id && currentType === 'subcategory'" [class.text-white]="currentId === sub.id && currentType === 'subcategory'" [class.bg-slate-50]="currentId !== sub.id || currentType !== 'subcategory'" [class.text-slate-400]="currentId !== sub.id || currentType !== 'subcategory'"><span class="material-symbols-outlined text-base">subdirectory_arrow_right</span></div>
-              <span class="text-sm font-bold transition-colors" [class.text-blue-600]="currentId === sub.id && currentType === 'subcategory'" [class.text-slate-600]="currentId !== sub.id || currentType !== 'subcategory'">{{sub.name}}</span>
+            <a [routerLink]="['/subcategory', sub.id]"
+              class="flex items-center gap-4 py-3 px-4 rounded-2xl transition-all hover:bg-white hover:shadow-md"
+              [class.bg-white]="currentId === sub.id && currentType === 'subcategory'"
+              [class.shadow-md]="currentId === sub.id && currentType === 'subcategory'">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                [class.bg-blue-600]="currentId === sub.id && currentType === 'subcategory'"
+                [class.text-white]="currentId === sub.id && currentType === 'subcategory'"
+                [class.bg-slate-50]="currentId !== sub.id || currentType !== 'subcategory'"
+                [class.text-slate-400]="currentId !== sub.id || currentType !== 'subcategory'"><span
+                  class="material-symbols-outlined text-base">subdirectory_arrow_right</span></div>
+              <span class="text-sm font-bold transition-colors"
+                [class.text-blue-600]="currentId === sub.id && currentType === 'subcategory'"
+                [class.text-slate-600]="currentId !== sub.id || currentType !== 'subcategory'">{{sub.name}}</span>
             </a>
           </div>
           <div *ngIf="currentType === 'subcategory'" class="pt-4 mt-4 border-t border-slate-50">
-            <a routerLink="/" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 flex items-center gap-2 px-4"><span class="material-symbols-outlined text-sm">arrow_back</span> Về trang chủ</a>
+            <a routerLink="/"
+              class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 flex items-center gap-2 px-4"><span
+                class="material-symbols-outlined text-sm">arrow_back</span> Về trang chủ</a>
           </div>
         </div>
       </section>
 
       <section class="glass-card p-8 border-white/40">
-        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8">Khoảng giá</h3>
-        <div class="px-2">
-          <input class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" max="500000" min="0" step="10000" type="range"/>
-          <div class="flex justify-between mt-6 text-[10px] font-black uppercase tracking-widest text-slate-400"><span>0₫</span><span>500.000₫+</span></div>
+        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between">
+          <span>Khoảng giá</span>
+          <button (click)="resetFilters()" class="text-blue-600 hover:underline">Xóa lọc</button>
+        </h3>
+        
+        <!-- Quick Select Chips -->
+        <div class="flex flex-wrap gap-2 mb-8">
+          <button (click)="setPriceRange(0, 100000)" 
+            [class.bg-blue-600]="minPrice === 0 && maxPrice === 100000"
+            [class.text-white]="minPrice === 0 && maxPrice === 100000"
+            class="px-3 py-2 rounded-xl border border-slate-100 text-[10px] font-bold hover:border-blue-600 transition-all bg-white shadow-sm">
+            Dưới 100k
+          </button>
+          <button (click)="setPriceRange(100000, 500000)" 
+            [class.bg-blue-600]="minPrice === 100000 && maxPrice === 500000"
+            [class.text-white]="minPrice === 100000 && maxPrice === 500000"
+            class="px-3 py-2 rounded-xl border border-slate-100 text-[10px] font-bold hover:border-blue-600 transition-all bg-white shadow-sm">
+            100k - 500k
+          </button>
+          <button (click)="setPriceRange(500000, 2000000)" 
+            [class.bg-blue-600]="minPrice === 500000 && maxPrice === 2000000"
+            [class.text-white]="minPrice === 500000 && maxPrice === 2000000"
+            class="px-3 py-2 rounded-xl border border-slate-100 text-[10px] font-bold hover:border-blue-600 transition-all bg-white shadow-sm">
+            Trên 500k
+          </button>
+        </div>
+
+        <!-- Custom Range Inputs -->
+        <div class="space-y-4">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Tùy chọn khoảng giá</p>
+          <div class="flex items-center gap-2">
+            <input type="number" [(ngModel)]="minPrice" placeholder="Từ" 
+              class="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-600 transition-all" />
+            <span class="w-4 h-[1px] bg-slate-200"></span>
+            <input type="number" [(ngModel)]="maxPrice" placeholder="Đến" 
+              class="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:border-blue-600 transition-all" />
+          </div>
+          <button (click)="onFilterChange()" 
+            class="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg active:scale-95">
+            Áp dụng
+          </button>
         </div>
       </section>
     </aside>
 
     <div class="flex-1 grid-stable">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6 px-2">
-        <p class="text-slate-500 font-bold text-sm tracking-tight">Tìm thấy <span class="text-blue-600">{{totalItems}}</span> tác phẩm tinh tuyển</p>
-        <div class="flex items-center gap-4 bg-white/50 backdrop-blur-sm p-2 rounded-2xl border border-white/60 shadow-sm">
+        <p class="text-slate-500 font-bold text-sm tracking-tight">Tìm thấy <span
+            class="text-blue-600">{{totalItems}}</span> tác phẩm tinh tuyển</p>
+        <div
+          class="flex items-center gap-4 bg-white/50 backdrop-blur-sm p-2 rounded-2xl border border-white/60 shadow-sm">
           <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4">Sắp xếp</span>
-          <select class="bg-transparent border-none text-sm font-black text-slate-900 focus:ring-0 cursor-pointer min-w-[150px] outline-none">
-            <option>Mới nhất</option>
-            <option>Giá: Thấp đến Cao</option>
-            <option>Giá: Cao đến Thấp</option>
+          <select [(ngModel)]="sortBy" (change)="onSortChange()"
+            class="bg-transparent border-none text-sm font-black text-slate-900 focus:ring-0 cursor-pointer min-w-[150px] outline-none">
+            <option value="newest">Mới nhất</option>
+            <option value="price_asc">Giá: Thấp đến Cao</option>
+            <option value="price_desc">Giá: Cao đến Thấp</option>
           </select>
         </div>
       </div>
@@ -82,24 +137,56 @@
 
         <!-- Sản phẩm thật -->
         <ng-container *ngIf="!isLoading">
-          <div *ngFor="let book of books" class="group bg-white p-4 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all border border-slate-50 duration-500">
-            <div class="block relative aspect-[3/4] rounded-[2rem] overflow-hidden mb-8 shadow-inner bg-slate-50">
-              <img [src]="'https://localhost:44326/uploads/' + book.imageUrl" [alt]="book.title" class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"/>
+          <div *ngFor="let book of books"
+            class="group bg-white p-4 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all border border-slate-50 duration-500">
+            <div [routerLink]="['/book', book.id]"
+              class="block relative aspect-[3/4] rounded-[2rem] overflow-hidden mb-8 shadow-inner bg-slate-50 cursor-pointer">
+              <img [src]="'https://localhost:44326/uploads/' + book.imageUrl" [alt]="book.title"
+                class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
               <div class="absolute top-5 left-5 flex flex-col gap-2">
-                <div *ngIf="book.isActive" class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase text-blue-600 shadow-sm">New</div>
-                <div *ngIf="book.discountPrice" class="bg-rose-600 px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase text-white shadow-lg">Sale</div>
+                <div *ngIf="book.isActive"
+                  class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase text-blue-600 shadow-sm">
+                  New</div>
+                <div *ngIf="book.discountPrice"
+                  class="bg-rose-600 px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase text-white shadow-lg">
+                  Sale</div>
               </div>
+
+              <!-- Nút Trái tim (Thiết kế Dark Glassmorphism) -->
+              <button (click)="toggleFavorite(book); $event.stopPropagation()" 
+                [disabled]="togglingId === book.id"
+                class="absolute top-4 right-4 w-10 h-10 bg-slate-900/40 backdrop-blur-md shadow-xl border border-white/20 rounded-full flex items-center justify-center transition-premium z-30 group/heart active:scale-95">
+                <span class="material-symbols-outlined transition-all duration-300"
+                  [class.text-rose-500]="book.isFavorited"
+                  [class.text-white]="!book.isFavorited"
+                  [class.animate-pulse]="togglingId === book.id"
+                  [style.font-variation-settings]="book.isFavorited ? '\'FILL\' 1' : '\'FILL\' 0'">
+                  favorite
+                </span>
+                <div *ngIf="togglingId === book.id" class="absolute inset-0 bg-slate-900/60 flex items-center justify-center rounded-full">
+                   <div class="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </button>
             </div>
             <div class="px-2 pb-2">
               <p class="text-[10px] tracking-widest text-slate-400 uppercase font-black mb-2">{{book.author}}</p>
-              <h3 class="font-black text-xl mb-6 leading-tight tracking-tight line-clamp-2 min-h-[3.5rem] hover:text-blue-600 transition-colors cursor-pointer text-slate-800">{{book.title}}</h3>
+              <h3 [routerLink]="['/book', book.id]"
+                class="font-black text-xl mb-6 leading-tight tracking-tight line-clamp-2 min-h-[3.5rem] hover:text-blue-600 transition-colors cursor-pointer text-slate-800">
+                {{book.title}}</h3>
               <div class="flex flex-col gap-4 pt-6 border-t border-slate-50">
                 <div class="flex items-center justify-between">
                   <div class="flex flex-col">
-                    <span *ngIf="book.discountPrice" class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">{{book.discountPrice | currency:'VND':'symbol':'1.0-0'}}</span>
-                    <span [class.text-[14px]]="book.discountPrice" [class.text-slate-400]="book.discountPrice" [class.line-through]="book.discountPrice" [class.text-2xl]="!book.discountPrice" [class.font-black]="!book.discountPrice" [class.text-blue-600]="!book.discountPrice">{{book.price | currency:'VND':'symbol':'1.0-0'}}</span>
+                    <span *ngIf="book.discountPrice"
+                      class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">{{book.discountPrice
+                      | currency:'VND':'symbol':'1.0-0'}}</span>
+                    <span [class.text-[14px]]="book.discountPrice" [class.text-slate-400]="book.discountPrice"
+                      [class.line-through]="book.discountPrice" [class.text-2xl]="!book.discountPrice"
+                      [class.font-black]="!book.discountPrice" [class.text-blue-600]="!book.discountPrice">{{book.price
+                      | currency:'VND':'symbol':'1.0-0'}}</span>
                   </div>
-                  <button type="button" class="w-12 h-12 bg-slate-950 text-white rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg active:scale-95 outline-none border-none"><span class="material-symbols-outlined">shopping_cart</span></button>
+                  <button type="button" (click)="addToCart(book); $event.stopPropagation()"
+                    class="w-12 h-12 bg-slate-950 text-white rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg active:scale-95 outline-none border-none"><span
+                      class="material-symbols-outlined">shopping_cart</span></button>
                 </div>
               </div>
             </div>
@@ -108,20 +195,35 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!isLoading && books.length === 0" class="flex flex-col items-center justify-center py-20 px-6 text-center">
-        <div class="mb-8 p-6 bg-white/40 backdrop-blur-md rounded-full border border-white/60 shadow-xl"><span class="material-symbols-outlined text-6xl text-slate-300">book_5</span></div>
+      <div *ngIf="!isLoading && books.length === 0"
+        class="flex flex-col items-center justify-center py-20 px-6 text-center">
+        <div class="mb-8 p-6 bg-white/40 backdrop-blur-md rounded-full border border-white/60 shadow-xl"><span
+            class="material-symbols-outlined text-6xl text-slate-300">book_5</span></div>
         <h3 class="text-2xl font-black text-slate-800 mb-2">Chưa có sản phẩm nào</h3>
         <p class="text-slate-400 mb-10 text-lg">Vui lòng quay lại sau hoặc khám phá các danh mục khác.</p>
-        <a routerLink="/" class="px-8 py-4 bg-slate-900 text-white rounded-full font-black shadow-2xl hover:scale-105 transition-all text-sm uppercase tracking-widest no-underline inline-block">Về trang chủ</a>
+        <a routerLink="/"
+          class="px-8 py-4 bg-slate-900 text-white rounded-full font-black shadow-2xl hover:scale-105 transition-all text-sm uppercase tracking-widest no-underline inline-block">Về
+          trang chủ</a>
       </div>
 
       <!-- Phân trang -->
       <div *ngIf="!isLoading && totalPages > 1" class="mt-20 flex justify-center items-center gap-2">
-        <a (click)="changePage(currentPage - 1)" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 transition-all cursor-pointer shadow-sm" [class.opacity-30]="currentPage === 1" [class.pointer-events-none]="currentPage === 1"><span class="material-symbols-outlined">chevron_left</span></a>
-        <div class="flex items-center gap-2 p-1.5 bg-white/40 backdrop-blur-md border border-white/60 rounded-[2rem] shadow-sm">
-          <a *ngFor="let page of getPages()" (click)="changePage(page)" class="w-11 h-11 flex items-center justify-center rounded-xl text-sm font-black transition-all cursor-pointer" [class.bg-blue-600]="currentPage === page" [class.text-white]="currentPage === page" [class.shadow-md]="currentPage === page" [class.text-slate-500]="currentPage !== page" [class.hover:bg-white]="currentPage !== page">{{page}}</a>
+        <a (click)="changePage(currentPage - 1)"
+          class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 transition-all cursor-pointer shadow-sm"
+          [class.opacity-30]="currentPage === 1" [class.pointer-events-none]="currentPage === 1"><span
+            class="material-symbols-outlined">chevron_left</span></a>
+        <div
+          class="flex items-center gap-2 p-1.5 bg-white/40 backdrop-blur-md border border-white/60 rounded-[2rem] shadow-sm">
+          <a *ngFor="let page of getPages()" (click)="changePage(page)"
+            class="w-11 h-11 flex items-center justify-center rounded-xl text-sm font-black transition-all cursor-pointer"
+            [class.bg-blue-600]="currentPage === page" [class.text-white]="currentPage === page"
+            [class.shadow-md]="currentPage === page" [class.text-slate-500]="currentPage !== page"
+            [class.hover:bg-white]="currentPage !== page">{{page}}</a>
         </div>
-        <a (click)="changePage(currentPage + 1)" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 transition-all cursor-pointer shadow-sm" [class.opacity-30]="currentPage === totalPages" [class.pointer-events-none]="currentPage === totalPages"><span class="material-symbols-outlined">chevron_right</span></a>
+        <a (click)="changePage(currentPage + 1)"
+          class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 transition-all cursor-pointer shadow-sm"
+          [class.opacity-30]="currentPage === totalPages" [class.pointer-events-none]="currentPage === totalPages"><span
+            class="material-symbols-outlined">chevron_right</span></a>
       </div>
     </div>
   </div>

@@ -30,6 +30,8 @@ namespace BookStore.Domain.Entities
         public bool IsFlashSale { get; set; } = false;
         public int? SaleSoldCount { get; set; }
         public int? SaleStock { get; set; }
+        public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+
 
     }
 }

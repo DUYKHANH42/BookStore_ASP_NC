@@ -1,4 +1,5 @@
-﻿using BookStore.Domain.Entities;
+﻿using BookStore.Domain.Common;
+using BookStore.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,17 @@ namespace BookStore.Domain.Interfaces
 {
     public interface IBookRepository : IGenericRepository<Book>
     {
-        
-        Task<IEnumerable<Book>> GetBooksByCategoryIdAsync(int categoryId);
-        Task<(IEnumerable<Book> Items, int TotalCount)> GetPagedAsync(int page, int pageSize);
-        Task<(IEnumerable<Book> Items, int TotalCount)> GetByCategoryPagedAsync(int categoryId, int page, int pageSize);
-        Task<(IEnumerable<Book> Items, int TotalCount)> GetBySubCategoryPagedAsync(int subCategoryId, int page, int pageSize);
-        Task<IEnumerable<Book>> SearchBooksAsync(string keyword);
+        Task<Book?> GetBookWithDetailsAsync(int id);
+
+        Task<(IEnumerable<Book> Items, int TotalCount)> GetFilteredPagedAsync(BookQueryParameters query);
+
+        Task<(IEnumerable<Book> Items, int TotalCount)> GetByCategoryPagedAsync(int categoryId, BookQueryParameters query);
+
+        Task<(IEnumerable<Book> Items, int TotalCount)> GetBySubCategoryPagedAsync(int subCategoryId, BookQueryParameters query);
+
+        Task<IEnumerable<Book>> GetRelatedBooksAsync(int bookId, int count);
+        Task<IEnumerable<Book>> GetNewArrivalsAsync(int count);
+        Task<(IEnumerable<Book> Items, int TotalCount)> SearchBooksAsync(BookQueryParameters query);
 
     }
 }
