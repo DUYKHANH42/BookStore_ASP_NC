@@ -31,17 +31,12 @@ export class RegisterComponent implements OnInit {
     }, { validators: this.passwordMatchValidator });
   }
 
-  // Custom Validator so sánh mật khẩu
+  // Custom Validator so sánh mật khẩu (Chuẩn Group Validator)
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('password');
-    const confirmPassword = control.get('confirmPassword');
+    const password = control.get('password')?.value;
+    const confirmPassword = control.get('confirmPassword')?.value;
     
-    if (password && confirmPassword && password.value !== confirmPassword.value) {
-      const errors = confirmPassword.errors || {};
-      confirmPassword.setErrors({ ...errors, passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-    return null;
+    return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
   // Async Validator kiểm tra email trùng (có debounce chuẩn RxJS)
@@ -66,7 +61,10 @@ export class RegisterComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.register(this.registerForm.value)
+    // Loại bỏ confirmPassword trước khi gửi lên Server
+    const { confirmPassword, ...registerData } = this.registerForm.value;
+
+    this.authService.register(registerData)
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: (res) => {
