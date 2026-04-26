@@ -33,9 +33,15 @@ namespace BookStore.Infrastructure.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("AvtUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -46,6 +52,12 @@ namespace BookStore.Infrastructure.Migrations
 
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -69,6 +81,12 @@ namespace BookStore.Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -254,6 +272,66 @@ namespace BookStore.Infrastructure.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("BookStore.Domain.Entities.Favorite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("UserId", "BookId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.ToTable("Favorites");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.ProductImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("ProductImages");
+                });
+
             modelBuilder.Entity("BookStore.Domain.Entities.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -284,6 +362,36 @@ namespace BookStore.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.ShippingAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressLine")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReceiverName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ShippingAddresses");
                 });
 
             modelBuilder.Entity("BookStore.Domain.Entities.StockHistory", b =>
@@ -488,6 +596,21 @@ namespace BookStore.Infrastructure.Migrations
                     b.Property<int?>("CustomerId")
                         .HasColumnType("int");
 
+                    b.Property<string>("OrderNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingPhone")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -589,6 +712,39 @@ namespace BookStore.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BookStore.Domain.Entities.Favorite", b =>
+                {
+                    b.HasOne("BookStore.Domain.Entities.ApplicationUser", null)
+                        .WithMany("Favorites")
+                        .HasForeignKey("ApplicationUserId");
+
+                    b.HasOne("BookStore.Domain.Entities.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookStore.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.ProductImage", b =>
+                {
+                    b.HasOne("BookStore.Domain.Entities.Book", "Book")
+                        .WithMany("Images")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+                });
+
             modelBuilder.Entity("BookStore.Domain.Entities.Review", b =>
                 {
                     b.HasOne("BookStore.Domain.Entities.Book", "Book")
@@ -598,10 +754,19 @@ namespace BookStore.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("BookStore.Domain.Entities.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("Reviews")
                         .HasForeignKey("UserId");
 
                     b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.ShippingAddress", b =>
+                {
+                    b.HasOne("BookStore.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("ShippingAddresses")
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -670,15 +835,13 @@ namespace BookStore.Infrastructure.Migrations
 
             modelBuilder.Entity("Order", b =>
                 {
-                    b.HasOne("BookStore.Domain.Entities.Customer", "Customer")
+                    b.HasOne("BookStore.Domain.Entities.Customer", null)
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId");
 
                     b.HasOne("BookStore.Domain.Entities.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("Orders")
                         .HasForeignKey("UserId");
-
-                    b.Navigation("Customer");
 
                     b.Navigation("User");
                 });
@@ -700,6 +863,22 @@ namespace BookStore.Infrastructure.Migrations
                     b.Navigation("Book");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("Favorites");
+
+                    b.Navigation("Orders");
+
+                    b.Navigation("Reviews");
+
+                    b.Navigation("ShippingAddresses");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.Book", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("BookStore.Domain.Entities.Cart", b =>

@@ -19,4 +19,7 @@ export interface Book {
   isFlashSale?: boolean;
   saleSoldCount?: number;
   saleStock?: number;
+  categoryName?: string;
+  subCategoryName?: string;
+  isFavorited?: boolean; // Trạng thái yêu thích
 }

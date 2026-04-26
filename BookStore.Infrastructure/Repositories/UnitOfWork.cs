@@ -15,6 +15,7 @@ public class UnitOfWork : IUnitOfWork
     public ICustomerRepository Customers { get; }
     public IReviewRepository Reviews { get; }
     public IStockHistoryRepository StockHistories { get; }
+    public IShippingAddressRepository ShippingAddresses { get; }
 
     public UnitOfWork(BookStoreDbContext context)
     {
@@ -27,6 +28,7 @@ public class UnitOfWork : IUnitOfWork
         Customers = new CustomerRepository(_context);
         Reviews = new ReviewRepository(_context);
         StockHistories = new StockHistoryRepository(_context);
+        ShippingAddresses = new ShippingAddressRepository(_context);
     }
 
     public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();

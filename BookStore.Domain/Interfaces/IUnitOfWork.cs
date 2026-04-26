@@ -13,6 +13,7 @@ namespace BookStore.Domain.Interfaces
         ICustomerRepository Customers { get; }
         IReviewRepository Reviews { get; }
         IStockHistoryRepository StockHistories { get; }
+        IShippingAddressRepository ShippingAddresses { get; }
 
         Task<int> SaveChangesAsync(); // Hàm quan trọng nhất để thực thi Transaction
     }

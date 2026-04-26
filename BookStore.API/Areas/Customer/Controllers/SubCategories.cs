@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
-namespace BookStore.API.Controllers
+namespace BookStore.API.Areas.Customer.Controllers
 {
     [ApiController]
     [Route("api/subcategories")]
