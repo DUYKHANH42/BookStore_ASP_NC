@@ -130,7 +130,7 @@
             <button
               class="flex items-center justify-center p-0.5 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full hover:scale-105 transition-premium shadow-lg">
               <img
-                [src]="'https://ui-avatars.com/api/?name=' + (user.fullName || 'User') + '&background=random&color=fff&bold=true'"
+                [src]="user.avtUrl ? authService.getFullImageUrl(user.avtUrl) : 'https://ui-avatars.com/api/?name=' + (user.fullName || 'User') + '&background=random&color=fff&bold=true'"
                 [alt]="user.fullName"
                 class="w-9 h-9 rounded-full object-cover border-2 border-white dark:border-slate-900" />
             </button>
@@ -270,7 +270,7 @@
             <!-- Profile Card trong Mobile Menu -->
             <div class="flex items-center gap-4 p-4 bg-white rounded-[2rem] shadow-sm border border-slate-100">
               <img
-                [src]="'https://ui-avatars.com/api/?name=' + (user.fullName || 'User') + '&background=random&color=fff&bold=true'"
+                [src]="user.avtUrl ? authService.getFullImageUrl(user.avtUrl) : 'https://ui-avatars.com/api/?name=' + (user.fullName || 'User') + '&background=random&color=fff&bold=true'"
                 class="w-14 h-14 rounded-full border-4 border-blue-50 shadow-inner" />
               <div class="flex flex-col">
                 <span class="text-sm font-black text-slate-800">{{user.fullName}}</span>

@@ -39,6 +39,20 @@ export class BookDetailComponent implements OnInit {
     });
   }
 
+  buyNow() {
+    if (!this.book) return;
+    
+    this.cartService.addToCart(this.book.id, this.quantity).subscribe({
+      next: () => {
+        this.router.navigate(['/checkout']);
+      },
+      error: (err) => {
+        console.error('Buy now error:', err);
+        this.toastService.show('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+      }
+    });
+  }
+
   book: Book | null = null;
   isToggling = false;
   togglingId: number | null = null;
@@ -147,6 +161,7 @@ export class BookDetailComponent implements OnInit {
           
           const favIds = favData.map((f: any) => f.bookId || f.BookId);
           this.myFavIds = favIds; // Lưu trữ để tái sử dụng
+          
           
           if (favIds.includes(this.book.id)) {
             this.book.isFavorited = true;

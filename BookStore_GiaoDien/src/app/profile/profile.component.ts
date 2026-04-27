@@ -16,7 +16,7 @@ import { finalize } from 'rxjs';
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private router = inject(Router);
   private toastService = inject(ToastService);
   private favoriteService = inject(FavoriteService);
@@ -220,15 +220,33 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    // Chuẩn bị FormData để gửi lên Server (multipart/form-data)
     const formData = new FormData();
-    formData.append('fullName', this.userInfo?.fullName || '');
-    formData.append('phoneNumber', this.userInfo?.phoneNumber || '');
-    if (this.userInfo?.isActive !== undefined) formData.append('isActive', String(this.userInfo.isActive));
+    formData.append('FullName', this.userInfo?.fullName || '');
+    formData.append('PhoneNumber', this.userInfo?.phoneNumber || '');
+    // Bổ sung isActive
+    formData.append('IsActive', String(this.userInfo?.isActive ?? true));
+
     if (this.avatarFile) {
-      formData.append('avatar', this.avatarFile);
+      formData.append('AvatarFile', this.avatarFile);
     }
-    this.toastService.show('Thông tin cá nhân đã được ghi nhận!', 'success');
+
+    // Hiển thị trạng thái đang xử lý (có thể thêm biến isLoading nếu cần)
+    this.authService.updateProfile(formData).subscribe({
+      next: (res) => {
+        if (res.isSuccess) {
+          this.toastService.show('Cập nhật hồ sơ thành công!', 'success');
+          // Reset avatar file sau khi upload thành công
+          this.avatarFile = null;
+        } else {
+          this.toastService.show(res.message || 'Cập nhật thất bại', 'error');
+        }
+      },
+      error: () => this.toastService.show('Lỗi hệ thống khi cập nhật hồ sơ', 'error')
+    });
   }
+
+  isLoading = false;
 
   changePassword() {
     this.errors = {}; 
@@ -250,7 +268,28 @@ export class ProfileComponent implements OnInit {
       this.confirmPasswordInput.nativeElement.focus();
       return;
     }
-    this.toastService.show('Mật khẩu đã được thay đổi!', 'success');
+
+    this.isLoading = true;
+    this.authService.changePassword({
+      currentPassword: this.currentPassword,
+      newPassword: this.newPassword
+    }).pipe(finalize(() => this.isLoading = false))
+    .subscribe({
+      next: (res) => {
+        if (res.isSuccess) {
+          this.toastService.show('Đổi mật khẩu thành công!', 'success');
+          // Reset form
+          this.currentPassword = '';
+          this.newPassword = '';
+          this.confirmPassword = '';
+        } else {
+          this.toastService.show(res.message || 'Đổi mật khẩu thất bại', 'error');
+        }
+      },
+      error: (err) => {
+        this.toastService.show(err.error?.message || 'Lỗi hệ thống khi đổi mật khẩu', 'error');
+      }
+    });
   }
 
   private ensureArray(data: any): any[] {

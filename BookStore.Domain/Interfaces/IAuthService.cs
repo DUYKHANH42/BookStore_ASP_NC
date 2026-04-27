@@ -18,5 +18,12 @@ namespace BookStore.Domain.Interfaces
         Task<bool> IsEmailUniqueAsync(string email);
 
         // Sau này có thể thêm: ChangePassword, ResetPassword...
+        Task<AuthModel?> RefreshTokenAsync(string accessToken, string refreshToken);
+        Task<IdentityResult> UpdateUserAsync(ApplicationUser user);
+        Task<ApplicationUser?> GetUserByIdAsync(string userId);
+        Task<IdentityResult> ChangePasswordAsync(ApplicationUser user, string currentPassword, string newPassword);
+        Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user);
+        Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string newPassword);
+        Task<ApplicationUser> FindByEmailAsync(string email);
     }
 }

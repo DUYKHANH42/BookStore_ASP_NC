@@ -44,8 +44,8 @@ export class LoginComponent implements OnInit {
           }
         },
         error: (err) => {
-          this.errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.';
-          console.error('Login error:', err);
+          // Lấy thông báo từ server (ví dụ: Tài khoản bị khóa)
+          this.errorMessage = err.error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối.';
         }
       });
   }

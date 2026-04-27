@@ -1,9 +1,11 @@
+using BookStore.Application.Interfaces;
 using BookStore.Application.Services;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Identity;
 using BookStore.Infrastructure.Persistence;
 using BookStore.Infrastructure.Repositories;
+using BookStore.Infrastructure.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -43,7 +45,7 @@ namespace BookStore.API
             })
 .AddEntityFrameworkStores<BookStoreDbContext>()
 .AddDefaultTokenProviders();
-            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuthService, AuthRepository>();
             services.AddIdentityCore<ApplicationUser>()
                     .AddEntityFrameworkStores<BookStoreDbContext>();
 
@@ -62,6 +64,8 @@ namespace BookStore.API
             services.AddScoped<CartService>();
             services.AddScoped<OrderService>();
             services.AddScoped<ShippingAddressService>();
+            services.AddScoped<AuthService>();
+            services.AddScoped<IMailService, MailService>();
             var key = System.Text.Encoding.UTF8.GetBytes(Configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_123");
             services.AddAuthentication(options =>
             {

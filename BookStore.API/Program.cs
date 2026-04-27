@@ -8,7 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BookStore.API
-{
+{   
     public class Program
     {
         public static void Main(string[] args)

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../environments/environment';
-import { AuthResponseDto, LoginDto, RegisterDto } from '../app/models/auth.model';
+import { AuthResponseDto, LoginDto, RegisterDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from '../app/models/auth.model';
 
 @Injectable({
   providedIn: 'root'
@@ -41,6 +41,7 @@ export class AuthService {
       map(res => {
         if (res.isSuccess && res.token) {
           localStorage.setItem('token', res.token);
+          if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
           if (res.fullName) localStorage.setItem('fullName', res.fullName);
           if (res.email) localStorage.setItem('email', res.email);
           if (res.address) localStorage.setItem('address', res.address);
@@ -62,6 +63,55 @@ export class AuthService {
     return this.http.post<AuthResponseDto>(`${this.apiUrl}/register`, data);
   }
 
+  // Cập nhật thông tin cá nhân
+  updateProfile(formData: FormData): Observable<AuthResponseDto> {
+    return this.http.put<any>(`${this.apiUrl}/update-profile`, formData).pipe(
+      map(res => {
+        if (res.isSuccess || res.IsSuccess) {
+          // Lấy dữ liệu bất kể là PascalCase hay camelCase từ Server
+          const newAvt = res.avtUrl || res.AvtUrl;
+          const newFullName = res.fullName || res.FullName;
+          const newPhone = res.phoneNumber || res.PhoneNumber;
+          const newIsActive = res.isActive !== undefined ? res.isActive : res.IsActive;
+
+          const current = this.currentUserSubject.value;
+          if (current) {
+            const updated = { 
+              ...current, 
+              fullName: newFullName || current.fullName,
+              phoneNumber: newPhone || current.phoneNumber,
+              avtUrl: newAvt || current.avtUrl,
+              isActive: newIsActive !== undefined ? newIsActive : current.isActive
+            };
+            this.currentUserSubject.next(updated);
+            
+            // Cập nhật LocalStorage
+            if (newFullName) localStorage.setItem('fullName', newFullName);
+            if (newPhone) localStorage.setItem('phoneNumber', newPhone);
+            if (newAvt) localStorage.setItem('avtUrl', newAvt);
+            if (newIsActive !== undefined) localStorage.setItem('isActive', String(newIsActive));
+          }
+        }
+        return res;
+      })
+    );
+  }
+
+  // Đổi mật khẩu
+  changePassword(data: ChangePasswordDto): Observable<AuthResponseDto> {
+    return this.http.post<AuthResponseDto>(`${this.apiUrl}/change-password`, data);
+  }
+
+  // Quên mật khẩu
+  forgotPassword(data: ForgotPasswordDto): Observable<AuthResponseDto> {
+    return this.http.post<AuthResponseDto>(`${this.apiUrl}/forgot-password`, data);
+  }
+
+  // Đặt lại mật khẩu
+  resetPassword(data: ResetPasswordDto): Observable<AuthResponseDto> {
+    return this.http.post<AuthResponseDto>(`${this.apiUrl}/reset-password`, data);
+  }
+
   // Kiểm tra email trùng (Async Validator)
   checkEmailExists(email: string): Observable<boolean> {
     if (!email) return of(false);
@@ -73,6 +123,7 @@ export class AuthService {
   // Đăng xuất
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('fullName');
     localStorage.removeItem('email');
     localStorage.removeItem('address');
@@ -87,9 +138,52 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refreshToken');
+  }
+
+  // Làm mới token
+  refreshToken(): Observable<AuthResponseDto> {
+    const token = this.getToken();
+    const refreshToken = this.getRefreshToken();
+
+    return this.http.post<AuthResponseDto>(`${this.apiUrl}/refresh-token`, {
+      accessToken: token,
+      refreshToken: refreshToken
+    }).pipe(
+      map(res => {
+        if (res.isSuccess && res.token) {
+          localStorage.setItem('token', res.token);
+          if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+          this.currentUserSubject.next({
+            ...this.currentUserSubject.value,
+            ...res
+          });
+        }
+        return res;
+      })
+    );
+  }
+
   // Kiểm tra trạng thái đăng nhập
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
-}
 
+  // Hàm helper để lấy đường dẫn ảnh đầy đủ
+  getFullImageUrl(url: string | undefined | null): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    
+    const baseUrl = 'https://localhost:44326';
+    
+    // Nếu url đã bắt đầu bằng /uploads thì chỉ cần thêm domain
+    if (url.startsWith('/uploads') || url.startsWith('uploads')) {
+      const cleanUrl = url.startsWith('/') ? url : '/' + url;
+      return `${baseUrl}${cleanUrl}`;
+    }
+    
+    // Mặc định giả định nó nằm trong thư mục uploads/avatars
+    return `${baseUrl}/uploads/avatars/${url}`;
+  }
+}
