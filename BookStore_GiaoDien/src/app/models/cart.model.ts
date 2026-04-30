@@ -1,9 +1,9 @@
 export interface CartItem {
   id: number;
-  bookId: number;
-  bookTitle: string;
+  productId: number;  // bookId -> productId
+  productName: string; // bookTitle -> productName
   imageUrl: string;
-  author: string;
+  brand: string;      // author -> brand
   originalPrice: number;
   price: number;
   quantity: number;

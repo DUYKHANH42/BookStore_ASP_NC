@@ -1,4 +1,5 @@
-﻿using BookStore.Domain.Entities;
+using BookStore.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,5 +18,11 @@ namespace BookStore.Domain.Interfaces
 
         // 4. Xử lý thay đổi trạng thái đơn hàng (Xử lý dữ liệu ở Infra)
         Task UpdateStatusAsync(int orderId, OrderStatus status);
+
+        // 5. Lấy đơn hàng theo khoảng thời gian (Dùng cho thống kê)
+        Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate);
+
+        // 6. Kiểm tra xem người dùng đã mua sản phẩm này chưa
+        Task<bool> HasPurchasedProductAsync(string userId, int productId);
     }
 }

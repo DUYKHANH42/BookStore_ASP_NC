@@ -76,8 +76,9 @@
               [class.text-rose-400]="activeTab !== 'favorites'" [class.hover:bg-rose-50]="activeTab !== 'favorites'"
               class="w-full text-left px-6 py-4 rounded-[2rem] font-bold transition-premium flex items-center gap-4 group">
               <span class="material-symbols-outlined group-hover:animate-pulse-hot"
-                [class.text-rose-500]="activeTab === 'favorites'">favorite</span>
-              Sách yêu thích
+                [class.text-red-600]="activeTab === 'favorites'">favorite</span>
+              Sản phẩm yêu thích
+
             </button>
 
             <button (click)="switchTab('settings')" [class.bg-blue-50]="activeTab === 'settings'"
@@ -160,7 +161,7 @@
             </div>
             <h3 class="text-2xl font-black mb-4 text-slate-800">Chưa có đơn hàng nào</h3>
             <p class="text-slate-400 font-medium max-w-sm mx-auto mb-8">Bạn chưa thực hiện giao dịch nào. Hãy khám phá
-              những cuốn sách thú vị ngay hôm nay!</p>
+              những sản phẩm thú vị ngay hôm nay!</p>
             <button routerLink="/"
               class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black hover:scale-105 transition-premium shadow-xl text-sm">Đi
               mua sắm</button>
@@ -253,14 +254,14 @@
                         class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0">
-                      <h5 class="font-black text-slate-800 line-clamp-1 truncate">{{item.bookTitle}}</h5>
+                      <h5 class="font-black text-slate-800 line-clamp-1 truncate">{{item.productName}}</h5>
                       <p class="text-xs text-slate-400 font-bold">Số lượng: {{item.quantity}}</p>
                     </div>
                     <div class="text-right">
                       <p class="text-sm font-black text-slate-900">{{item.subTotal | currency:'VND':'symbol':'1.0-0'}}
                       </p>
                       <p class="text-[10px] text-slate-400 font-bold">{{item.price | currency:'VND':'symbol':'1.0-0'}} /
-                        cuốn</p>
+                        sản phẩm</p>
                     </div>
                   </div>
                 </div>
@@ -479,7 +480,8 @@
             <div class="pt-6 border-slate-100 flex items-center justify-end">
               <button (click)="changePassword()" [disabled]="isLoading"
                 class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
-                <span *ngIf="isLoading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span *ngIf="isLoading"
+                  class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                 {{ isLoading ? 'Đang cập nhật...' : 'Đổi mật khẩu' }}
               </button>
             </div>
@@ -513,7 +515,7 @@
                 <span class="material-symbols-outlined text-4xl text-rose-300">heart_broken</span>
               </div>
               <h3 class="text-xl font-black text-slate-800 mb-2">Danh sách trống</h3>
-              <p class="text-slate-400 mb-8 max-w-xs text-sm">Bạn chưa thả tim cuốn sách nào. Thêm ngay vào bộ sưu tập!
+              <p class="text-slate-400 mb-8 max-w-xs text-sm">Bạn chưa thả tim sản phẩm nào. Thêm ngay vào bộ sưu tập!
               </p>
               <a routerLink="/"
                 class="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all">Khám
@@ -525,23 +527,23 @@
               <div *ngFor="let item of favorites"
                 class="group bg-white p-3 rounded-[2rem] shadow-sm hover:shadow-xl transition-premium border border-slate-100 flex gap-4 items-center relative pr-4">
 
-                <div [routerLink]="['/book', item.bookId]"
+                <div [routerLink]="['/product', item.productId]"
                   class="w-20 h-[100px] flex-shrink-0 rounded-[1.5rem] overflow-hidden bg-slate-50 cursor-pointer shadow-inner">
-                  <img [src]="'https://localhost:44326/uploads/avatars/' + item.imageUrl"
+                  <img [src]="'https://localhost:44326/uploads/' + item.imageUrl"
                     class="w-full h-full object-cover transition-premium group-hover:scale-110" />
                 </div>
 
                 <div class="flex-1 min-w-0">
-                  <h3 [routerLink]="['/book', item.bookId]"
+                  <h3 [routerLink]="['/product', item.productId]"
                     class="font-black text-sm mb-1 leading-tight tracking-tight line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer text-slate-800">
-                    {{item.bookTitle}}</h3>
+                    {{item.productName}}</h3>
                   <span class="text-sm font-black text-rose-600 block mt-2">{{item.price |
                     currency:'VND':'symbol':'1.0-0'}}</span>
                 </div>
 
                 <!-- Remove Button -->
-                <button (click)="removeFavorite(item.bookId)"
-                  class="absolute right-4 w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90">
+                <button (click)="removeFavorite(item.productId)"
+                  class="absolute right-4 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-90">
                   <span class="material-symbols-outlined text-lg"
                     style="font-variation-settings: 'FILL' 1;">favorite</span>
                 </button>

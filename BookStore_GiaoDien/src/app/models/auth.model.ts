@@ -1,5 +1,6 @@
 export interface AuthResponseDto {
     isSuccess: boolean;
+    userId?: string;
     message?: string;
     token?: string;
     refreshToken?: string;

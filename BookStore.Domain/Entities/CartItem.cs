@@ -1,4 +1,4 @@
-﻿namespace BookStore.Domain.Entities
+namespace BookStore.Domain.Entities
 {
     public class CartItem
     {
@@ -7,8 +7,8 @@
         public int CartId { get; set; }
         public Cart Cart { get; set; } = null!;
 
-        public int BookId { get; set; }
-        public Book Book { get; set; } = null!;
+        public int ProductId { get; set; } // Thay BookId bằng ProductId
+        public Product Product { get; set; } = null!;
 
         public int Quantity { get; set; }
     }

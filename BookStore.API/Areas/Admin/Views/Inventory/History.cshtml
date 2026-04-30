@@ -1,0 +1,66 @@
+@model IEnumerable<StockHistoryDTO>
+@{
+    ViewData["Title"] = "Nhật ký biến động kho";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/inventory-management.css" />
+}
+
+<div class="inventory-container space-y-8">
+    <!-- Header -->
+    <div class="flex items-center gap-4">
+        <a href="@Url.Action("Index")" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-slate-900 transition-premium">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Nhật ký kho hàng</h2>
+            <p class="text-slate-500 font-medium text-sm">Chi tiết mọi lần tăng/giảm số lượng của từng sản phẩm.</p>
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white border border-slate-100">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 w-full">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="ps-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-widest">Thời gian</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Sản phẩm</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">SKU</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest text-center">Biến động</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Lý do / Chứng từ</th>
+                        <th class="text-end pe-8 text-slate-400 font-black text-[10px] uppercase tracking-widest">Người thực hiện</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var h in Model)
+                    {
+                        <tr class="history-item">
+                            <td class="ps-8">
+                                <div class="text-slate-900 font-bold text-sm">@h.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td>
+                                <div class="text-slate-900 font-black text-sm">@h.ProductName</div>
+                            </td>
+                            <td>
+                                <div class="text-blue-600 font-black text-xs px-3 py-1 bg-blue-50 rounded-lg inline-block">@h.SKU</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="quantity-badge @(h.ChangeQuantity > 0 ? "badge-plus" : "badge-minus")">
+                                    @(h.ChangeQuantity > 0 ? "+" : "")@h.ChangeQuantity
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-slate-500 font-medium text-xs">@h.Reason</div>
+                            </td>
+                            <td class="text-end pe-8">
+                                <div class="text-slate-900 font-bold text-xs">@h.ChangedBy</div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

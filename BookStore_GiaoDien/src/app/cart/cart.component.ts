@@ -15,14 +15,12 @@ export class CartComponent implements OnInit {
   cart$: Observable<Cart> = this.cartService.cart$;
 
   ngOnInit(): void {
-    // Optionally trigger a fresh load if needed
-    // this.cartService.loadCartFromServer();
   }
 
   updateQuantity(item: CartItem, delta: number) {
     const newQty = item.quantity + delta;
     if (newQty > 0) {
-      this.cartService.updateQuantity(item.bookId, newQty).subscribe({
+      this.cartService.updateQuantity(item.productId, newQty).subscribe({
         next: () => this.toastService.show('Đã cập nhật số lượng', 'success'),
         error: () => this.toastService.show('Không thể cập nhật số lượng', 'error')
       });
@@ -32,8 +30,8 @@ export class CartComponent implements OnInit {
   }
 
   removeItem(item: CartItem) {
-    if (confirm(`Bạn có chắc muốn xóa "${item.bookTitle}" khỏi giỏ hàng?`)) {
-      this.cartService.removeFromCart(item.bookId).subscribe({
+    if (confirm(`Bạn có chắc muốn xóa "${item.productName}" khỏi giỏ hàng?`)) {
+      this.cartService.removeFromCart(item.productId).subscribe({
         next: () => this.toastService.show('Đã xóa sản phẩm', 'info'),
         error: () => this.toastService.show('Có lỗi xảy ra khi xóa', 'error')
       });
@@ -48,5 +46,4 @@ export class CartComponent implements OnInit {
       });
     }
   }
-
 }

@@ -12,10 +12,10 @@ namespace BookStore.Infrastructure.Repositories
     {
         public StockHistoryRepository(BookStoreDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<StockHistory>> GetHistoryByBookIdAsync(int bookId)
+        public async Task<IEnumerable<StockHistory>> GetHistoryByBookIdAsync(int productid)
         {
             return await _context.StockHistories
-                .Where(s => s.BookId == bookId)
+                .Where(s => s.ProductId == productid)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
         }

@@ -1,0 +1,67 @@
+@model IEnumerable<BookStore.Application.DTO.FlashSaleManagementDTO>
+
+    <table class="w-full text-left border-separate border-spacing-y-2">
+        <thead>
+            <tr>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Giá Sale</th>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Suất Sale</th>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Đã bán</th>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Bắt đầu</th>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Kết thúc</th>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Trạng thái</th>
+                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">Chưa có chương trình Flash Sale nào</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-4"><span class="font-black text-rose-600">@item.SalePrice.ToString("N0")</span> <span class="text-[10px] text-rose-400">₫</span></td>
+                        <td class="px-4 py-4 font-bold text-slate-700">@item.SaleStock</td>
+                        <td class="px-4 py-4 font-bold text-slate-700">@item.SoldCount</td>
+                        <td class="px-4 py-4 text-xs font-medium text-slate-500">@item.StartTime.ToString("dd/MM HH:mm")</td>
+                        <td class="px-4 py-4 text-xs font-medium text-slate-500">@item.EndTime.ToString("dd/MM HH:mm")</td>
+                        <td class="px-4 py-4">
+                            @switch (item.Status)
+                            {
+                                case "Đang diễn ra":
+                                    <span class="badge bg-success">Đang diễn ra</span>
+                                    break;
+                                case "Sắp diễn ra":
+                                    <span class="badge bg-primary">Sắp diễn ra</span>
+                                    break;
+                                case "Hết suất":
+                                    <span class="badge bg-warning">Hết suất</span>
+                                    break;
+                                case "Đã tắt":
+                                    <span class="badge bg-secondary">Đã tắt</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-danger">@item.Status</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button" class="sale-action-btn @(item.IsActive ? "toggle-active" : "")" onclick="toggleSaleStatus(@item.Id)" title="Bật/Tắt">
+                                    <span class="material-symbols-outlined text-lg">@(item.IsActive ? "toggle_on" : "toggle_off")</span>
+                                </button>
+                                <button type="button" class="sale-action-btn delete" onclick="deleteSale(@item.Id)" title="Xóa">
+                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

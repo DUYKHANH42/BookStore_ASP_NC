@@ -1,0 +1,154 @@
+@using BookStore.Application.DTO
+@model PagedResultDTO<UserDTO>
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/customer-management.css" />
+}
+
+<div class="customer-container space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Quản lý khách hàng</h2>
+            <p class="text-slate-500 font-medium">Hệ thống có <span class="text-blue-600 font-bold">@Model.TotalItems</span> người dùng đăng ký.</p>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-sm">
+        <form method="get" action="@Url.Action("Index")" class="flex flex-wrap gap-4 items-end">
+            <!-- Search -->
+            <div class="flex-1 min-w-[300px] space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tìm kiếm người dùng</label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">search</span>
+                    <input type="text" name="search" value="@Context.Request.Query["search"]" placeholder="Tên, Email hoặc Số điện thoại..." 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="w-full md:w-60 space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Trạng thái tài khoản</label>
+                <select name="isActive" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none shadow-sm cursor-pointer">
+                    <option value="">Tất cả</option>
+                    <option value="true" selected="@(Context.Request.Query["isActive"] == "true")">Đang hoạt động</option>
+                    <option value="false" selected="@(Context.Request.Query["isActive"] == "false")">Đã khóa</option>
+                </select>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 text-white hover:bg-black transition-premium shadow-lg shadow-slate-900/20">
+                <span class="material-symbols-outlined text-2xl">filter_list</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Table List -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 w-full">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="ps-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-widest">Khách hàng</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Liên hệ</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Ngày tham gia</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest text-center">Đơn hàng</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Trạng thái</th>
+                        <th class="text-end pe-8 text-slate-400 font-black text-[10px] uppercase tracking-widest">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Items)
+                    {
+                        <tr>
+                            <td class="ps-8">
+                                <div class="flex items-center gap-4">
+                                    <div class="user-avatar">
+                                        @user.FullName.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-900 font-black text-sm">@user.FullName</div>
+                                        <div class="text-slate-400 text-xs font-medium">ID: @user.Id.Substring(0, 8)...</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-slate-700 font-bold text-sm">@user.Email</div>
+                                <div class="text-slate-400 text-xs font-bold">@user.PhoneNumber</div>
+                            </td>
+                            <td>
+                                <div class="text-slate-600 font-bold text-sm">@user.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black text-xs">@user.OrderCount</span>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="status-indicator @(user.IsActive ? "status-active" : "status-locked")"></div>
+                                    <span class="font-black text-[10px] uppercase tracking-widest @(user.IsActive ? "text-emerald-600" : "text-rose-600")">
+                                        @(user.IsActive ? "Active" : "Locked")
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-end pe-8">
+                                <div class="flex justify-end gap-3">
+                                    <button onclick="openCustomerModal('@user.Id')" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white transition-premium">
+                                        <span class="material-symbols-outlined text-xl">settings</span>
+                                    </button>
+                                    <button data-id="@user.Id" data-active="@user.IsActive.ToString().ToLower()" 
+                                            class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-rose-600 hover:text-white transition-premium btn-toggle-status">
+                                        <span class="material-symbols-outlined text-xl">@(user.IsActive ? "lock" : "lock_open")</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Trang @Model.CurrentPage / @Model.TotalPages</p>
+                <div class="flex gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a href="@Url.Action("Index", new { page = Model.CurrentPage - 1, search = Context.Request.Query["search"], isActive = Context.Request.Query["isActive"] })" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </a>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <a href="@Url.Action("Index", new { page = i, search = Context.Request.Query["search"], isActive = Context.Request.Query["isActive"] })" 
+                           class="w-11 h-11 flex items-center justify-center rounded-2xl border font-black text-sm transition-premium @(i == Model.CurrentPage ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20" : "bg-white border-slate-200 text-slate-600 hover:bg-blue-50")">
+                            @i
+                        </a>
+                    }
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a href="@Url.Action("Index", new { page = Model.CurrentPage + 1, search = Context.Request.Query["search"], isActive = Context.Request.Query["isActive"] })" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Custom Customer Modal -->
+<div id="customerModal" onclick="if(event.target === this) closeCustomerModal()">
+    <div class="modal-content relative z-10">
+        <div id="customerModalBody" class="p-0"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/admin/js/customer-management.js"></script>
+}

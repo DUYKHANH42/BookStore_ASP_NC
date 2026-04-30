@@ -1,0 +1,60 @@
+@using BookStore.Application.DTO
+@model IEnumerable<CategoryDTO>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+    @foreach (var cat in Model)
+    {
+        <div class="glass-card rounded-[2.5rem] premium-shadow bg-white overflow-hidden group hover:translate-y-[-4px] transition-all duration-500">
+            <!-- Category Header -->
+            <div class="p-8 pb-4 flex justify-between items-start">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-6 bg-blue-600 rounded-full"></span>
+                        <h4 class="text-xl font-black text-slate-900 tracking-tight">@cat.Name</h4>
+                    </div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4">ID: @cat.Id • @(cat.SubCategories?.Count ?? 0) danh mục phụ</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openCategoryModal(@cat.Id)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                        <span class="material-symbols-outlined text-xl">edit</span>
+                    </button>
+                    <button onclick="deleteCategory(@cat.Id)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all">
+                        <span class="material-symbols-outlined text-xl">delete</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SubCategories List -->
+            <div class="px-8 pb-8 space-y-4">
+                <div class="flex flex-wrap gap-2">
+                    @if (cat.SubCategories != null && cat.SubCategories.Any())
+                    {
+                        foreach (var sub in cat.SubCategories)
+                        {
+                            <div class="group/sub flex items-center gap-3 px-4 py-2 bg-slate-50 hover:bg-white border border-slate-100 hover:border-blue-200 rounded-xl transition-all shadow-sm hover:shadow-md">
+                                <span class="text-sm font-bold text-slate-700">@sub.Name</span>
+                                <div class="flex gap-1 opacity-0 group-hover/sub:opacity-100 transition-opacity">
+                                    <button onclick="openSubCategoryModal(@sub.Id, @cat.Id, '@cat.Name')" class="text-blue-600 hover:scale-110 transition-transform">
+                                        <span class="material-symbols-outlined text-base">edit</span>
+                                    </button>
+                                    <button onclick="deleteSubCategory(@sub.Id)" class="text-rose-500 hover:scale-110 transition-transform">
+                                        <span class="material-symbols-outlined text-base">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-xs font-bold text-slate-400 italic py-2">Chưa có danh mục phụ</p>
+                    }
+                    
+                    <button onclick="openSubCategoryModal(0, @cat.Id, '@cat.Name')" class="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all">
+                        <span class="material-symbols-outlined text-sm font-bold">add</span>
+                        <span class="text-xs font-black uppercase tracking-widest">Thêm mới</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>

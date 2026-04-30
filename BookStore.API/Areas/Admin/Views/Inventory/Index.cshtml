@@ -1,0 +1,95 @@
+@using BookStore.Application.DTO
+@model IEnumerable<InventoryReceiptDTO>
+@{
+    ViewData["Title"] = "Quản lý phiếu nhập kho";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/inventory-management.css" />
+}
+
+<div class="inventory-container space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Chứng từ nhập kho</h2>
+            <p class="text-slate-500 font-medium">Danh sách các phiếu nhập hàng chính quy từ nhà cung cấp.</p>
+        </div>
+        <div class="flex gap-4">
+            <a href="@Url.Action("History")" class="flex items-center gap-3 px-6 py-4 bg-white border border-slate-200 text-slate-600 rounded-[1.25rem] font-bold text-sm hover:bg-slate-50 transition-premium">
+                <span class="material-symbols-outlined">history</span> Xem nhật ký biến động
+            </a>
+            <a href="@Url.Action("Import")" class="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-[1.25rem] font-black text-sm shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-premium active:scale-95">
+                <span class="material-symbols-outlined">add_box</span> Lập phiếu nhập mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Receipts Table -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white border border-slate-100">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 w-full">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="ps-8 py-6 text-slate-400 font-black text-[10px] uppercase tracking-widest">Mã Phiếu</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Nhà cung cấp</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Ngày nhập</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest text-center">Tổng tiền</th>
+                        <th class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Trạng thái</th>
+                        <th class="text-end pe-8 text-slate-400 font-black text-[10px] uppercase tracking-widest">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td class="ps-8">
+                                <span class="font-black text-slate-900">#@r.Id</span>
+                            </td>
+                            <td>
+                                <div class="text-slate-900 font-bold text-sm">@r.SupplierName</div>
+                            </td>
+                            <td>
+                                <div class="text-slate-600 font-medium text-sm">@r.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-blue-600 font-black text-sm">@r.TotalAmount.ToString("N0")₫</span>
+                            </td>
+                            <td>
+                                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg font-black text-[10px] uppercase">@r.Status</span>
+                            </td>
+                            <td class="text-end pe-8">
+                                <button onclick="viewReceiptDetails(@r.Id)" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-premium">
+                                    <span class="material-symbols-outlined text-xl">visibility</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xem chi tiết phiếu nhập -->
+<div id="receiptModal" class="fixed inset-0 z-[200] hidden bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4" onclick="if(event.target === this) closeReceiptModal()">
+    <div class="modal-content bg-white rounded-[2.5rem] w-full max-w-4xl overflow-hidden shadow-2xl">
+        <div id="receiptModalBody"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function viewReceiptDetails(id) {
+            $('#receiptModal').removeClass('hidden').addClass('flex');
+            $('#receiptModalBody').html('<div class="p-20 text-center font-bold text-slate-400">Đang tải chi tiết phiếu...</div>');
+            
+            $.get('/Admin/Inventory/GetReceiptDetails', { id: id }, function (data) {
+                $('#receiptModalBody').html(data);
+            });
+        }
+        function closeReceiptModal() {
+            $('#receiptModal').addClass('hidden').removeClass('flex');
+        }
+    </script>
+}

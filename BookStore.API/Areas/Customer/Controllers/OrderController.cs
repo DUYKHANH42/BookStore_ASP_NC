@@ -1,4 +1,4 @@
-﻿using BookStore.Application.DTO;
+using BookStore.Application.DTO;
 using BookStore.Application.Services;
 using BookStore.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -25,10 +25,11 @@ namespace BookStore.API.Areas.Customer.Controllers
         {
             // Lấy UserId từ Token
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userName = User.Identity?.Name ?? "Khách hàng";
 
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var result = await _orderService.PlaceOrderAsync(userId, checkoutDto);
+            var result = await _orderService.PlaceOrderAsync(userId, checkoutDto, userName);
 
             if (result == null)
             {

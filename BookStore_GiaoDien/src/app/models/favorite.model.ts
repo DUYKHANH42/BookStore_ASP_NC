@@ -1,6 +1,6 @@
 export interface FavoriteDto {
-    bookId: number;
-    bookTitle: string;
+    productId: number;
+    productName: string;
     price: number;
     imageUrl: string;
 }

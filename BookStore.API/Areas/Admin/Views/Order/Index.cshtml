@@ -1,0 +1,148 @@
+@model BookStore.Application.DTO.PagedResultDTO<BookStore.Application.DTO.OrderDTO>
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/order-management.css" />
+}
+
+<div class="order-container space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Quản lý đơn hàng</h2>
+            <p class="text-slate-500 font-medium">Hệ thống ghi nhận <span class="text-blue-600 font-bold">@Model.TotalItems</span> giao dịch.</p>
+        </div>
+    </div>
+
+    <!-- Filters Bar (Premium Style) -->
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-sm">
+        <form method="get" action="@Url.Action("Index")" class="filter-container">
+            <!-- Search -->
+            <div class="filter-item-search space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tìm mã đơn hàng</label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">search</span>
+                    <input type="text" name="search" value="@Context.Request.Query["search"]" placeholder="VD: ORD-2026..." 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="filter-item space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Trạng thái</label>
+                <select name="status" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none shadow-sm cursor-pointer">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Shipping">Shipping</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+
+            <!-- Submit & Export -->
+            <div class="filter-item-btn flex gap-2">
+                <button type="submit" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 text-white hover:bg-black transition-premium shadow-lg shadow-slate-900/20" title="Lọc đơn hàng">
+                    <span class="material-symbols-outlined text-2xl">filter_list</span>
+                </button>
+                <a href="@Url.Action("ExportExcel", new { status = Context.Request.Query["status"], search = Context.Request.Query["search"] })" 
+                   class="w-14 h-14 flex items-center justify-center rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 transition-premium shadow-lg shadow-emerald-600/20" title="Xuất báo cáo Excel">
+                    <span class="material-symbols-outlined text-2xl">description</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table List -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 w-full">
+                <thead>
+                    <tr>
+                        <th class="ps-8">Mã đơn hàng</th>
+                        <th>Thời gian đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-8">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="ps-8">
+                                <div class="order-number text-slate-900 font-black">#@item.OrderNumber</div>
+                            </td>
+                            <td>
+                                <div class="text-slate-900 font-bold">@item.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                <div class="text-slate-400 text-xs font-bold">@item.CreatedAt.ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                <div class="text-blue-600 font-black text-lg">@item.TotalPrice.ToString("N0")đ</div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-@item.Status.ToLower()">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                    @item.Status
+                                </span>
+                            </td>
+                            <td class="text-end pe-8">
+                                <div class="flex justify-end gap-3">
+                                    <button onclick="openOrderModal(@item.Id)" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white transition-premium shadow-sm">
+                                        <span class="material-symbols-outlined text-xl">visibility</span>
+                                    </button>
+                                    <a href="@Url.Action("ExportInvoice", new { id = item.Id })" target="_blank" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white transition-premium shadow-sm">
+                                        <span class="material-symbols-outlined text-xl">print</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Trang @Model.CurrentPage / @Model.TotalPages</p>
+                <div class="flex gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a href="@Url.Action("Index", new { page = Model.CurrentPage - 1, search = Context.Request.Query["search"], status = Context.Request.Query["status"] })" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium shadow-sm">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </a>
+                    }
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <a href="@Url.Action("Index", new { page = i, search = Context.Request.Query["search"], status = Context.Request.Query["status"] })" 
+                           class="w-11 h-11 flex items-center justify-center rounded-2xl border font-black text-sm transition-premium @(i == Model.CurrentPage ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20" : "bg-white border-slate-200 text-slate-600 hover:bg-blue-50")">
+                            @i
+                        </a>
+                    }
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a href="@Url.Action("Index", new { page = Model.CurrentPage + 1, search = Context.Request.Query["search"], status = Context.Request.Query["status"] })" class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium shadow-sm">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Premium Order Modal (Centered & Blurred) -->
+<div id="orderModal" onclick="if(event.target === this) closeOrderModal()">
+    <div class="modal-content relative z-10">
+        <div id="orderModalBody" class="p-0">
+            <!-- Content loaded via AJAX -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/admin/js/order-management.js"></script>
+}

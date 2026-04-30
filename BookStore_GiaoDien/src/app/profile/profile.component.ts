@@ -164,12 +164,13 @@ export class ProfileComponent implements OnInit {
     this.loadAddresses();
   }
 
-  removeFavorite(bookId: number) {
-    this.favoriteService.toggleFavorite(bookId).subscribe({
+  removeFavorite(productId: number) {
+    this.favoriteService.toggleFavorite(productId).subscribe({
       next: (res: any) => {
-        if (!res.isFavorited && !res.IsFavorited) {
-          this.favorites = this.favorites.filter(f => f.bookId !== bookId);
-          this.toastService.show('Đã bỏ sách khỏi Yêu thích.', 'info');
+        const isFavorited = res.isFavorited ?? res.IsFavorited;
+        if (!isFavorited) {
+          this.favorites = this.favorites.filter(f => f.productId !== productId);
+          this.toastService.show('Đã bỏ sản phẩm khỏi Yêu thích.', 'info');
         }
       }
     });

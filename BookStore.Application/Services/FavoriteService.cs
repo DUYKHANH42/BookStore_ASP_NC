@@ -1,10 +1,8 @@
-﻿using BookStore.Application.DTO;
+using BookStore.Application.DTO;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BookStore.Application.Services
@@ -20,20 +18,20 @@ namespace BookStore.Application.Services
             _favoriteRepo = favoriteRepo;
         }
 
-        public async Task<bool> ToggleFavoriteAsync(string userId, int bookId)
+        public async Task<bool> ToggleFavoriteAsync(string userId, int productId)
         {
-            var favorite = await _favoriteRepo.GetFavoriteAsync(userId, bookId);
+            var favorite = await _favoriteRepo.GetFavoriteAsync(userId, productId);
 
             if (favorite != null)
             {
-                _ = _favoriteRepo.DeleteAsync(favorite.Id); // Đã thích rồi thì bỏ thích
+                await _favoriteRepo.DeleteAsync(favorite.Id); 
                 await _unitOfWork.SaveChangesAsync();
-                return false; // Trả về false nghĩa là đã gỡ khỏi danh sách
+                return false; 
             }
 
-            await _favoriteRepo.AddAsync(new Favorite { UserId = userId, BookId = bookId });
+            await _favoriteRepo.AddAsync(new Favorite { UserId = userId, ProductId = productId });
             await _unitOfWork.SaveChangesAsync();
-            return true; // Trả về true nghĩa là đã thêm vào danh sách
+            return true; 
         }
 
         public async Task<IEnumerable<FavoriteDto>> GetUserFavorites(string userId)
@@ -41,10 +39,10 @@ namespace BookStore.Application.Services
             var list = await _favoriteRepo.GetUserFavoritesAsync(userId);
             return list.Select(f => new FavoriteDto
             {
-                BookId = f.BookId,
-                BookTitle = f.Book.Title,
-                Price = f.Book.Price,
-                ImageUrl = f.Book.ImageUrl
+                ProductId = f.ProductId,
+                ProductName = f.Product.Name,
+                Price = f.Product.Price,
+                ImageUrl = f.Product.ImageUrl
             });
         }
     }

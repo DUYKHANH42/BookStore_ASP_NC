@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { finalize } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -38,7 +39,13 @@ export class LoginComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.isSuccess) {
-            this.router.navigate(['/']);
+            const roles = res.roles || [];
+            if (roles.includes('Admin')) {
+              const backendUrl = environment.apiUrl.replace('/api', '');
+              window.location.href = `${backendUrl}/Admin`;
+            } else {
+              this.router.navigate(['/']);
+            }
           } else {
             this.errorMessage = res.message || 'Email hoặc mật khẩu không chính xác.';
           }

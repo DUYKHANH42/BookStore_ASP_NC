@@ -1,16 +1,24 @@
-﻿using BookStore.Domain.Entities;
+using BookStore.Domain.Entities;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class OrderDetail
+namespace BookStore.Domain.Entities
 {
-    public int Id { get; set; }
+    public class OrderDetail
+    {
+        public int Id { get; set; }
 
-    public int OrderId { get; set; }
-    public Order Order { get; set; } = null!;
+        public int OrderId { get; set; }
+        public virtual Order Order { get; set; } = null!;
 
-    public int BookId { get; set; }
-    public Book Book { get; set; } = null!;
+        public int ProductId { get; set; }
+        public virtual Product Product { get; set; } = null!;
 
-    public int Quantity { get; set; }
+        public int Quantity { get; set; }
 
-    public decimal Price { get; set; } 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
+
+        public int? FlashSaleId { get; set; }
+        public virtual FlashSale? FlashSale { get; set; }
+    }
 }

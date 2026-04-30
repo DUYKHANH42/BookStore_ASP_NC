@@ -1,4 +1,4 @@
-﻿using BookStore.Domain.Entities;
+using BookStore.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +11,7 @@ public class BookStoreDbContext : IdentityDbContext<ApplicationUser, IdentityRol
         : base(options)
     {
     }
-    public DbSet<Book> Books { get; set; }
+    public DbSet<Product> Products { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<SubCategory> SubCategories { get; set; }
     public DbSet<Cart> Carts { get; set; }
@@ -24,11 +24,14 @@ public class BookStoreDbContext : IdentityDbContext<ApplicationUser, IdentityRol
     public DbSet<Favorite> Favorites { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<ShippingAddress> ShippingAddresses { get; set; }
+    public DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<InventoryReceipt> InventoryReceipts { get; set; }
+    public DbSet<InventoryReceiptDetail> InventoryReceiptDetails { get; set; }
+    public DbSet<FlashSale> FlashSales { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(BookStoreDbContext).Assembly);
-
     }
 }

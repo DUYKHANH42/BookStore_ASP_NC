@@ -21,6 +21,7 @@ export class AuthService {
     const email = localStorage.getItem('email');
 
     if (token) {
+      const roles = localStorage.getItem('roles');
       this.currentUserSubject.next({
         isSuccess: true,
         message: 'Loaded from storage',
@@ -30,14 +31,15 @@ export class AuthService {
         address: localStorage.getItem('address') || undefined,
         phoneNumber: localStorage.getItem('phoneNumber') || undefined,
         avtUrl: localStorage.getItem('avtUrl') || undefined,
-        isActive: localStorage.getItem('isActive') === 'true'
+        isActive: localStorage.getItem('isActive') === 'true',
+        roles: roles ? JSON.parse(roles) : undefined
       });
     }
   }
 
   // Đăng nhập
   login(data: LoginDto): Observable<AuthResponseDto> {
-    return this.http.post<AuthResponseDto>(`${this.apiUrl}/login`, data).pipe(
+    return this.http.post<AuthResponseDto>(`${this.apiUrl}/login`, data, { withCredentials: true }).pipe(
       map(res => {
         if (res.isSuccess && res.token) {
           localStorage.setItem('token', res.token);
@@ -49,6 +51,9 @@ export class AuthService {
           if (res.avtUrl) localStorage.setItem('avtUrl', res.avtUrl);
           if (res.isActive !== undefined) {
             localStorage.setItem('isActive', String(res.isActive));
+          }
+          if (res.roles) {
+            localStorage.setItem('roles', JSON.stringify(res.roles));
           }
           
           this.currentUserSubject.next(res);
@@ -130,6 +135,7 @@ export class AuthService {
     localStorage.removeItem('phoneNumber');
     localStorage.removeItem('avtUrl');
     localStorage.removeItem('isActive');
+    localStorage.removeItem('roles');
     this.currentUserSubject.next(null);
   }
 
@@ -150,7 +156,7 @@ export class AuthService {
     return this.http.post<AuthResponseDto>(`${this.apiUrl}/refresh-token`, {
       accessToken: token,
       refreshToken: refreshToken
-    }).pipe(
+    }, { withCredentials: true }).pipe(
       map(res => {
         if (res.isSuccess && res.token) {
           localStorage.setItem('token', res.token);

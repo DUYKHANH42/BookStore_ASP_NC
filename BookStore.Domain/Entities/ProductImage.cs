@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace BookStore.Domain.Entities
 {
@@ -10,8 +6,8 @@ namespace BookStore.Domain.Entities
     {
         public int Id { get; set; }
 
-        public int BookId { get; set; }
-        public virtual Book Book { get; set; } = null!; // Navigation property
+        public int ProductId { get; set; } // Đổi từ BookId sang ProductId
+        public virtual Product Product { get; set; } = null!; // Navigation property
 
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsMain { get; set; } // Ảnh đại diện chính hay không

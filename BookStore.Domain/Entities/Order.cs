@@ -1,6 +1,8 @@
-﻿using BookStore.Domain.Entities;
+using BookStore.Domain.Entities;
 using System;
 using System.Collections.Generic;
+
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class Order
 {
@@ -15,7 +17,9 @@ public class Order
     public string ShippingPhone { get; set; } = string.Empty;
     public string ShippingAddress { get; set; } = string.Empty;
 
+    [Column(TypeName = "decimal(18,2)")]
     public decimal TotalPrice { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.COD;
@@ -28,12 +32,14 @@ public enum PaymentMethod
     COD, 
     CreditCard,
     PayPal,
-    BankTransfer
+    BankTransfer,
+    ZaloPay
 }
-
 public enum OrderStatus
 {
-    Pending,
-    Paid,
-    Cancelled
+    Pending,      
+    Paid,        
+    Cancelled,    
+    Shipping,    
+    Completed     
 }

@@ -1,0 +1,90 @@
+@using BookStore.Application.DTO
+@model InventoryReceiptDTO
+
+<div class="p-8 space-y-6">
+    <div class="flex justify-between items-start border-b border-slate-50 pb-6">
+        <div>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">Chi tiết phiếu nhập #@Model.Id</h3>
+            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                Nhà cung cấp: <span class="text-blue-600">@Model.SupplierName</span>
+            </p>
+        </div>
+        <button onclick="closeReceiptModal()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-50 text-slate-400 transition-premium">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-slate-50 rounded-2xl">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ngày lập phiếu</p>
+            <p class="font-bold text-slate-900 text-sm">@Model.ReceivedDate.ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Người thực hiện</p>
+            <p class="font-bold text-slate-900 text-sm">@Model.EmployeeName</p>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Danh sách sản phẩm</p>
+        <div class="border border-slate-100 rounded-3xl overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-black text-[10px] uppercase">Hình ảnh</th>
+                        <th class="px-4 py-3 text-left font-black text-[10px] uppercase">Sản phẩm</th>
+                        <th class="px-4 py-3 text-center font-black text-[10px] uppercase">SL</th>
+                        <th class="px-4 py-3 text-right font-black text-[10px] uppercase">Giá nhập</th>
+                        <th class="px-4 py-3 text-right font-black text-[10px] uppercase">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach(var d in Model.Details)
+                    {
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="w-10 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                                    @{
+                                        var imgUrl = d.ImageUrl ?? "";
+                                        var finalPath = imgUrl.StartsWith("http") ? imgUrl : 
+                                                       (imgUrl.Contains("/") ? imgUrl : "/uploads/products/" + imgUrl);
+                                    }
+                                    <img src="@finalPath" 
+                                         class="w-full h-full object-cover" 
+                                         onerror="this.onerror=null; this.src='/uploads/@d.ImageUrl';" />
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="font-bold text-slate-900">@d.ProductName</div>
+                                <div class="text-[10px] text-slate-400 font-bold">@d.SKU</div>
+                            </td>
+                            <td class="px-4 py-3 text-center font-black">@d.Quantity</td>
+                            <td class="px-4 py-3 text-right font-bold">@d.ImportPrice.ToString("N0")₫</td>
+                            <td class="px-4 py-3 text-right font-black text-blue-600">@d.SubTotal.ToString("N0")₫</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="bg-blue-50/50">
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-right font-black text-[10px] uppercase text-slate-500">Tổng cộng phiếu</td>
+                        <td class="px-4 py-4 text-right font-black text-lg text-blue-600">@Model.TotalAmount.ToString("N0")₫</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="flex gap-4 pt-2">
+        <button onclick="location.href='/Admin/Inventory/DownloadPdf/@Model.Id'" class="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black transition-premium">
+            <span class="material-symbols-outlined text-lg">picture_as_pdf</span> Xuất phiếu nhập (PDF)
+        </button>
+    </div>
+
+    @if(!string.IsNullOrEmpty(Model.Notes))
+    {
+        <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+            <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Ghi chú</p>
+            <p class="text-sm text-amber-800 font-medium italic">"@Model.Notes"</p>
+        </div>
+    }
+</div>

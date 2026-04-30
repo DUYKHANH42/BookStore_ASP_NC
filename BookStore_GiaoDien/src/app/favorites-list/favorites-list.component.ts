@@ -2,8 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FavoriteService } from '../../services/favorite.service';
 import { FavoriteDto } from '../models/favorite.model';
 import { finalize } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-favorites-list',
@@ -31,11 +29,11 @@ export class FavoritesListComponent implements OnInit {
       });
   }
 
-  removeFavorite(bookId: number) {
-    this.favoriteService.toggleFavorite(bookId).subscribe({
+  removeFavorite(productId: number) {
+    this.favoriteService.toggleFavorite(productId).subscribe({
       next: (res) => {
         if (!res.isFavorited) {
-          this.favorites = this.favorites.filter(f => f.bookId !== bookId);
+          this.favorites = this.favorites.filter(f => f.productId !== productId);
         }
       }
     });

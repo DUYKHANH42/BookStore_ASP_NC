@@ -1,4 +1,4 @@
-﻿using BookStore.Domain.Entities;
+using BookStore.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,6 @@ namespace BookStore.Application.DTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
-
+        public ICollection<SubCategoryDTO> SubCategories { get; set; } = new List<SubCategoryDTO>();
     }
 }

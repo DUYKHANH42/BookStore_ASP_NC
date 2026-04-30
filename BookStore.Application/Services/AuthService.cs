@@ -1,4 +1,4 @@
-﻿using BookStore.Application.DTO.Auth;
+using BookStore.Application.DTO.Auth;
 using BookStore.Application.Interfaces;
 using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
@@ -62,6 +62,7 @@ namespace BookStore.Application.Services
             return new AuthResponseDto
             {
                 IsSuccess = true,
+                UserId = authModel.User.Id,
                 Token = authModel.Token,
                 RefreshToken = authModel.RefreshToken,
                 Expiration = authModel.Expiration,
@@ -87,6 +88,7 @@ namespace BookStore.Application.Services
             return new AuthResponseDto
             {
                 IsSuccess = true,
+                UserId = authModel.User.Id,
                 Token = authModel.Token,
                 RefreshToken = authModel.RefreshToken,
                 Expiration = authModel.Expiration,

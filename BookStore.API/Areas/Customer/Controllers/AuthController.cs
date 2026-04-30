@@ -1,12 +1,14 @@
-﻿using BookStore.Application.DTO.Auth;
+using BookStore.Application.DTO.Auth;
 using BookStore.Application.Services;
 using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -33,16 +35,39 @@ namespace BookStore.API.Areas.Customer.Controllers
             return Ok(result);
         }
 
+        [HttpGet("login")]
+        public IActionResult Login()
+        {
+            return Redirect("http://localhost:53214/login");
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             var result = await _authAppService.LoginAsync(loginDto);
-            if (result == null)
-                return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
-            if (!result.IsActive)
-                return Unauthorized(new { message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên." });
 
-            return Ok(result);
+            if (result == null) return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
+            if (!result.IsActive) return Unauthorized(new { message = "Tài khoản bị khóa." });
+
+            if (result.Roles != null && result.Roles.Contains("Admin"))
+            {
+                var claims = new List<Claim> {
+                    new Claim(ClaimTypes.Name, result.FullName!),
+                    new Claim(ClaimTypes.Email, result.Email!),
+                    new Claim(ClaimTypes.NameIdentifier, result.UserId!),
+                };
+                foreach (var role in result.Roles) claims.Add(new Claim(ClaimTypes.Role, role));
+
+                var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
+                await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
+            }
+
+            return Ok(result); 
         }
 
         [HttpGet("check-email")]

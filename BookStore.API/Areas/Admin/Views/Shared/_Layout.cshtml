@@ -3,117 +3,190 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin Lumen</title>
+    <title>@ViewData["Title"] - Lumen Control Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .sidebar-link.active { background-color: #2563eb; color: white; }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .glass-sidebar { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(16px); 
+            border-right: 1px solid rgba(0, 0, 0, 0.05); 
+        }
+        .glass-header { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
+        }
+        .nav-link-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+            color: white !important;
+        }
+        .nav-link-active span { color: white !important; }
         
+        .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+        }
+
         /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .transition-premium {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
     </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-[#f8fafc] text-slate-900 overflow-x-hidden">
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-72 bg-slate-900 text-white flex-shrink-0 flex flex-col sticky top-0 h-screen">
-            <div class="p-8 border-b border-slate-800">
-                <h1 class="text-2xl font-black tracking-tighter">LUMEN <span class="text-blue-500">ADMIN</span></h1>
+        <aside class="w-80 glass-sidebar text-slate-900 flex-shrink-0 flex flex-col sticky top-0 h-screen z-[100]">
+            <div class="p-10 flex flex-col items-center">
+                <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="block group">
+                    <img src="/uploads/imgs/logo_sach.png" alt="Lumen Logo" 
+                         class="h-28 w-auto object-contain transition-transform group-hover:scale-105" />
+                </a>
             </div>
             
-            <nav class="flex-1 p-6 space-y-2 overflow-y-auto">
-                <a asp-area="Admin" asp-controller="Admin" asp-action="Index" 
-                   class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white")">
-                    <span class="material-symbols-outlined">dashboard</span> Dashboard
-                </a>
-
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4">Quản lý kho</p>
+            <nav class="flex-1 px-6 space-y-1 overflow-y-auto hide-scrollbar">
+                <div class="pb-4">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Điều khiển chính</p>
+                    <a asp-area="Admin" asp-controller="Home" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "text-white" : "text-slate-400")">grid_view</span> Dashboard
+                    </a>
                 </div>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-sm text-slate-400 hover:text-white">
-                    <span class="material-symbols-outlined">menu_book</span> Quản lý sách
-                </a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-sm text-slate-400 hover:text-white">
-                    <span class="material-symbols-outlined">category</span> Danh mục
-                </a>
 
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4">Kinh doanh</p>
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Kho hàng & Sản phẩm</p>
+                    <a asp-area="Admin" asp-controller="Product" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "text-white" : "text-slate-400")">inventory_2</span> Quản lý sản phẩm
+                    </a>
+                    <a asp-area="Admin" asp-controller="Category" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "text-white" : "text-slate-400")">account_tree</span> Cây danh mục
+                    </a>
+                    <a asp-area="Admin" asp-controller="Inventory" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "text-white" : "text-slate-400")">inventory</span> Quản lý tồn kho
+                    </a>
                 </div>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-sm text-slate-400 hover:text-white">
-                    <span class="material-symbols-outlined">shopping_bag</span> Đơn hàng
-                </a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-sm text-slate-400 hover:text-white">
-                    <span class="material-symbols-outlined">group</span> Khách hàng
-                </a>
 
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4">Cài đặt</p>
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Vận hành kinh doanh</p>
+                    <a asp-area="Admin" asp-controller="Order" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <div class="relative">
+                            <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "text-white" : "text-slate-400")">receipt_long</span>
+                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        Quản lý đơn hàng
+                    </a>
+                    <a asp-area="Admin" asp-controller="Customer" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "text-white" : "text-slate-400")">group</span> Khách hàng
+                    </a>
+                    <a asp-area="Admin" asp-controller="Review" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "text-white" : "text-slate-400")">chat</span> Quản lý đánh giá
+                    </a>
                 </div>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-sm text-slate-400 hover:text-white">
-                    <span class="material-symbols-outlined">settings</span> Cấu hình
-                </a>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Hệ thống</p>
+                    <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
+                        <span class="material-symbols-outlined text-slate-400">analytics</span> Báo cáo chi tiết
+                    </a>
+                    <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
+                        <span class="material-symbols-outlined text-slate-400">tune</span> Cấu hình App
+                    </a>
+                </div>
             </nav>
 
-            <div class="p-6 border-t border-slate-800">
-                <a href="/" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-rose-600 transition-all font-bold text-sm text-slate-400 hover:text-white">
-                    <span class="material-symbols-outlined">logout</span> Quay về Client
+            <div class="p-8">
+                <a href="/" class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
+                    <span class="material-symbols-outlined text-lg group-hover:translate-x-[-4px] transition-premium">logout</span> 
+                    Quay về Client
                 </a>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0">
             <!-- Header -->
-            <header class="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-50">
-                <div class="flex items-center gap-4">
-                    <button class="lg:hidden p-2 hover:bg-slate-50 rounded-xl">
-                        <span class="material-symbols-outlined">menu</span>
-                    </button>
-                    <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                        <span>Admin</span>
+            <header class="h-24 glass-header flex items-center justify-between px-12 sticky top-0 z-[90]">
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        <span class="hover:text-blue-600 cursor-pointer transition-colors">Hệ thống</span>
                         <span class="material-symbols-outlined text-sm">chevron_right</span>
                         <span class="text-slate-900">@ViewData["Title"]</span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-6">
-                    <!-- Notifications -->
-                    <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all relative">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-                    </button>
+                <div class="flex items-center gap-8">
+                    <!-- Global Search -->
+                    <div class="hidden xl:flex items-center bg-slate-100 rounded-2xl px-5 py-2.5 w-80 group focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/10 transition-premium">
+                        <span class="material-symbols-outlined text-slate-400 text-xl">search</span>
+                        <input type="text" placeholder="Tìm nhanh tính năng..." class="bg-transparent border-none outline-none text-xs font-bold px-3 w-full text-slate-600 placeholder:text-slate-400" />
+                    </div>
 
-                    <div class="h-8 w-[1px] bg-slate-100"></div>
-
-                    <!-- User Profile -->
-                    <div class="relative group">
-                        <button class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-2xl transition-all">
-                            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black shadow-lg shadow-blue-200">A</div>
-                            <div class="text-left hidden sm:block">
-                                <p class="text-xs font-black text-slate-900 leading-none mb-1">Administrator</p>
-                                <p class="text-[10px] font-bold text-slate-400">admin@lumen.com</p>
-                            </div>
-                            <span class="material-symbols-outlined text-slate-400">expand_more</span>
+                    <!-- Action Icons -->
+                    <div class="flex items-center gap-2">
+                        <button class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-premium relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span class="absolute top-3 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
                         </button>
+                        <button class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-premium">
+                            <span class="material-symbols-outlined">dark_mode</span>
+                        </button>
+                    </div>
+
+                    <div class="h-10 w-[1px] bg-slate-200"></div>
+
+                    <!-- Profile Section -->
+                    <div class="flex items-center gap-4 group cursor-pointer">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-xs font-black text-slate-900 leading-none mb-1">Administrator</p>
+                            <p class="text-[10px] font-bold text-slate-400">Quản trị viên tối cao</p>
+                        </div>
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-xl shadow-blue-500/20 group-hover:scale-105 transition-premium">
+                                <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+                                    <span class="text-white font-black text-sm">AD</span>
+                                </div>
+                            </div>
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-white rounded-full"></span>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <main class="p-10 flex-1">
-                @RenderBody()
+            <!-- Page Body -->
+            <main class="p-12 flex-1">
+                <div class="max-w-[1600px] mx-auto">
+                    @RenderBody()
+                </div>
             </main>
 
-            <!-- Footer -->
-            <footer class="p-10 border-t border-slate-100 text-center">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2026 Lumen BookStore • Admin Control Panel v1.0</p>
+            <!-- Copyright -->
+            <footer class="px-12 py-8 border-t border-slate-100 flex justify-between items-center bg-white/50">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2026 Lumen BookStore • Enterprise Edition</p>
+                <div class="flex gap-6">
+                    <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Tài liệu</a>
+                    <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Hỗ trợ kĩ thuật</a>
+                </div>
             </footer>
         </div>
     </div>

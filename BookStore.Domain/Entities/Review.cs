@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace BookStore.Domain.Entities
 {
@@ -10,17 +6,21 @@ namespace BookStore.Domain.Entities
     {
         public int Id { get; set; }
 
-        public int BookId { get; set; }
-        public Book Book { get; set; } = null!;
+        public int ProductId { get; set; }
+        public virtual Product Product { get; set; } = null!;
 
         public string UserId { get; set; }
+        public virtual ApplicationUser User { get; set; } = null!;
 
-        public int Rating { get; set; } 
+        public int Rating { get; set; } // 1-5 sao
 
-        public string Comment { get; set; }
+        public string? Comment { get; set; }
 
-        public DateTime CreatedAt { get; set; }
-        public ApplicationUser User { get; set; } = null!;
+        public string? AdminReply { get; set; } // Phản hồi từ Admin
 
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? UpdatedAt { get; set; }
+
+        public bool IsActive { get; set; } = true; // Cho phép ẩn đánh giá xấu/vi phạm
     }
 }

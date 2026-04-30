@@ -1,0 +1,183 @@
+@using BookStore.Application.DTO
+@model IEnumerable<ReviewDTO>
+@{
+    ViewData["Title"] = "Quản lý đánh giá";
+}
+
+<div class="space-y-8 animate-fadeIn">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Quản lý đánh giá</h2>
+            <p class="text-slate-500 font-medium">Lắng nghe phản hồi từ <span class="text-blue-600 font-bold">khách hàng</span> để cải thiện dịch vụ.</p>
+        </div>
+    </div>
+
+    <!-- Stats Summary (Optional) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-[2rem] premium-shadow bg-white flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <span class="material-symbols-outlined">reviews</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng đánh giá</p>
+                <p class="text-xl font-black text-slate-900">@Model.Count()</p>
+            </div>
+        </div>
+        <div class="glass-card p-6 rounded-[2rem] premium-shadow bg-white flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <span class="material-symbols-outlined">star</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trung bình</p>
+                <p class="text-xl font-black text-slate-900">@(Model.Any() ? Model.Average(x => x.Rating).ToString("F1") : "0") / 5</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Table -->
+    <div class="glass-card rounded-[2.5rem] premium-shadow overflow-hidden bg-white border border-slate-100">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-8 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Khách hàng</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Sản phẩm</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Đánh giá</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Nội dung</th>
+                        <th class="px-6 py-6 text-center text-slate-400 font-black text-[10px] uppercase tracking-widest">Trạng thái</th>
+                        <th class="px-8 py-6 text-right text-slate-400 font-black text-[10px] uppercase tracking-widest">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var r in Model)
+                    {
+                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="px-8 py-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs uppercase">
+                                        @r.UserName.Substring(0, 1)
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-900">@r.UserName</div>
+                                        <div class="text-[10px] text-slate-400 font-bold">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="font-bold text-slate-600 max-w-[200px] truncate">@r.ProductName</div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="flex gap-0.5 text-amber-400">
+                                    @for(int i=1; i<=5; i++) {
+                                        <span class="material-symbols-outlined text-sm @(i <= r.Rating ? "fill-1" : "")">star</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="text-slate-600 font-medium line-clamp-2 max-w-[300px]">@r.Comment</div>
+                                @if(!string.IsNullOrEmpty(r.AdminReply)) {
+                                    <div class="mt-2 p-2 bg-blue-50 rounded-xl text-[11px] text-blue-600 font-bold border border-blue-100 italic">
+                                        Admin: @r.AdminReply
+                                    </div>
+                                }
+                            </td>
+                            <td class="px-6 py-6 text-center">
+                                <button onclick="toggleReviewStatus(@r.Id)" class="px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all @(r.IsActive ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")">
+                                    @(r.IsActive ? "Hiển thị" : "Đã ẩn")
+                                </button>
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <button onclick="openReplyModal(@r.Id, '@r.UserName', '@(r.AdminReply ?? "")')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white transition-premium">
+                                        <span class="material-symbols-outlined text-lg">reply</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reply Modal -->
+<div id="replyModal" class="modal-overlay hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onclick="if(event.target === this) closeReplyModal()">
+    <div class="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl animate-modalIn flex flex-col">
+        <div class="p-8 border-b border-slate-50 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-2xl font-black text-slate-900 tracking-tight">Phản hồi đánh giá</h3>
+                <p id="replyTarget" class="text-blue-600 text-xs font-bold uppercase tracking-widest mt-1">Gửi tới: ...</p>
+            </div>
+            <button onclick="closeReplyModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-100 text-slate-400 transition-premium">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-8 space-y-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Nội dung phản hồi</label>
+                <textarea id="replyContent" rows="4" placeholder="Nhập phản hồi của bạn..." 
+                          class="w-full bg-slate-50 border border-slate-100 rounded-3xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all resize-none"></textarea>
+            </div>
+            <button onclick="submitReply()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-slate-900/20 hover:bg-black transition-premium active:scale-95">
+                Gửi phản hồi
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentReviewId = null;
+
+        function openReplyModal(id, userName, currentReply) {
+            currentReviewId = id;
+            $('#replyTarget').text('Gửi tới: ' + userName);
+            $('#replyContent').val(currentReply);
+            $('#replyModal').removeClass('hidden').addClass('flex');
+        }
+
+        function closeReplyModal() {
+            $('#replyModal').addClass('hidden').removeClass('flex');
+        }
+
+        function submitReply() {
+            const reply = $('#replyContent').val();
+            if (!reply) {
+                alert('Vui lòng nhập nội dung phản hồi');
+                return;
+            }
+
+            fetch('/Admin/Review/Reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reviewId: currentReviewId, reply: reply })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function toggleReviewStatus(id) {
+            fetch('/Admin/Review/ToggleStatus/' + id, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+    </script>
+}
+
+<style>
+    .fill-1 { font-variation-settings: 'FILL' 1; }
+</style>
