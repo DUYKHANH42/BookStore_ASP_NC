@@ -1,3 +1,4 @@
+using System;
 using BookStore.Application.Interfaces;
 using BookStore.Application.Services;
 using BookStore.Domain.Entities;
@@ -15,6 +16,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
+using BookStore.Application.Configurations;
+using BookStore.API.Middleware;
+using BookStore.API.Services;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace BookStore.API
 {
@@ -32,17 +38,18 @@ namespace BookStore.API
         {
             services.AddControllers();
             services.AddControllersWithViews();
+            services.AddMemoryCache();
             services.AddDbContext<BookStoreDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")
                 ));
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
-                options.Password.RequireDigit = false;
-                options.Password.RequiredLength = 6;
+                options.Password.RequireDigit = true;
+                options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
             })
             .AddEntityFrameworkStores<BookStoreDbContext>()
             .AddDefaultTokenProviders();
@@ -72,6 +79,9 @@ namespace BookStore.API
             services.AddScoped<AuthService>();
             services.AddScoped<IMailService, MailService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<PricingService>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IFileService, FileService>();
             var key = System.Text.Encoding.UTF8.GetBytes(Configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_123");
             services.AddAuthentication(options =>
             {
@@ -105,7 +115,7 @@ namespace BookStore.API
             {
                 options.AddPolicy("AllowAngular",
                     builder => builder
-                        .WithOrigins("http://localhost:53214")
+                        .WithOrigins("http://localhost:53214", "https://lumenBookStore.somee.com")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials());
@@ -115,11 +125,30 @@ namespace BookStore.API
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BookStore.API", Version = "v1" });
             });
+
+            // SignalR & Payment Configuration
+            services.AddSignalR();
+            services.AddHttpClient();
+            services.Configure<ZaloPayConfig>(Configuration.GetSection(ZaloPayConfig.ConfigName));
+            services.AddScoped<ZaloPayService>();
+            services.AddRateLimiter(options =>
+            {
+                options.AddFixedWindowLimiter("forgot-password", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(10);
+                    opt.PermitLimit = 3;
+                    opt.QueueLimit = 0;
+                });
+                options.RejectionStatusCode = 429;
+            });
+            services.Configure<PayOSConfig>(Configuration.GetSection("PayOS"));
+            services.AddScoped<PayOSService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseMiddleware<ExceptionMiddleware>();
             QuestPDF.Settings.License = LicenseType.Community;
             if (env.IsDevelopment())
             {
@@ -129,21 +158,25 @@ namespace BookStore.API
             }
 
             app.UseHttpsRedirection();
-
-            app.UseRouting();
+            app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseRouting();
             app.UseCors("AllowAngular");
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseRateLimiter();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<BookStore.API.Hubs.NotificationHub>("/notificationHub");
                 endpoints.MapAreaControllerRoute(
         name: "admin_default",
         areaName: "Admin",
         pattern: "Admin/{controller=Home}/{action=Index}/{id?}"
     );
+                endpoints.MapFallbackToFile("index.html");
+
             });
         }
     }

@@ -21,228 +21,234 @@ namespace BookStore.Application.Services
             _userManager = userManager;
         }
 
-        public async Task<bool> ImportStockAsync(StockImportDTO dto, string adminName, string? adminId, string? imageUrl, List<string>? additionalImages = null)
+        public async Task<bool> ImportStockAsync(BulkStockImportDTO bulkDto, string adminName, string? adminId, Dictionary<int, string> mainImages, Dictionary<int, List<string>> galleryImages)
         {
-            var products = await _unitOfWork.Products.GetAllAsync();
-            var product = products.FirstOrDefault(p => p.SKU == dto.SKU);
-
-            bool isNewProduct = false;
-
-            if (product == null)
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                isNewProduct = true;
-                if (string.IsNullOrEmpty(dto.Name)) throw new Exception("Tên sản phẩm không được để trống khi tạo mới");
-
-                product = new Product
+                // 1. Tạo Phiếu Nhập Kho (InventoryReceipt) trước
+                var receipt = new InventoryReceipt
                 {
-                    SKU = dto.SKU,
-                    Name = dto.Name,
-                    Brand = dto.Brand ?? "Unknown",
-                    Description = dto.Description ?? "",
-                    Price = dto.SellingPrice ?? 0,
-                    Quantity = dto.QuantityToImport,
-                    CategoryId = dto.CategoryId ?? 1,
-                    SubCategoryId = dto.SubCategoryId,
-                    ImageUrl = imageUrl ?? "default_product.png",
-                    CreatedAt = DateTime.Now,
-                    IsActive = true,
-                    CreatedBy = adminName
+                    SupplierId = bulkDto.SupplierId,
+                    EmployeeId = adminId,
+                    ReceivedDate = DateTime.Now,
+                    TotalAmount = 0, // Sẽ cập nhật sau khi tính tổng details
+                    Notes = bulkDto.Notes ?? "Nhập hàng theo lô",
+                    Status = ReceiptStatus.Completed
                 };
-
-                // Thêm ảnh chính vào bảng ProductImage
-                if (!string.IsNullOrEmpty(imageUrl))
-                {
-                    product.Images.Add(new ProductImage
-                    {
-                        ImageUrl = imageUrl,
-                        IsMain = true,
-                        DisplayOrder = 0
-                    });
-                }
-
-                // Thêm ảnh phụ
-                if (additionalImages != null && additionalImages.Any())
-                {
-                    int order = 1;
-                    foreach (var img in additionalImages)
-                    {
-                        product.Images.Add(new ProductImage
-                        {
-                            ImageUrl = img,
-                            IsMain = false,
-                            DisplayOrder = order++
-                        });
-                    }
-                }
-
-                await _unitOfWork.Products.AddAsync(product);
-                // Cần SaveChanges để lấy được ProductId cho ReceiptDetail
+                await _unitOfWork.InventoryReceipts.AddAsync(receipt);
                 await _unitOfWork.SaveChangesAsync();
-            }
-            else
-            {
-                product.Quantity += dto.QuantityToImport;
-                if (dto.SellingPrice.HasValue && dto.SellingPrice.Value > 0)
-                {
-                    product.Price = dto.SellingPrice.Value;
-                }
-                // Cập nhật các thông tin khác nếu có gửi lên (Tùy chọn)
-                if (!string.IsNullOrEmpty(dto.Description)) product.Description = dto.Description;
-                if (dto.SubCategoryId.HasValue) product.SubCategoryId = dto.SubCategoryId;
-                
-                if (product.Images == null) product.Images = new List<ProductImage>();
 
-                if (!string.IsNullOrEmpty(imageUrl))
+                decimal totalAmount = 0;
+
+                for (int i = 0; i < bulkDto.Items.Count; i++)
                 {
-                    product.ImageUrl = imageUrl;
-                    product.Images.Add(new ProductImage
+                    var item = bulkDto.Items[i];
+                    var product = await _unitOfWork.Products.GetBySKUAsync(item.SKU);
+
+                    bool isNewProduct = false;
+                    string? imageUrl = mainImages.ContainsKey(i) ? mainImages[i] : null;
+                    List<string>? additionalImages = galleryImages.ContainsKey(i) ? galleryImages[i] : null;
+
+                    if (product == null)
                     {
-                        ImageUrl = imageUrl,
-                        IsMain = true,
-                        DisplayOrder = 0
+                        isNewProduct = true;
+                        product = new Product
+                        {
+                            SKU = item.SKU,
+                            Name = item.Name ?? "Sản phẩm mới",
+                            Brand = item.Brand ?? "Unknown",
+                            Description = item.Description ?? "",
+                            Price = item.SellingPrice ?? 0,
+                            Quantity = item.QuantityToImport,
+                            CategoryId = item.CategoryId ?? 1,
+                            SubCategoryId = item.SubCategoryId,
+                            ImageUrl = imageUrl ?? "default_product.png",
+                            CreatedAt = DateTime.Now,
+                            IsActive = true,
+                            CreatedBy = adminName
+                        };
+
+                        if (!string.IsNullOrEmpty(imageUrl))
+                        {
+                            product.Images.Add(new ProductImage { ImageUrl = imageUrl, IsMain = true, DisplayOrder = 0 });
+                        }
+
+                        if (additionalImages != null)
+                        {
+                            int order = 1;
+                            foreach (var img in additionalImages)
+                            {
+                                product.Images.Add(new ProductImage { ImageUrl = img, IsMain = false, DisplayOrder = order++ });
+                            }
+                        }
+
+                        await _unitOfWork.Products.AddAsync(product);
+                        // SaveChanges ở đây để lấy Product.Id cho các bảng liên quan (Detail, History)
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        product.Quantity += item.QuantityToImport;
+                        product.UpdatedAt = DateTime.Now;
+                        product.UpdatedBy = adminName;
+                        await _unitOfWork.Products.UpdateAsync(product);
+                    }
+
+                    var detail = new InventoryReceiptDetail
+                    {
+                        InventoryReceiptId = receipt.Id,
+                        ProductId = product.Id,
+                        Quantity = item.QuantityToImport,
+                        ImportPrice = item.ImportPrice
+                    };
+                    await _unitOfWork.InventoryReceiptDetails.AddAsync(detail);
+                    totalAmount += item.QuantityToImport * item.ImportPrice;
+
+                    // Ghi log lịch sử
+                    await _unitOfWork.StockHistories.AddAsync(new StockHistory
+                    {
+                        ProductId = product.Id,
+                        ChangeQuantity = item.QuantityToImport,
+                        Reason = isNewProduct ? $"Nhập hàng mới (Phiếu #{receipt.Id})" : $"Nhập bổ sung (Phiếu #{receipt.Id})",
+                        CreatedAt = DateTime.Now,
+                        ChangedBy = adminName
                     });
                 }
 
-                if (additionalImages != null && additionalImages.Any())
-                {
-                    int order = product.Images.Count > 0 ? product.Images.Max(i => i.DisplayOrder) + 1 : 1;
-                    foreach (var img in additionalImages)
-                    {
-                        product.Images.Add(new ProductImage
-                        {
-                            ImageUrl = img,
-                            IsMain = false,
-                            DisplayOrder = order++
-                        });
-                    }
-                }
-
-                product.UpdatedAt = DateTime.Now;
-                product.UpdatedBy = adminName;
-                await _unitOfWork.Products.UpdateAsync(product);
+                receipt.TotalAmount = totalAmount;
+                await _unitOfWork.SaveChangesAsync();
+                
+                await _unitOfWork.CommitAsync();
+                return true;
             }
-
-            // 1. Tạo Phiếu Nhập Kho (InventoryReceipt)
-            var receipt = new InventoryReceipt
+            catch (Exception)
             {
-                SupplierId = dto.SupplierId ?? 1, // Giả định ID 1 là NCC Mặc định
-                EmployeeId = adminId,
-                ReceivedDate = DateTime.Now,
-                TotalAmount = dto.QuantityToImport * dto.ImportPrice,
-                Notes = dto.Notes ?? (isNewProduct ? "Nhập hàng khởi tạo sản phẩm mới" : "Nhập hàng bổ sung"),
-                Status = ReceiptStatus.Completed
-            };
-            await _unitOfWork.InventoryReceipts.AddAsync(receipt);
-            await _unitOfWork.SaveChangesAsync(); // Để lấy ReceiptId
-
-            // 2. Tạo Chi Tiết Phiếu Nhập (InventoryReceiptDetail)
-            var detail = new InventoryReceiptDetail
-            {
-                InventoryReceiptId = receipt.Id,
-                ProductId = product.Id,
-                Quantity = dto.QuantityToImport,
-                ImportPrice = dto.ImportPrice
-            };
-            await _unitOfWork.InventoryReceiptDetails.AddAsync(detail);
-
-            // 3. Ghi log lịch sử kho (Để hiển thị nhanh ở Dashboard)
-            var history = new StockHistory
-            {
-                ProductId = product.Id,
-                ChangeQuantity = dto.QuantityToImport,
-                Reason = isNewProduct ? $"Nhập hàng mới qua Phiếu #{receipt.Id}" : $"Nhập bổ sung qua Phiếu #{receipt.Id}",
-                CreatedAt = DateTime.Now,
-                ChangedBy = adminName
-            };
-            await _unitOfWork.StockHistories.AddAsync(history);
-
-            return await _unitOfWork.SaveChangesAsync() > 0;
+                await _unitOfWork.RollbackAsync();
+                throw; // Để Global Middleware bắt lại
+            }
         }
 
-        public async Task<IEnumerable<StockHistoryDTO>> GetStockHistoryAsync(int limit = 50)
+        public async Task<PagedResultDTO<StockHistoryDTO>> GetStockHistoryPagedAsync(int page = 1, int pageSize = 10)
         {
-            var historyList = await _unitOfWork.StockHistories.GetAllAsync();
-            var products = await _unitOfWork.Products.GetAllAsync();
+            var historyQuery = _unitOfWork.StockHistories.GetQueryable();
+            var productQuery = _unitOfWork.Products.GetQueryable();
 
-            return historyList
+            var query = from h in historyQuery
+                        join p in productQuery on h.ProductId equals p.Id
+                        select new StockHistoryDTO
+                        {
+                            Id = h.Id,
+                            ProductName = p.Name,
+                            SKU = p.SKU ?? "N/A",
+                            ChangeQuantity = h.ChangeQuantity,
+                            Reason = h.Reason,
+                            CreatedAt = h.CreatedAt,
+                            ChangedBy = h.ChangedBy
+                        };
+
+            var totalItems = await query.CountAsync();
+            var items = await query
                 .OrderByDescending(h => h.CreatedAt)
-                .Take(limit)
-                .Join(products, h => h.ProductId, p => p.Id, (h, p) => new StockHistoryDTO
-                {
-                    Id = h.Id,
-                    ProductName = p.Name,
-                    SKU = p.SKU ?? "N/A",
-                    ChangeQuantity = h.ChangeQuantity,
-                    Reason = h.Reason,
-                    CreatedAt = h.CreatedAt,
-                    ChangedBy = h.ChangedBy
-                }).ToList();
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResultDTO<StockHistoryDTO>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            };
         }
 
-        public async Task<IEnumerable<InventoryReceiptDTO>> GetAllReceiptsAsync()
+        public async Task<PagedResultDTO<InventoryReceiptDTO>> GetAllReceiptsPagedAsync(int page = 1, int pageSize = 10)
         {
-            var receipts = await _unitOfWork.InventoryReceipts.GetAllAsync();
-            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            var users = await _userManager.Users.ToListAsync();
+            var receiptQuery = _unitOfWork.InventoryReceipts.GetQueryable();
+            var supplierQuery = _unitOfWork.Suppliers.GetQueryable();
+            var userQuery = _userManager.Users.AsQueryable();
 
-            return receipts.OrderByDescending(r => r.ReceivedDate).Select(r => new InventoryReceiptDTO
+            var query = from r in receiptQuery
+                        join s in supplierQuery on r.SupplierId equals s.Id
+                        join u in userQuery on r.EmployeeId equals u.Id into users
+                        from u in users.DefaultIfEmpty()
+                        select new InventoryReceiptDTO
+                        {
+                            Id = r.Id,
+                            SupplierName = s.Name,
+                            EmployeeName = u != null ? u.FullName : "Admin",
+                            ReceivedDate = r.ReceivedDate,
+                            TotalAmount = r.TotalAmount,
+                            Status = r.Status.ToString(),
+                            Notes = r.Notes ?? ""
+                        };
+
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(r => r.ReceivedDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResultDTO<InventoryReceiptDTO>
             {
-                Id = r.Id,
-                SupplierName = suppliers.FirstOrDefault(s => s.Id == r.SupplierId)?.Name ?? "N/A",
-                EmployeeName = users.FirstOrDefault(u => u.Id == r.EmployeeId)?.FullName ?? "Admin",
-                ReceivedDate = r.ReceivedDate,
-                TotalAmount = r.TotalAmount,
-                Status = r.Status.ToString(),
-                Notes = r.Notes ?? ""
-            }).ToList();
+                Items = items,
+                TotalItems = totalItems,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+            };
         }
 
         public async Task<InventoryReceiptDTO?> GetReceiptByIdAsync(int id)
         {
-            // Giả định UnitOfWork/Repository hỗ trợ Include hoặc lấy details
-            var receipts = await _unitOfWork.InventoryReceipts.GetAllAsync();
-            var r = receipts.FirstOrDefault(x => x.Id == id);
+            var receiptQuery = _unitOfWork.InventoryReceipts.GetQueryable();
+            var supplierQuery = _unitOfWork.Suppliers.GetQueryable();
+            var userQuery = _userManager.Users.AsQueryable();
+
+            var r = await (from rc in receiptQuery
+                           join s in supplierQuery on rc.SupplierId equals s.Id
+                           join u in userQuery on rc.EmployeeId equals u.Id into users
+                           from u in users.DefaultIfEmpty()
+                           where rc.Id == id
+                           select new InventoryReceiptDTO
+                           {
+                               Id = rc.Id,
+                               SupplierName = s.Name,
+                               EmployeeName = u != null ? u.FullName : "Admin",
+                               ReceivedDate = rc.ReceivedDate,
+                               TotalAmount = rc.TotalAmount,
+                               Status = rc.Status.ToString(),
+                               Notes = rc.Notes ?? ""
+                           }).FirstOrDefaultAsync();
+
             if (r == null) return null;
 
-            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            var details = await _unitOfWork.InventoryReceiptDetails.GetAllAsync();
-            var products = await _unitOfWork.Products.GetAllAsync();
+            var detailsQuery = _unitOfWork.InventoryReceiptDetails.GetQueryable();
+            var productQuery = _unitOfWork.Products.GetQueryable();
 
-            var users = await _userManager.Users.ToListAsync();
-            var employeeName = users.FirstOrDefault(u => u.Id == r.EmployeeId)?.FullName ?? "Admin";
+            r.Details = await (from d in detailsQuery
+                               join p in productQuery on d.ProductId equals p.Id
+                               where d.InventoryReceiptId == id
+                               select new InventoryReceiptDetailDTO
+                               {
+                                   ProductId = p.Id,
+                                   ProductName = p.Name,
+                                   SKU = p.SKU ?? "N/A",
+                                   ImageUrl = p.ImageUrl,
+                                   Quantity = d.Quantity,
+                                   ImportPrice = d.ImportPrice
+                               }).ToListAsync();
 
-            var receiptDTO = new InventoryReceiptDTO
-            {
-                Id = r.Id,
-                SupplierName = suppliers.FirstOrDefault(s => s.Id == r.SupplierId)?.Name ?? "N/A",
-                EmployeeName = employeeName,
-                ReceivedDate = r.ReceivedDate,
-                TotalAmount = r.TotalAmount,
-                Status = r.Status.ToString(),
-                Notes = r.Notes ?? ""
-            };
-
-            receiptDTO.Details = details.Where(d => d.InventoryReceiptId == r.Id)
-                .Join(products, d => d.ProductId, p => p.Id, (d, p) => new InventoryReceiptDetailDTO
-                {
-                    ProductId = p.Id,
-                    ProductName = p.Name,
-                    SKU = p.SKU ?? "N/A",
-                    ImageUrl = p.ImageUrl,
-                    Quantity = d.Quantity,
-                    ImportPrice = d.ImportPrice
-                }).ToList();
-
-            // Đảm bảo TotalAmount khớp với tổng Details (Fix lỗi hiển thị sai số liệu)
-            receiptDTO.TotalAmount = receiptDTO.Details.Sum(x => x.SubTotal);
-
-            return receiptDTO;
+            r.TotalAmount = r.Details.Sum(x => x.SubTotal);
+            return r;
         }
 
         public async Task<Product?> GetProductBySKUAsync(string sku)
         {
-            var products = await _unitOfWork.Products.GetAllAsync();
-            return products.FirstOrDefault(p => p.SKU == sku);
+            return await _unitOfWork.Products.GetBySKUAsync(sku);
         }
     }
 }

@@ -42,8 +42,6 @@ namespace BookStore.Infrastructure.Persistence
                     IsActive = true,
                     CreatedAt = DateTime.Now
                 };
-
-                // Đặt mật khẩu cho Admin tại đây
                 var result = await userManager.CreateAsync(user, "Admin@123");
 
                 if (result.Succeeded)

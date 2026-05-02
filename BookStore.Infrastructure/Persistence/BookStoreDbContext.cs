@@ -28,6 +28,7 @@ public class BookStoreDbContext : IdentityDbContext<ApplicationUser, IdentityRol
     public DbSet<InventoryReceipt> InventoryReceipts { get; set; }
     public DbSet<InventoryReceiptDetail> InventoryReceiptDetails { get; set; }
     public DbSet<FlashSale> FlashSales { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

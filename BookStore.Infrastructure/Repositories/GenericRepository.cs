@@ -1,4 +1,4 @@
-﻿using BookStore.Domain.Interfaces;
+using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -25,15 +25,12 @@ namespace BookStore.Infrastructure.Repositories
         public async Task AddAsync(T entity)
             => await _context.Set<T>().AddAsync(entity);
 
-        // EF Core không có UpdateAsync thực thụ vì nó chỉ đánh dấu State của Entity.
-        // Ta dùng Task.CompletedTask để khớp với Interface async.
         public Task UpdateAsync(T entity)
         {
             _context.Set<T>().Update(entity);
             return Task.CompletedTask;
         }
 
-        // Với hàm Delete theo ID, ta phải tìm nó trước rồi mới xóa.
         public async Task DeleteAsync(int id)
         {
             var entity = await _context.Set<T>().FindAsync(id);
@@ -42,6 +39,9 @@ namespace BookStore.Infrastructure.Repositories
                 _context.Set<T>().Remove(entity);
             }
         }
+
+        public IQueryable<T> GetQueryable() => _context.Set<T>().AsQueryable();
+
         public async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
             var query = _context.Set<T>().AsNoTracking();

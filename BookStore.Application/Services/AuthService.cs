@@ -4,6 +4,7 @@ using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 using System.Linq;
@@ -14,14 +15,17 @@ namespace BookStore.Application.Services
 {
     public class AuthService
     {
-        // Gọi Interface IAuthService (thực thi ở tầng Infrastructure)
         private readonly IAuthService _identityService;
         private readonly IMailService _mailService;
+        private readonly IFileService _fileService;
+        private readonly IConfiguration _configuration;
 
-        public AuthService(IAuthService identityService, IMailService mailService)
+        public AuthService(IAuthService identityService, IMailService mailService, IFileService fileService, IConfiguration configuration)
         {
             _identityService = identityService;
             _mailService = mailService;
+            _fileService = fileService;
+            _configuration = configuration;
         }
 
         // Logic Đăng ký
@@ -105,33 +109,16 @@ namespace BookStore.Application.Services
 
             user.FullName = dto.FullName;
             user.PhoneNumber = dto.PhoneNumber;
-            user.IsActive = dto.IsActive;
             if (dto.AvatarFile != null)
             {
-                // 1. Quy định thư mục lưu trữ (Chỉ cần 1 biến duy nhất ở đây)
-                var folderName = Path.Combine("wwwroot", "uploads", "avatars");
-                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), folderName);
-
-                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
+                // Xóa ảnh cũ nếu có
                 if (!string.IsNullOrEmpty(user.AvtUrl))
                 {
-                    var oldFilePath = Path.Combine(folderPath, user.AvtUrl);
-                    if (File.Exists(oldFilePath))
-                    {
-                        File.Delete(oldFilePath);
-                    }
+                    _fileService.DeleteFile(user.AvtUrl, "avatars");
                 }
 
-                var newFileName = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(dto.AvatarFile.FileName)}";
-                var newFilePath = Path.Combine(folderPath, newFileName);
-
-                using (var stream = new FileStream(newFilePath, FileMode.Create))
-                {
-                    await dto.AvatarFile.CopyToAsync(stream);
-                }
-
-                user.AvtUrl = newFileName;
+                // Lưu ảnh mới
+                user.AvtUrl = await _fileService.SaveFileAsync(dto.AvatarFile, "avatars");
             }
 
             var result = await _identityService.UpdateUserAsync(user);
@@ -173,8 +160,11 @@ namespace BookStore.Application.Services
             if (user == null) return new AuthResponseDto { IsSuccess = true, Message = "Vui lòng kiểm tra email." };
             var token = await _identityService.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-            string baseUrl = "https://localhost:44326";
-            string resetLink = $"http://localhost:53214/reset-password?token={encodedToken}&email={user.Email}";
+            
+            string baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://localhost:44326";
+            string clientUrl = _configuration["AppSettings:ClientUrl"] ?? "http://localhost:53214";
+            
+            string resetLink = $"{clientUrl}/reset-password?token={encodedToken}&email={user.Email}";
             string subject = "Khôi phục mật khẩu - Lumen BookStore";
 
             string content = $@"

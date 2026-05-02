@@ -15,6 +15,7 @@ import { AddressManagerComponent } from './address-manager/address-manager.compo
 import { AddressFormComponent } from './address-manager/address-form.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
+import { OrderStatusPipe } from './pipes/order-status.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
@@ -25,7 +26,7 @@ import { RouterModule } from '@angular/router';
     AppComponent,
     HomeComponent,
     ProductListingComponent,
-    ProductDetailComponent, // BookDetailComponent -> ProductDetailComponent
+    ProductDetailComponent,
     NotFoundComponent,
     LoginComponent,
     RegisterComponent,
@@ -35,7 +36,8 @@ import { RouterModule } from '@angular/router';
     AddressManagerComponent,
     AddressFormComponent,
     CheckoutComponent,
-    OrderHistoryComponent
+    OrderHistoryComponent,
+    OrderStatusPipe
   ],
   imports: [
     BrowserModule,

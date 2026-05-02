@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace BookStore.Application.DTO
 {
-    public class StockImportDTO
+    public class StockImportItemDTO
     {
         [Required(ErrorMessage = "SKU là bắt buộc")]
         public string SKU { get; set; } = string.Empty;
@@ -16,9 +16,6 @@ namespace BookStore.Application.DTO
         [Range(0, double.MaxValue, ErrorMessage = "Giá nhập không được âm")]
         public decimal ImportPrice { get; set; }
 
-        public int? SupplierId { get; set; } // Nhà cung cấp
-        public string? Notes { get; set; }
-
         // Các trường dành cho trường hợp tạo mới Sản phẩm
         public string? Name { get; set; }
         public string? Brand { get; set; }
@@ -26,8 +23,16 @@ namespace BookStore.Application.DTO
         public decimal? SellingPrice { get; set; } 
         public int? CategoryId { get; set; }
         public int? SubCategoryId { get; set; }
-        public IFormFile? ImageFile { get; set; } // Upload ảnh thay vì URL
-        public List<IFormFile>? AdditionalImageFiles { get; set; } // Thêm nhiều ảnh phụ
+        public IFormFile? ImageFile { get; set; } 
+        public List<IFormFile>? AdditionalImageFiles { get; set; } 
+    }
+
+    public class BulkStockImportDTO
+    {
+        [Required]
+        public int SupplierId { get; set; }
+        public string? Notes { get; set; }
+        public List<StockImportItemDTO> Items { get; set; } = new List<StockImportItemDTO>();
     }
 
     public class StockHistoryDTO

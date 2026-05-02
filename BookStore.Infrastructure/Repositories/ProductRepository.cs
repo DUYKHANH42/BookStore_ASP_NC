@@ -116,6 +116,13 @@ namespace BookStore.Infrastructure.Repositories
         {
             return await GetFilteredPagedAsync(query);
         }
+        
+        public async Task<Product?> GetBySKUAsync(string sku)
+        {
+            return await _context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.SKU == sku);
+        }
 
         private async Task<(IEnumerable<Product> Items, int TotalCount)> GetPagedResultAsync(IQueryable<Product> query, ProductQueryParameters parameters)
         {

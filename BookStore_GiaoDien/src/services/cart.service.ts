@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { Cart, CartItem } from '../app/models/cart.model';
-import { ProductService } from './product.service'; // Đổi từ BookService
+import { ProductService } from './product.service'; 
 
 @Injectable({
   providedIn: 'root'
@@ -51,10 +51,13 @@ export class CartService {
 
   addToCart(productId: number, quantity: number = 1): Observable<any> {
     if (this.authService.isLoggedIn()) {
-      return this.http.post(`${this.apiUrl}/add`, null, {
+      return this.http.post<any>(`${this.apiUrl}/add`, null, {
         params: { productId: productId.toString(), quantity: quantity.toString() }
       }).pipe(
-        tap(() => this.loadCartFromServer())
+        tap(res => {
+          const cart = this.mapServerCart(res);
+          this.cartSubject.next(cart);
+        })
       );
     } else {
       const currentItems = this.getGuestItems();
@@ -71,8 +74,11 @@ export class CartService {
 
   removeFromCart(productId: number): Observable<any> {
     if (this.authService.isLoggedIn()) {
-      return this.http.delete(`${this.apiUrl}/remove/${productId}`).pipe(
-        tap(() => this.loadCartFromServer())
+      return this.http.delete<any>(`${this.apiUrl}/remove/${productId}`).pipe(
+        tap(res => {
+          const cart = this.mapServerCart(res);
+          this.cartSubject.next(cart);
+        })
       );
     } else {
       const currentItems = this.getGuestItems().filter(i => i.productId !== productId);
@@ -85,10 +91,13 @@ export class CartService {
     if (quantity <= 0) return this.removeFromCart(productId);
 
     if (this.authService.isLoggedIn()) {
-      return this.http.put(`${this.apiUrl}/update-quantity`, null, {
+      return this.http.put<any>(`${this.apiUrl}/update-quantity`, null, {
         params: { productId: productId.toString(), quantity: quantity.toString() }
       }).pipe(
-        tap(() => this.loadCartFromServer())
+        tap(res => {
+          const cart = this.mapServerCart(res);
+          this.cartSubject.next(cart);
+        })
       );
     } else {
       const currentItems = this.getGuestItems();

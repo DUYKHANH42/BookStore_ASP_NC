@@ -26,5 +26,14 @@ namespace BookStore.Infrastructure.Repositories
             return await _context.Reviews
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.ProductId == productId);
         }
+
+        public async Task<IEnumerable<Review>> GetAllWithIncludeAsync()
+        {
+            return await _context.Reviews
+                .Include(r => r.Product)
+                .Include(r => r.User)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

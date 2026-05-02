@@ -25,11 +25,10 @@
 
     <div class="import-card p-10">
         <form id="importStockForm" enctype="multipart/form-data" class="space-y-8">
-            <!-- Bước 1: Chứng từ & SKU -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-slate-50 pb-8">
                 <div class="space-y-2">
                     <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Nhà cung cấp</label>
-                    <select name="SupplierId" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none cursor-pointer">
+                    <select name="SupplierId" id="supplierSelect" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none cursor-pointer">
                         @if (suppliers != null)
                         {
                             foreach(var s in suppliers) { <option value="@s.Id">@s.Name</option> }
@@ -37,126 +36,154 @@
                     </select>
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Mã SKU định danh</label>
-                    <div class="sku-input-wrapper">
-                        <input type="text" id="skuInput" name="SKU" required placeholder="Gõ hoặc quét mã SKU..." 
-                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm">
-                        <div class="sku-status-icon"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bước 2: Số lượng & Giá -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Số lượng nhập</label>
-                    <input type="number" name="QuantityToImport" required min="1" value="1"
-                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Giá nhập (₫)</label>
-                    <input type="number" name="ImportPrice" required min="0" placeholder="0"
-                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-black text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Ghi chú phiếu</label>
-                    <input type="text" name="Notes" placeholder="VD: Nhập đợt 1..."
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Ghi chú phiếu nhập</label>
+                    <input type="text" name="Notes" id="receiptNotes" placeholder="Ghi chú chung cho toàn bộ lô hàng..."
                            class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm">
                 </div>
             </div>
 
-            <!-- Bước 3: Thông tin sản phẩm (Expandable) -->
-            <div class="new-product-section">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <span class="material-symbols-outlined">new_releases</span>
-                    </div>
-                    <div>
-                        <h5 class="text-slate-900 font-black text-sm mb-0">Thông tin chi tiết sản phẩm</h5>
-                        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Khởi tạo hoặc cập nhật thông tin bán hàng</p>
+            <!-- Bước 2: Thêm sản phẩm (Form riêng) -->
+            <div id="addProductSection" class="bg-slate-50/50 p-8 rounded-3xl space-y-6 border border-slate-100">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+                            <span class="material-symbols-outlined text-sm">add</span>
+                        </div>
+                        <h4 class="font-black text-slate-900 text-sm uppercase tracking-tight">Thêm sản phẩm vào danh sách</h4>
                     </div>
                 </div>
 
-                <div id="productInfoAlert" class="hidden mb-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-emerald-500">info</span>
-                    <span class="text-sm text-emerald-700 font-bold uppercase tracking-tight">Hệ thống đã nhận diện: <span class="p-name underline"></span></span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mã SKU</label>
+                        <div class="sku-input-wrapper">
+                            <input type="text" id="skuInput" placeholder="Gõ SKU..." 
+                                   class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-700 outline-none focus:border-blue-600 transition-all">
+                            <div class="sku-status-icon"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Số lượng nhập</label>
+                        <input type="number" id="qtyInput" min="1" value="1"
+                               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-700 outline-none focus:border-blue-600 transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Giá nhập (₫)</label>
+                        <input type="number" id="priceInput" min="0" placeholder="0"
+                               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-700 outline-none focus:border-blue-600 transition-all">
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2 md:col-span-2">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tên sản phẩm/Sách</label>
-                        <input type="text" id="nameInput" name="Name" placeholder="Nhập tên đầy đủ..." 
-                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thương hiệu/Tác giả</label>
-                        <input type="text" id="brandInput" name="Brand" placeholder="VD: Nhà xuất bản Trẻ..." 
-                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Giá bán niêm yết (₫)</label>
-                        <input type="number" id="sellingPriceInput" name="SellingPrice" placeholder="0" 
-                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-black text-blue-600 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                <!-- Thông tin chi tiết sản phẩm (Ẩn/Hiện dựa trên SKU) -->
+                <div id="productDetailSection" class="hidden space-y-6 pt-4 border-t border-slate-100">
+                    <div id="productInfoAlert" class="hidden p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                        <span class="text-xs text-emerald-700 font-bold uppercase tracking-tight">Hệ thống đã nhận diện: <span class="p-name underline"></span></span>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Danh mục chính</label>
-                        <select id="categorySelect" name="CategoryId" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none cursor-pointer">
-                            <option value="">-- Chọn danh mục --</option>
-                            @if (categories != null)
-                            {
-                                foreach(var cat in categories) { <option value="@cat.Id">@cat.Name</option> }
-                            }
-                        </select>
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2 md:col-span-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Tên sản phẩm/Sách</label>
+                            <input type="text" id="nameInput" placeholder="Nhập tên..." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Thương hiệu/Tác giả</label>
+                            <input type="text" id="brandInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Giá bán niêm yết (₫)</label>
+                            <input type="number" id="sellingPriceInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-blue-600">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Danh mục chính</label>
+                            <select id="categorySelect" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700">
+                                <option value="">-- Chọn danh mục --</option>
+                                @if (categories != null) { foreach(var cat in categories) { <option value="@cat.Id">@cat.Name</option> } }
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Danh mục con</label>
+                            <select id="subCategorySelect" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700">
+                                <option value="">-- Chọn danh mục con --</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2 md:col-span-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mô tả sản phẩm</label>
+                            <textarea id="descriptionInput" rows="2" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700"></textarea>
+                        </div>
 
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Danh mục con</label>
-                        <select id="subCategorySelect" name="SubCategoryId" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none cursor-pointer">
-                            <option value="">-- Chọn danh mục con --</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-2 md:col-span-2">
-                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Mô tả sản phẩm</label>
-                        <textarea id="descriptionInput" name="Description" rows="3" placeholder="Thông tin chi tiết về nội dung sách, chất lượng..." 
-                                  class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-medium text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all"></textarea>
-                    </div>
-
-                    <div class="space-y-2 md:col-span-2">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2 grid grid-cols-2 gap-6">
                             <div class="space-y-2">
-                                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Hình ảnh đại diện (Ảnh chính)</label>
-                                <div class="trigger-image-input flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 border-dashed hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group">
-                                    <div id="imagePreview" class="w-full h-32 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden border border-white group-hover:scale-105 transition-all">
-                                        <span class="material-symbols-outlined text-slate-200 text-4xl">add_photo_alternate</span>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Ảnh chính</label>
+                                <div class="trigger-image-input flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-dashed border-slate-200 cursor-pointer">
+                                    <div id="imagePreview" class="w-20 h-20 rounded-lg bg-slate-50 flex items-center justify-center overflow-hidden">
+                                        <span class="material-symbols-outlined text-slate-200">add_photo_alternate</span>
                                     </div>
-                                    <input type="file" name="ImageFile" id="imageInput" accept="image/*" class="hidden">
-                                    <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20">Chọn ảnh chính</button>
+                                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                                    <span class="text-[9px] font-black uppercase text-blue-600">Chọn ảnh</span>
                                 </div>
                             </div>
-                            
                             <div class="space-y-2">
-                                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Bộ sưu tập ảnh phụ (Tùy chọn)</label>
-                                <div class="trigger-gallery-input flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 border-dashed hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer group">
-                                    <div class="w-full h-32 rounded-2xl bg-white shadow-lg flex items-center justify-center border border-white group-hover:scale-105 transition-all overflow-y-auto p-2">
-                                        <div id="galleryPreview" class="flex flex-wrap gap-2 justify-center">
-                                            <span class="material-symbols-outlined text-slate-200 text-4xl mt-6">collections</span>
-                                        </div>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Ảnh phụ</label>
+                                <div class="trigger-gallery-input flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-dashed border-slate-200 cursor-pointer">
+                                    <div id="galleryPreview" class="w-full h-20 bg-slate-50 rounded-lg flex flex-wrap gap-1 p-1 overflow-y-auto justify-center items-center">
+                                        <span class="material-symbols-outlined text-slate-200">collections</span>
                                     </div>
-                                    <input type="file" name="AdditionalImageFiles" id="additionalImagesInput" accept="image/*" multiple class="hidden">
-                                    <button type="button" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-600/20">Chọn nhiều ảnh</button>
+                                    <input type="file" id="additionalImagesInput" accept="image/*" multiple class="hidden">
+                                    <span class="text-[9px] font-black uppercase text-emerald-600">Chọn nhiều</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="button" id="btnAddToList" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-95">
+                        Thêm vào danh sách chờ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bước 3: Bảng danh sách chờ nhập -->
+            <div class="space-y-4 pt-4">
+                <div class="flex items-center justify-between">
+                    <h5 class="text-sm font-black text-slate-900 uppercase tracking-widest">Danh sách sản phẩm chờ nhập</h5>
+                    <div class="px-4 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase">
+                        Tổng cộng: <span id="totalItemsCount">0</span> SP
+                    </div>
+                </div>
+                
+                <div class="border border-slate-100 rounded-3xl overflow-hidden shadow-sm bg-white">
+                    <table class="w-full text-xs" id="tempProductTable">
+                        <thead class="bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-4 text-left font-black text-[10px] uppercase text-slate-400">Sản phẩm</th>
+                                <th class="px-6 py-4 text-center font-black text-[10px] uppercase text-slate-400">SL</th>
+                                <th class="px-6 py-4 text-right font-black text-[10px] uppercase text-slate-400">Giá nhập</th>
+                                <th class="px-6 py-4 text-right font-black text-[10px] uppercase text-slate-400">Thành tiền</th>
+                                <th class="px-6 py-4 text-center font-black text-[10px] uppercase text-slate-400 w-20"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            <tr id="emptyRow">
+                                <td colspan="5" class="px-6 py-10 text-center text-slate-300 italic font-medium">Chưa có sản phẩm nào được thêm</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-50/50 hidden" id="tableFooter">
+                            <tr>
+                                <td colspan="3" class="px-6 py-4 text-right font-black uppercase text-[10px] text-slate-400">Tổng tiền lô hàng</td>
+                                <td class="px-6 py-4 text-right font-black text-blue-600 text-lg" id="receiptTotalAmount">0₫</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
 
             <!-- Footer -->
             <div class="pt-10 flex gap-4 border-t border-slate-50">
-                <button type="submit" class="flex-1 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-black transition-premium shadow-2xl shadow-slate-900/20 active:scale-95">
-                    Xác nhận Nhập kho & Lưu thông tin
+                <button type="submit" id="btnSubmitAll" disabled class="flex-1 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:bg-black transition-premium shadow-2xl shadow-slate-900/20 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
+                    Xác nhận nhập kho (<span class="count">0</span> SP)
                 </button>
             </div>
         </form>

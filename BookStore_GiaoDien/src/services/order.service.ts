@@ -15,11 +15,15 @@ export class OrderService {
     return this.http.post(`${this.apiUrl}/checkout`, checkoutData);
   }
 
-  getHistory(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/history`);
+  getHistory(page: number = 1, pageSize: number = 5): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/history?page=${page}&pageSize=${pageSize}`);
   }
 
   getOrderDetails(id: number): Observable<OrderFullDetail> {
     return this.http.get<OrderFullDetail>(`${this.apiUrl}/${id}`);
+  }
+
+  cancelOrder(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/cancel`, {});
   }
 }

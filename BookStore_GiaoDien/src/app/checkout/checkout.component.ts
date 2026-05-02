@@ -76,10 +76,15 @@ export class CheckoutComponent implements OnInit {
     const checkoutDto: CheckoutDto = this.checkoutForm.value;
 
     this.orderService.checkout(checkoutDto).subscribe({
-      next: (res) => {
+      next: (res: any) => {
+        // Nếu là thanh toán Online (ZaloPay) và có URL
+        if (res.paymentUrl) {
+           window.location.href = res.paymentUrl;
+           return;
+        }
+
         this.toastService.show('Đặt hàng thành công!', 'success');
-        this.cartService.clearLocalCart(); // Xóa giỏ hàng local nếu có
-        // Chuyển hướng đến lịch sử đơn hàng hoặc trang thành công
+        this.cartService.clearLocalCart(); 
         this.router.navigate(['/orders']); 
       },
       error: (err) => {

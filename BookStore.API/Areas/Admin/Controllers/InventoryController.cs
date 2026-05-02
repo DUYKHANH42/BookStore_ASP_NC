@@ -8,6 +8,7 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace BookStore.API.Areas.Admin.Controllers
 {
@@ -50,17 +51,16 @@ namespace BookStore.API.Areas.Admin.Controllers
             return File(pdfBytes, "application/pdf", $"Receipt_PNK_{id}.pdf");
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
         {
             // Hiển thị danh sách Phiếu nhập thay vì chỉ Log lẻ
-            var receipts = await _inventoryService.GetAllReceiptsAsync();
+            var receipts = await _inventoryService.GetAllReceiptsPagedAsync(page, pageSize);
             return View(receipts);
         }
 
-        public async Task<IActionResult> History()
+        public async Task<IActionResult> History(int page = 1, int pageSize = 10)
         {
-            // Trang xem lịch sử biến động kho (Log lẻ)
-            var history = await _inventoryService.GetStockHistoryAsync();
+            var history = await _inventoryService.GetStockHistoryPagedAsync(page, pageSize);
             return View(history);
         }
 
@@ -81,39 +81,51 @@ namespace BookStore.API.Areas.Admin.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Import(StockImportDTO dto)
+        public async Task<IActionResult> Import(BulkStockImportDTO dto)
         {
-            if (!ModelState.IsValid) return Json(new { success = false, message = "Dữ liệu không hợp lệ" });
-
-            string? imageUrl = null;
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-
-            if (dto.ImageFile != null)
+            if (!ModelState.IsValid) 
             {
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.ImageFile.FileName;
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await dto.ImageFile.CopyToAsync(fileStream);
-                }
-                imageUrl = uniqueFileName;
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + errors });
             }
 
-            var additionalImageUrls = new System.Collections.Generic.List<string>();
-            if (dto.AdditionalImageFiles != null && dto.AdditionalImageFiles.Any())
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var mainImages = new Dictionary<int, string>();
+            var galleryImages = new Dictionary<int, List<string>>();
+
+            for (int i = 0; i < dto.Items.Count; i++)
             {
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                foreach (var img in dto.AdditionalImageFiles)
+                var item = dto.Items[i];
+                
+                // Xử lý ảnh chính cho từng item
+                if (item.ImageFile != null)
                 {
-                    var imgUrl = Guid.NewGuid().ToString() + "_" + img.FileName;
-                    string filePath = Path.Combine(uploadsFolder, imgUrl);
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + item.ImageFile.FileName;
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
-                        await img.CopyToAsync(fileStream);
+                        await item.ImageFile.CopyToAsync(fileStream);
                     }
-                    additionalImageUrls.Add(imgUrl);
+                    mainImages[i] = uniqueFileName;
+                }
+
+                // Xử lý ảnh phụ cho từng item
+                if (item.AdditionalImageFiles != null && item.AdditionalImageFiles.Any())
+                {
+                    var imgList = new List<string>();
+                    foreach (var img in item.AdditionalImageFiles)
+                    {
+                        var imgUrl = Guid.NewGuid().ToString() + "_" + img.FileName;
+                        string filePath = Path.Combine(uploadsFolder, imgUrl);
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await img.CopyToAsync(fileStream);
+                        }
+                        imgList.Add(imgUrl);
+                    }
+                    galleryImages[i] = imgList;
                 }
             }
 
@@ -122,7 +134,7 @@ namespace BookStore.API.Areas.Admin.Controllers
 
             try
             {
-                var result = await _inventoryService.ImportStockAsync(dto, adminName, adminId, imageUrl, additionalImageUrls);
+                var result = await _inventoryService.ImportStockAsync(dto, adminName, adminId, mainImages, galleryImages);
                 if (result) return Json(new { success = true, message = "Nhập kho thành công!" });
             }
             catch (Exception ex)
@@ -146,6 +158,13 @@ namespace BookStore.API.Areas.Admin.Controllers
             var product = await _inventoryService.GetProductBySKUAsync(sku);
             if (product != null)
             {
+                // Hàm helper để tạo path ảnh chuẩn
+                Func<string, string> getPath = (url) => {
+                    if (string.IsNullOrEmpty(url)) return "";
+                    if (url.StartsWith("http")) return url;
+                    return url;
+                };
+
                 return Json(new { 
                     exists = true, 
                     name = product.Name, 
@@ -153,7 +172,9 @@ namespace BookStore.API.Areas.Admin.Controllers
                     price = product.Price,
                     categoryId = product.CategoryId,
                     subCategoryId = product.SubCategoryId,
-                    description = product.Description
+                    description = product.Description ?? "",
+                    imageUrl = getPath(product.ImageUrl),
+                    images = product.Images.Select(i => getPath(i.ImageUrl)).ToList()
                 });
             }
             return Json(new { exists = false });

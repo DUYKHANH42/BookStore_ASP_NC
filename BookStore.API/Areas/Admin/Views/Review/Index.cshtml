@@ -36,7 +36,7 @@
     </div>
 
     <!-- Reviews Table -->
-    <div class="glass-card rounded-[2.5rem] premium-shadow overflow-hidden bg-white border border-slate-100">
+    <div class="glass-card rounded-[2.5rem] premium-shadow overflow-hidden bg-white border border-slate-100 mb-20">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -44,7 +44,7 @@
                         <th class="px-8 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Khách hàng</th>
                         <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Sản phẩm</th>
                         <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Đánh giá</th>
-                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Nội dung</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Nội dung & Phản hồi</th>
                         <th class="px-6 py-6 text-center text-slate-400 font-black text-[10px] uppercase tracking-widest">Trạng thái</th>
                         <th class="px-8 py-6 text-right text-slate-400 font-black text-[10px] uppercase tracking-widest">Hành động</th>
                     </tr>
@@ -52,45 +52,58 @@
                 <tbody class="divide-y divide-slate-50">
                     @foreach (var r in Model)
                     {
-                        <tr class="hover:bg-slate-50/50 transition-colors group">
-                            <td class="px-8 py-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs uppercase">
+                        <tr class="hover:bg-slate-50/30 transition-all duration-300 group">
+                            <td class="px-8 py-8">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20 flex items-center justify-center font-black text-sm uppercase ring-4 ring-white">
                                         @r.UserName.Substring(0, 1)
                                     </div>
                                     <div>
-                                        <div class="font-bold text-slate-900">@r.UserName</div>
-                                        <div class="text-[10px] text-slate-400 font-bold">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        <div class="font-black text-slate-900 tracking-tight">@r.UserName</div>
+                                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-6">
-                                <div class="font-bold text-slate-600 max-w-[200px] truncate">@r.ProductName</div>
+                            <td class="px-6 py-8">
+                                <div class="font-bold text-slate-700 max-w-[220px] leading-relaxed">@r.ProductName</div>
                             </td>
-                            <td class="px-6 py-6">
-                                <div class="flex gap-0.5 text-amber-400">
-                                    @for(int i=1; i<=5; i++) {
-                                        <span class="material-symbols-outlined text-sm @(i <= r.Rating ? "fill-1" : "")">star</span>
+                            <td class="px-6 py-8">
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex gap-0.5 text-amber-400">
+                                        @for(int i=1; i<=5; i++) {
+                                            <span class="material-symbols-outlined text-sm @(i <= r.Rating ? "fill-1" : "opacity-20")">star</span>
+                                        }
+                                    </div>
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">@r.Rating / 5 sao</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-8">
+                                <div class="max-w-[400px]">
+                                    <p class="text-slate-600 font-medium leading-relaxed italic">"@r.Comment"</p>
+                                    @if(!string.IsNullOrEmpty(r.AdminReply)) {
+                                        <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3 group/reply relative animate-slideIn">
+                                            <div class="w-1.5 h-full absolute left-0 top-0 bg-blue-500 rounded-l-2xl"></div>
+                                            <span class="material-symbols-outlined text-blue-500 text-lg">reply</span>
+                                            <div>
+                                                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Cửa hàng phản hồi</p>
+                                                <p class="text-[11px] text-slate-500 font-bold leading-relaxed">@r.AdminReply</p>
+                                            </div>
+                                        </div>
                                     }
                                 </div>
                             </td>
-                            <td class="px-6 py-6">
-                                <div class="text-slate-600 font-medium line-clamp-2 max-w-[300px]">@r.Comment</div>
-                                @if(!string.IsNullOrEmpty(r.AdminReply)) {
-                                    <div class="mt-2 p-2 bg-blue-50 rounded-xl text-[11px] text-blue-600 font-bold border border-blue-100 italic">
-                                        Admin: @r.AdminReply
-                                    </div>
-                                }
-                            </td>
-                            <td class="px-6 py-6 text-center">
-                                <button onclick="toggleReviewStatus(@r.Id)" class="px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all @(r.IsActive ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")">
+                            <td class="px-6 py-8 text-center">
+                                <button onclick="toggleReviewStatus(@r.Id)" 
+                                        class="px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm
+                                        @(r.IsActive ? "bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100")">
                                     @(r.IsActive ? "Hiển thị" : "Đã ẩn")
                                 </button>
                             </td>
-                            <td class="px-8 py-6 text-right">
+                            <td class="px-8 py-8 text-right">
                                 <div class="flex justify-end gap-2">
-                                    <button onclick="openReplyModal(@r.Id, '@r.UserName', '@(r.AdminReply ?? "")')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white transition-premium">
-                                        <span class="material-symbols-outlined text-lg">reply</span>
+                                    <button onclick="openReplyModal(@r.Id, '@r.UserName', '@(r.AdminReply ?? "")')" 
+                                            class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition-premium shadow-sm active:scale-90">
+                                        <span class="material-symbols-outlined text-xl">chat_bubble</span>
                                     </button>
                                 </div>
                             </td>

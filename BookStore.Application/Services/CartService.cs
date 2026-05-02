@@ -11,10 +11,12 @@ namespace BookStore.Application.Services
     public class CartService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly PricingService _pricingService;
 
-        public CartService(IUnitOfWork unitOfWork)
+        public CartService(IUnitOfWork unitOfWork, PricingService pricingService)
         {
             _unitOfWork = unitOfWork;
+            _pricingService = pricingService;
         }
 
         public async Task<CartDTO> GetCartAsync(string userId)
@@ -66,17 +68,7 @@ namespace BookStore.Application.Services
                 Id = cart.Id,
                 Items = cart.Items.Select(i =>
                 {
-                    // LOGIC TÍNH GIÁ CHUẨN ĐỒNG NHẤT VỚI ORDER SERVICE
-                    decimal effectivePrice = i.Product.Price;
-                    
-                    var now = DateTime.Now;
-                    var activeSale = i.Product.FlashSales?.FirstOrDefault(s => 
-                        s.IsActive && s.StartTime <= now && s.EndTime >= now && s.SoldCount < s.SaleStock);
-
-                    if (activeSale != null && i.Quantity <= (activeSale.SaleStock - activeSale.SoldCount))
-                    {
-                        effectivePrice = activeSale.SalePrice;
-                    }
+                    decimal effectivePrice = _pricingService.GetEffectivePrice(i.Product, i.Quantity);
 
                     return new CartItemDTO
                     {

@@ -61,7 +61,7 @@ namespace BookStore.Application.Services
         // ADMIN: Lấy toàn bộ đánh giá (có phân trang)
         public async Task<IEnumerable<ReviewDTO>> GetAllReviewsAsync()
         {
-            var reviews = await _unitOfWork.Reviews.GetAllAsync();
+            var reviews = await _unitOfWork.Reviews.GetAllWithIncludeAsync();
             return reviews.Select(r => new ReviewDTO
             {
                 Id = r.Id,

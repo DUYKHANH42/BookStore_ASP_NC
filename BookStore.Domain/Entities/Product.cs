@@ -7,15 +7,15 @@ namespace BookStore.Domain.Entities
 {
     public class Product
     {
-        public int Id { get; set; } // Primary key
-        public string Name { get; set; } = string.Empty; // Tên sản phẩm (Thay cho Title)
-        public string Brand { get; set; } = string.Empty; // Thương hiệu/Nhà sản xuất (Thay cho Author)
-        public string Description { get; set; } = string.Empty; // Mô tả sản phẩm
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Brand { get; set; } = string.Empty; 
+        public string Description { get; set; } = string.Empty;
         
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; } // Giá bán
+        public decimal Price { get; set; } 
 
-        public int Quantity { get; set; } // Số lượng tồn kho
+        public int Quantity { get; set; } 
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }

@@ -47,3 +47,14 @@ $(document).on('click', '.btn-update-status', function () {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeOrderModal();
 });
+
+$(document).ready(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('orderId');
+    if (orderId) {
+        // Đợi một chút để đảm bảo trang đã load xong các thành phần cần thiết
+        setTimeout(() => {
+            openOrderModal(orderId);
+        }, 500);
+    }
+});

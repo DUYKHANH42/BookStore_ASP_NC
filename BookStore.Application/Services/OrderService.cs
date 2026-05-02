@@ -5,16 +5,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BookStore.Application.Interfaces;
 
 namespace BookStore.Application.Services
 {
     public class OrderService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ZaloPayService _zaloPayService;
+        private readonly PayOSService _payOSService;
+        private readonly INotificationService _notificationService;
 
-        public OrderService(IUnitOfWork unitOfWork)
+        public OrderService(
+            IUnitOfWork unitOfWork,
+            ZaloPayService zaloPayService,
+            PayOSService payOSService,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _zaloPayService = zaloPayService;
+            _payOSService = payOSService;
+            _notificationService = notificationService;
         }
 
         // HÀM CỦA BẠN: Đặt hàng, trừ tồn kho và ghi log
@@ -121,6 +132,96 @@ namespace BookStore.Application.Services
                 Status = order.Status.ToString(),
                 CreatedAt = order.CreatedAt
             };
+        }
+
+        public async Task<CheckoutResultDTO> ProcessCheckoutAsync(string userId, CheckoutDTO checkoutDto, string userName)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var orderDto = await PlaceOrderAsync(userId, checkoutDto, userName);
+                if (orderDto == null)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return new CheckoutResultDTO { Success = false, Message = "Giỏ hàng trống." };
+                }
+
+                string? paymentUrl = null;
+
+                if (checkoutDto.PaymentMethod == PaymentMethod.ZaloPay)
+                {
+                    paymentUrl = await _zaloPayService.CreateOrderAsync(orderDto.Id, orderDto.TotalPrice, orderDto.OrderNumber);
+                    if (string.IsNullOrEmpty(paymentUrl))
+                    {
+                        await _unitOfWork.RollbackAsync();
+                        return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch ZaloPay." };
+                    }
+                }
+                else if (checkoutDto.PaymentMethod == PaymentMethod.PayOS)
+                {
+                    var paymentResult = await _payOSService.CreatePaymentLinkAsync(orderDto.Id, orderDto.TotalPrice, orderDto.OrderNumber, $"Thanh toan don hang {orderDto.OrderNumber}");
+                    paymentUrl = paymentResult.checkoutUrl;
+                    if (string.IsNullOrEmpty(paymentUrl))
+                    {
+                        await _unitOfWork.RollbackAsync();
+                        return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch PayOS." };
+                    }
+                }
+
+                await _unitOfWork.CommitAsync();
+
+                // Thông báo
+                await _notificationService.SendAdminNotificationAsync(
+                    "Đơn hàng mới", 
+                    $"Có đơn hàng mới {orderDto.OrderNumber} tổng trị giá {orderDto.TotalPrice:N0}đ",
+                    $"/Admin/Order?orderId={orderDto.Id}");
+
+                return new CheckoutResultDTO
+                {
+                    Success = true,
+                    Order = orderDto,
+                    PaymentUrl = paymentUrl
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                throw; // Để Global Exception Middleware bắt lại
+            }
+        }
+
+        public async Task<(bool Success, string Message)> ProcessZaloPayCallbackAsync(string dataStr, string mac)
+        {
+            if (!_zaloPayService.ValidateCallback(dataStr, mac))
+            {
+                return (false, "mac not equal");
+            }
+
+            var dataJson = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(dataStr);
+            string app_trans_id = dataJson.app_trans_id;
+            
+            // Format app_trans_id: yyMMdd_ORD-Number_Guid
+            var parts = app_trans_id.Split('_');
+            if (parts.Length <= 1) return (false, "Invalid trans id");
+
+            string orderNumber = parts[1];
+            var order = (await _unitOfWork.Orders.GetAllAsync()).FirstOrDefault(o => o.OrderNumber == orderNumber);
+            
+            if (order != null && order.Status == OrderStatus.Pending)
+            {
+                order.Status = OrderStatus.Paid;
+                await _unitOfWork.Orders.UpdateAsync(order);
+                await _unitOfWork.SaveChangesAsync();
+
+                // Thông báo cho Admin
+                await _notificationService.SendAdminNotificationAsync(
+                    "Thanh toán ZaloPay",
+                    $"Đơn hàng {order.OrderNumber} đã thanh toán thành công qua ZaloPay.",
+                    $"/admin/order/details/{order.Id}"
+                );
+            }
+
+            return (true, "success");
         }
 
         // HÀM CHO ADMIN: Cập nhật trạng thái đơn hàng và xử lý HOÀN KHO (TÍCH HỢP HOÀN SALE)
@@ -251,18 +352,50 @@ namespace BookStore.Application.Services
             };
         }
 
-        // HÀM CỦA BẠN: Lấy lịch sử đơn hàng của User
-        public async Task<IEnumerable<OrderDTO>> GetUserOrdersAsync(string userId)
+        public async Task<PagedResultDTO<OrderDTO>> GetUserOrdersPagedAsync(string userId, int page = 1, int pageSize = 5)
         {
             var orders = await _unitOfWork.Orders.GetUserOrderHistoryAsync(userId);
-            return orders.Select(o => new OrderDTO
+            var query = orders.OrderByDescending(o => o.CreatedAt);
+
+            var totalItems = query.Count();
+            var items = query.Skip((page - 1) * pageSize)
+                             .Take(pageSize)
+                             .Select(o => new OrderDTO
+                             {
+                                 Id = o.Id,
+                                 OrderNumber = o.OrderNumber,
+                                 TotalPrice = o.TotalPrice,
+                                 Status = o.Status.ToString(),
+                                 CreatedAt = o.CreatedAt
+                             }).ToList();
+
+            return new PagedResultDTO<OrderDTO>
             {
-                Id = o.Id,
-                OrderNumber = o.OrderNumber,
-                TotalPrice = o.TotalPrice,
-                Status = o.Status.ToString(),
-                CreatedAt = o.CreatedAt
-            });
+                Items = items,
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                CurrentPage = page,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<(bool Success, string Message)> CancelOrderForUserAsync(int orderId, string userId)
+        {
+            var order = await _unitOfWork.Orders.GetOrderByIdWithDetailsAsync(orderId);
+            if (order == null) return (false, "Không tìm thấy đơn hàng.");
+            
+            if (order.UserId != userId) return (false, "Bạn không có quyền hủy đơn hàng này.");
+
+            if (order.Status != OrderStatus.Pending)
+            {
+                return (false, "Chỉ có thể hủy đơn hàng khi đang ở trạng thái chờ xác nhận.");
+            }
+
+            // Gọi logic cập nhật trạng thái chung để hoàn kho
+            var result = await UpdateOrderStatusAsync(orderId, "Cancelled", "Customer: " + userId);
+            
+            if (result) return (true, "Đã hủy đơn hàng thành công.");
+            return (false, "Có lỗi xảy ra khi hủy đơn hàng.");
         }
 
 

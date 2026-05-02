@@ -19,5 +19,6 @@ namespace BookStore.Domain.Interfaces
         Task<IEnumerable<Product>> GetRelatedProductsAsync(int productId, int count);
         Task<IEnumerable<Product>> GetNewArrivalsAsync(int count);
         Task<(IEnumerable<Product> Items, int TotalCount)> SearchProductsAsync(ProductQueryParameters query);
+        Task<Product?> GetBySKUAsync(string sku);
     }
 }

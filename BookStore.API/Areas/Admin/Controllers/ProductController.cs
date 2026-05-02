@@ -1,3 +1,4 @@
+#nullable enable
 using BookStore.Application.DTO;
 using BookStore.Application.Services;
 using BookStore.Domain.Common;

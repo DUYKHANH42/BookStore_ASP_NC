@@ -181,7 +181,8 @@ export class AuthService {
     if (!url) return '';
     if (url.startsWith('http')) return url;
     
-    const baseUrl = 'https://localhost:44326';
+    // Sử dụng uploadUrl từ environment
+    const baseUrl = environment.uploadUrl.replace(/\/uploads$/, '');
     
     // Nếu url đã bắt đầu bằng /uploads thì chỉ cần thêm domain
     if (url.startsWith('/uploads') || url.startsWith('uploads')) {
@@ -190,6 +191,6 @@ export class AuthService {
     }
     
     // Mặc định giả định nó nằm trong thư mục uploads/avatars
-    return `${baseUrl}/uploads/avatars/${url}`;
+    return `${environment.uploadUrl}/avatars/${url}`;
   }
 }

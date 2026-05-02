@@ -23,6 +23,7 @@ namespace BookStore.API
                 try
                 {
                     await DbInitializer.SeedAdminUser(services);
+
                 }
                 catch (Exception ex)
                 {
@@ -39,6 +40,7 @@ namespace BookStore.API
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+
                 });
     }
 }

@@ -8,5 +8,6 @@ namespace BookStore.Domain.Interfaces
     {
         Task<IEnumerable<Review>> GetReviewsByProductIdAsync(int productId);
         Task<Review?> GetReviewByUserAndProductAsync(string userId, int productId);
+        Task<IEnumerable<Review>> GetAllWithIncludeAsync();
     }
 }

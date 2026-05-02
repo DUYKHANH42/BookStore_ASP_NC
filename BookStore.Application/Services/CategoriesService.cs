@@ -4,6 +4,7 @@ using BookStore.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,15 +13,31 @@ namespace BookStore.Application.Services
     public class CategoriesService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public CategoriesService(IUnitOfWork unitOfWork)
+        private readonly IMemoryCache _cache;
+        private const string CATEGORY_CACHE_KEY = "categories_all";
+
+        public CategoriesService(IUnitOfWork unitOfWork, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<CategoryDTO>> GetAll()
         {
-            var categories = await _unitOfWork.Categories.GetAllWithSubCategoriesAsync();
-            return categories.Select(b => MapToDto(b));
+            if (!_cache.TryGetValue(CATEGORY_CACHE_KEY, out IEnumerable<CategoryDTO>? cachedCategories))
+            {
+                var categories = await _unitOfWork.Categories.GetAllWithSubCategoriesAsync();
+                cachedCategories = categories.Select(b => MapToDto(b)).ToList();
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetSlidingExpiration(TimeSpan.FromHours(1))
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(24))
+                    .SetPriority(CacheItemPriority.Normal);
+
+                _cache.Set(CATEGORY_CACHE_KEY, cachedCategories, cacheEntryOptions);
+            }
+
+            return cachedCategories ?? Enumerable.Empty<CategoryDTO>();
         }
 
         public async Task<CategoryDTO> GetById(int id)
@@ -36,7 +53,9 @@ namespace BookStore.Application.Services
                 Name = dto.Name
             };
             await _unitOfWork.Categories.AddAsync(category);
-            return await _unitOfWork.SaveChangesAsync() > 0;
+            var success = await _unitOfWork.SaveChangesAsync() > 0;
+            if (success) _cache.Remove(CATEGORY_CACHE_KEY);
+            return success;
         }
 
         public async Task<bool> UpdateAsync(int id, CategoryDTO dto)
@@ -46,7 +65,9 @@ namespace BookStore.Application.Services
 
             category.Name = dto.Name;
             await _unitOfWork.Categories.UpdateAsync(category);
-            return await _unitOfWork.SaveChangesAsync() > 0;
+            var success = await _unitOfWork.SaveChangesAsync() > 0;
+            if (success) _cache.Remove(CATEGORY_CACHE_KEY);
+            return success;
         }
 
         public async Task<string> DeleteAsync(int id)
@@ -64,6 +85,7 @@ namespace BookStore.Application.Services
 
             await _unitOfWork.Categories.DeleteAsync(id);
             var success = await _unitOfWork.SaveChangesAsync() > 0;
+            if (success) _cache.Remove(CATEGORY_CACHE_KEY);
             return success ? "success" : "Lỗi khi xóa dữ liệu";
         }
 

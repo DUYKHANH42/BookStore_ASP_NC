@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
     public IInventoryReceiptDetailRepository InventoryReceiptDetails { get; }
     public ISupplierRepository Suppliers { get; }
     public IFlashSaleRepository FlashSales { get; }
+    public INotificationRepository Notifications { get; }
 
     public UnitOfWork(BookStoreDbContext context)
     {
@@ -37,8 +38,24 @@ public class UnitOfWork : IUnitOfWork
         InventoryReceiptDetails = new InventoryReceiptDetailRepository(_context);
         Suppliers = new SupplierRepository(_context);
         FlashSales = new FlashSaleRepository(_context);
+        Notifications = new NotificationRepository(_context);
     }
 
     public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
+    
+    public async Task BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
+    
+    public async Task CommitAsync()
+    {
+        if (_context.Database.CurrentTransaction != null)
+            await _context.Database.CurrentTransaction.CommitAsync();
+    }
+
+    public async Task RollbackAsync()
+    {
+        if (_context.Database.CurrentTransaction != null)
+            await _context.Database.CurrentTransaction.RollbackAsync();
+    }
+
     public void Dispose() => _context.Dispose();
 }
