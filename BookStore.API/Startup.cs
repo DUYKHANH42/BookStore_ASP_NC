@@ -126,7 +126,9 @@ namespace BookStore.API
                         )
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials());
+                        .AllowCredentials()
+                        .SetIsOriginAllowed(options=> true));
+                        
             });
 
             services.AddSwaggerGen(c =>

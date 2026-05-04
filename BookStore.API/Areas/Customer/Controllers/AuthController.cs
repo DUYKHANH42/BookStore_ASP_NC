@@ -39,7 +39,9 @@ namespace BookStore.API.Areas.Customer.Controllers
         [HttpGet("login")]
         public IActionResult Login()
         {
-            return Redirect("http://localhost:53214/login");
+            //return Redirect("http://localhost:53214/login");
+            return Redirect("https://book-store-giao-dien.vercel.app/login");
+
         }
 
         [HttpPost("login")]
