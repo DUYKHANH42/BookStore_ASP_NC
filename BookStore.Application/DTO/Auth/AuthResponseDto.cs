@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +9,7 @@ namespace BookStore.Application.DTO.Auth
     public class AuthResponseDto
     {
         public bool IsSuccess { get; set; }
+        public string? UserId { get; set; }
         public string? Message { get; set; }
         public string? Token { get; set; }
         public DateTime? Expiration { get; set; }

@@ -16,8 +16,8 @@
             <img *ngIf="avatarPreview" [src]="avatarPreview" class="w-full h-full object-cover" />
 
             <!-- Server Image -->
-            <img *ngIf="!avatarPreview && userInfo?.avtUrl"
-              [src]="'https://localhost:44326/uploads/' + userInfo?.avtUrl" class="w-full h-full object-cover" />
+            <img *ngIf="!avatarPreview && userInfo?.avtUrl" [src]="authService.getFullImageUrl(userInfo?.avtUrl)"
+              class="w-full h-full object-cover" />
 
             <!-- Upload Overlay -->
             <label for="avatarInput"
@@ -76,8 +76,9 @@
               [class.text-rose-400]="activeTab !== 'favorites'" [class.hover:bg-rose-50]="activeTab !== 'favorites'"
               class="w-full text-left px-6 py-4 rounded-[2rem] font-bold transition-premium flex items-center gap-4 group">
               <span class="material-symbols-outlined group-hover:animate-pulse-hot"
-                [class.text-rose-500]="activeTab === 'favorites'">favorite</span>
-              Sách yêu thích
+                [class.text-red-600]="activeTab === 'favorites'">favorite</span>
+              Sản phẩm yêu thích
+
             </button>
 
             <button (click)="switchTab('settings')" [class.bg-blue-50]="activeTab === 'settings'"
@@ -153,21 +154,25 @@
 
         <!-- Orders Tab -->
         <div *ngIf="activeTab === 'orders'" class="animate-fadeIn">
-          <div *ngIf="orders.length === 0" class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 text-center py-20">
+          <div *ngIf="orders.length === 0"
+            class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 text-center py-20">
             <div class="w-32 h-32 bg-slate-50 rounded-full mx-auto flex items-center justify-center mb-8">
               <span class="material-symbols-outlined text-6xl text-slate-300">receipt_long</span>
             </div>
             <h3 class="text-2xl font-black mb-4 text-slate-800">Chưa có đơn hàng nào</h3>
             <p class="text-slate-400 font-medium max-w-sm mx-auto mb-8">Bạn chưa thực hiện giao dịch nào. Hãy khám phá
-              những cuốn sách thú vị ngay hôm nay!</p>
-            <button routerLink="/" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black hover:scale-105 transition-premium shadow-xl text-sm">Đi mua sắm</button>
+              những sản phẩm thú vị ngay hôm nay!</p>
+            <button routerLink="/"
+              class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black hover:scale-105 transition-premium shadow-xl text-sm">Đi
+              mua sắm</button>
           </div>
 
           <div *ngIf="orders.length > 0" class="space-y-4">
-            <div *ngFor="let order of orders" (click)="viewDetail(order.id)" 
-                 class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-blue-200 transition-premium cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div *ngFor="let order of orders" (click)="viewDetail(order.id)"
+              class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-blue-200 transition-premium cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div class="flex items-center gap-6">
-                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                <div
+                  class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
                   <span class="material-symbols-outlined">receipt_long</span>
                 </div>
                 <div>
@@ -181,24 +186,29 @@
                   <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Tổng cộng</p>
                   <p class="font-black text-slate-900">{{order.totalPrice | currency:'VND':'symbol':'1.0-0'}}</p>
                 </div>
-                <span [class]="'px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ' + getStatusClass(order.status)">
+                <span
+                  [class]="'px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ' + getStatusClass(order.status)">
                   {{order.status}}
                 </span>
-                <span class="material-symbols-outlined text-slate-300 group-hover:text-blue-600 transition-colors">chevron_right</span>
+                <span
+                  class="material-symbols-outlined text-slate-300 group-hover:text-blue-600 transition-colors">chevron_right</span>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Integrated Order Detail Modal -->
-        <div *ngIf="showOrderDetail && selectedOrder" class="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
+        <div *ngIf="showOrderDetail && selectedOrder"
+          class="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
           <div class="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <header class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
               <div>
                 <h2 class="text-2xl font-black text-slate-900">Chi tiết đơn hàng</h2>
-                <p class="text-xs text-slate-500 font-black uppercase tracking-widest">Mã đơn: #{{selectedOrder.orderNumber}}</p>
+                <p class="text-xs text-slate-500 font-black uppercase tracking-widest">Mã đơn:
+                  #{{selectedOrder.orderNumber}}</p>
               </div>
-              <button (click)="closeOrderDetail()" class="w-10 h-10 bg-white shadow-sm border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-95 transition-all">
+              <button (click)="closeOrderDetail()"
+                class="w-10 h-10 bg-white shadow-sm border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 active:scale-95 transition-all">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </header>
@@ -212,20 +222,23 @@
                     <p class="text-sm text-slate-500 font-bold">{{selectedOrder.shippingPhone}}</p>
                   </div>
                   <div>
-                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Địa chỉ giao hàng</h4>
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Địa chỉ giao hàng
+                    </h4>
                     <p class="text-sm text-slate-600 leading-relaxed font-bold">{{selectedOrder.shippingAddress}}</p>
                   </div>
                 </div>
                 <div class="space-y-6">
                   <div>
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Trạng thái</h4>
-                    <span [class]="'px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ' + getStatusClass(selectedOrder.status)">
+                    <span
+                      [class]="'px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ' + getStatusClass(selectedOrder.status)">
                       {{selectedOrder.status}}
                     </span>
                   </div>
                   <div>
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Thời gian đặt</h4>
-                    <p class="text-sm text-slate-600 font-black">{{selectedOrder.createdAt | date:'dd/MM/yyyy HH:mm'}}</p>
+                    <p class="text-sm text-slate-600 font-black">{{selectedOrder.createdAt | date:'dd/MM/yyyy HH:mm'}}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -233,17 +246,22 @@
               <div>
                 <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Sản phẩm đã mua</h4>
                 <div class="space-y-4">
-                  <div *ngFor="let item of selectedOrder.items" class="flex items-center gap-6 p-4 rounded-3xl bg-slate-50/50 border border-slate-50">
+                  <div *ngFor="let item of selectedOrder.items"
+                    class="flex items-center gap-6 p-4 rounded-3xl bg-slate-50/50 border border-slate-50">
                     <div class="w-16 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
-                      <img [src]="item.imageUrl.startsWith('http') ? item.imageUrl : 'https://localhost:44326/uploads/' + item.imageUrl" class="w-full h-full object-cover">
+                      <img
+                        [src]="item.imageUrl.startsWith('http') ? item.imageUrl : 'https://localhost:44326/uploads/' + item.imageUrl"
+                        class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0">
-                      <h5 class="font-black text-slate-800 line-clamp-1 truncate">{{item.bookTitle}}</h5>
+                      <h5 class="font-black text-slate-800 line-clamp-1 truncate">{{item.productName}}</h5>
                       <p class="text-xs text-slate-400 font-bold">Số lượng: {{item.quantity}}</p>
                     </div>
                     <div class="text-right">
-                      <p class="text-sm font-black text-slate-900">{{item.subTotal | currency:'VND':'symbol':'1.0-0'}}</p>
-                      <p class="text-[10px] text-slate-400 font-bold">{{item.price | currency:'VND':'symbol':'1.0-0'}} / cuốn</p>
+                      <p class="text-sm font-black text-slate-900">{{item.subTotal | currency:'VND':'symbol':'1.0-0'}}
+                      </p>
+                      <p class="text-[10px] text-slate-400 font-bold">{{item.price | currency:'VND':'symbol':'1.0-0'}} /
+                        sản phẩm</p>
                     </div>
                   </div>
                 </div>
@@ -253,7 +271,8 @@
             <footer class="p-8 border-t border-slate-50 bg-slate-50/30">
               <div class="flex justify-between items-center">
                 <span class="text-lg font-black text-slate-800">Tổng thanh toán</span>
-                <span class="text-3xl font-black text-blue-600 tracking-tighter">{{selectedOrder.totalPrice | currency:'VND':'symbol':'1.0-0'}}</span>
+                <span class="text-3xl font-black text-blue-600 tracking-tighter">{{selectedOrder.totalPrice |
+                  currency:'VND':'symbol':'1.0-0'}}</span>
               </div>
             </footer>
           </div>
@@ -351,7 +370,8 @@
                 <span class="material-symbols-outlined text-blue-600">location_on</span>
                 Sổ địa chỉ nhận hàng
               </h4>
-              <button (click)="openAddressForm()" class="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">
+              <button (click)="openAddressForm()"
+                class="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">
                 <span class="material-symbols-outlined text-lg">add</span>
                 Thêm địa chỉ mới
               </button>
@@ -361,28 +381,34 @@
               <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
 
-            <div *ngIf="!isLoadingAddresses && addresses.length === 0" class="bg-slate-50 rounded-3xl p-10 text-center border border-dashed border-slate-200">
+            <div *ngIf="!isLoadingAddresses && addresses.length === 0"
+              class="bg-slate-50 rounded-3xl p-10 text-center border border-dashed border-slate-200">
               <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">location_off</span>
               <p class="text-slate-500 font-medium">Bạn chưa lưu địa chỉ giao hàng nào.</p>
             </div>
 
             <div class="space-y-4">
-              <div *ngFor="let addr of addresses" class="p-6 rounded-[2rem] border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 transition-all group">
+              <div *ngFor="let addr of addresses"
+                class="p-6 rounded-[2rem] border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 transition-all group">
                 <div class="flex justify-between items-start">
                   <div class="space-y-2">
                     <div class="flex items-center gap-3">
                       <span class="text-base font-black text-slate-800">{{addr.receiverName}}</span>
                       <div class="w-[1px] h-3 bg-slate-300"></div>
                       <span class="text-slate-500 font-bold text-sm">{{addr.phoneNumber}}</span>
-                      <span *ngIf="addr.isDefault" class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Mặc định</span>
+                      <span *ngIf="addr.isDefault"
+                        class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Mặc
+                        định</span>
                     </div>
                     <p class="text-sm text-slate-500 font-medium pr-10 line-clamp-2">{{addr.addressLine}}</p>
                   </div>
                   <div class="flex items-center gap-3">
-                    <button (click)="openAddressForm(addr)" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                    <button (click)="openAddressForm(addr)"
+                      class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
                       <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
-                    <button *ngIf="!addr.isDefault" (click)="deleteAddress(addr.id)" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
+                    <button *ngIf="!addr.isDefault" (click)="deleteAddress(addr.id)"
+                      class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
                       <span class="material-symbols-outlined text-lg">delete</span>
                     </button>
                   </div>
@@ -452,9 +478,11 @@
 
             <!-- Nút Lưu Mật Khẩu -->
             <div class="pt-6 border-slate-100 flex items-center justify-end">
-              <button (click)="changePassword()"
-                class="bg-rose-500 text-white px-8 py-4 rounded-2xl font-black hover:scale-105 hover:bg-rose-600 transition-premium shadow-xl text-sm flex items-center gap-2">
-                Đổi mật khẩu <span class="material-symbols-outlined text-base">vpn_key</span>
+              <button (click)="changePassword()" [disabled]="isLoading"
+                class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
+                <span *ngIf="isLoading"
+                  class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                {{ isLoading ? 'Đang cập nhật...' : 'Đổi mật khẩu' }}
               </button>
             </div>
           </div>
@@ -487,7 +515,7 @@
                 <span class="material-symbols-outlined text-4xl text-rose-300">heart_broken</span>
               </div>
               <h3 class="text-xl font-black text-slate-800 mb-2">Danh sách trống</h3>
-              <p class="text-slate-400 mb-8 max-w-xs text-sm">Bạn chưa thả tim cuốn sách nào. Thêm ngay vào bộ sưu tập!
+              <p class="text-slate-400 mb-8 max-w-xs text-sm">Bạn chưa thả tim sản phẩm nào. Thêm ngay vào bộ sưu tập!
               </p>
               <a routerLink="/"
                 class="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all">Khám
@@ -499,23 +527,23 @@
               <div *ngFor="let item of favorites"
                 class="group bg-white p-3 rounded-[2rem] shadow-sm hover:shadow-xl transition-premium border border-slate-100 flex gap-4 items-center relative pr-4">
 
-                <div [routerLink]="['/book', item.bookId]"
+                <div [routerLink]="['/product', item.productId]"
                   class="w-20 h-[100px] flex-shrink-0 rounded-[1.5rem] overflow-hidden bg-slate-50 cursor-pointer shadow-inner">
                   <img [src]="'https://localhost:44326/uploads/' + item.imageUrl"
                     class="w-full h-full object-cover transition-premium group-hover:scale-110" />
                 </div>
 
                 <div class="flex-1 min-w-0">
-                  <h3 [routerLink]="['/book', item.bookId]"
+                  <h3 [routerLink]="['/product', item.productId]"
                     class="font-black text-sm mb-1 leading-tight tracking-tight line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer text-slate-800">
-                    {{item.bookTitle}}</h3>
+                    {{item.productName}}</h3>
                   <span class="text-sm font-black text-rose-600 block mt-2">{{item.price |
                     currency:'VND':'symbol':'1.0-0'}}</span>
                 </div>
 
                 <!-- Remove Button -->
-                <button (click)="removeFavorite(item.bookId)"
-                  class="absolute right-4 w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90">
+                <button (click)="removeFavorite(item.productId)"
+                  class="absolute right-4 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-90">
                   <span class="material-symbols-outlined text-lg"
                     style="font-variation-settings: 'FILL' 1;">favorite</span>
                 </button>
@@ -530,17 +558,17 @@
 </div>
 
 <!-- Modals (Address Form) - Truly Fixed at Root Level -->
-<div *ngIf="showAddressForm" class="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-6 bg-slate-900/40 backdrop-blur-md animate-fadeIn">
-  <div class="bg-white w-full max-w-xl rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-10 relative max-h-[92vh] overflow-y-auto custom-scrollbar overflow-x-hidden">
-    <button (click)="showAddressForm = false" class="absolute top-8 right-8 w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all z-10">
+<div *ngIf="showAddressForm"
+  class="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-6 bg-slate-900/40 backdrop-blur-md animate-fadeIn">
+  <div
+    class="bg-white w-full max-w-xl rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-10 relative max-h-[92vh] overflow-y-auto custom-scrollbar overflow-x-hidden">
+    <button (click)="showAddressForm = false"
+      class="absolute top-8 right-8 w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all z-10">
       <span class="material-symbols-outlined">close</span>
     </button>
-    
-    <app-address-form 
-      [address]="selectedAddress" 
-      [defaultName]="userInfo?.fullName || ''"
-      [defaultPhone]="userInfo?.phoneNumber || ''"
-      (submitted)="onAddressSubmitted()" 
+
+    <app-address-form [address]="selectedAddress" [defaultName]="userInfo?.fullName || ''"
+      [defaultPhone]="userInfo?.phoneNumber || ''" (submitted)="onAddressSubmitted()"
       (cancelled)="showAddressForm = false">
     </app-address-form>
   </div>

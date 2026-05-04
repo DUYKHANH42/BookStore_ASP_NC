@@ -1,7 +1,8 @@
-﻿using BookStore.Domain.Entities;
+using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace BookStore.Infrastructure.Repositories
         {
             return await _context.Orders
                 .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Book) // Lấy thông tin sách của từng item
+                    .ThenInclude(od => od.Product) // Lấy thông tin sách của từng item
                 .Include(o => o.User) // Lấy thông tin người đặt
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
@@ -50,5 +51,21 @@ namespace BookStore.Infrastructure.Repositories
             }
         }
 
+        // 5. Lấy đơn hàng theo khoảng thời gian
+        public async Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.Orders
+                .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Include(o => o.OrderDetails)
+                .ToListAsync();
+        }
+
+        public async Task<bool> HasPurchasedProductAsync(string userId, int productId)
+        {
+            return await _context.Orders
+                .AnyAsync(o => o.UserId == userId 
+                            && o.Status != OrderStatus.Cancelled 
+                            && o.OrderDetails.Any(od => od.ProductId == productId));
+        }
     }
 }

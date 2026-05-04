@@ -1,0 +1,116 @@
+@model PagedResultDTO<StockHistoryDTO>
+@{
+    ViewData["Title"] = "Nhật ký biến động kho";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/inventory-management.css" />
+}
+
+<div class="inventory-container space-y-8 animate-fadeIn">
+    <!-- Header -->
+    <div class="flex items-center gap-6">
+        <a href="@Url.Action("Index")" class="w-14 h-14 flex items-center justify-center rounded-[1.25rem] bg-white border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-premium shadow-sm group">
+            <span class="material-symbols-outlined text-2xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Nhật ký kho hàng</h2>
+            <p class="text-slate-500 font-medium text-sm">Theo dõi chi tiết biến động tồn kho theo thời gian thực.</p>
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white border border-slate-100 premium-shadow">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="ps-10 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest w-[180px]">Thời gian</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Sản phẩm</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest w-[120px]">SKU</th>
+                        <th class="px-6 py-6 text-center text-slate-400 font-black text-[10px] uppercase tracking-widest w-[120px]">Biến động</th>
+                        <th class="px-6 py-6 text-left text-slate-400 font-black text-[10px] uppercase tracking-widest">Lý do / Chứng từ</th>
+                        <th class="pe-10 py-6 text-right text-slate-400 font-black text-[10px] uppercase tracking-widest w-[180px]">Người thực hiện</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var h in Model.Items)
+                    {
+                        <tr class="group hover:bg-slate-50/30 transition-all duration-300">
+                            <td class="ps-10 py-7">
+                                <div class="flex flex-col">
+                                    <span class="text-slate-900 font-black tracking-tight">@h.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">@h.CreatedAt.ToString("HH:mm:ss")</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-7">
+                                <div class="font-bold text-slate-800 leading-tight max-w-[300px]">@h.ProductName</div>
+                            </td>
+                            <td class="px-6 py-7">
+                                <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] tracking-widest border border-blue-100/50">@h.SKU</span>
+                            </td>
+                            <td class="px-6 py-7 text-center">
+                                <div class="flex justify-center">
+                                    <span class="min-w-[50px] px-3 py-1.5 rounded-xl font-black text-xs shadow-sm
+                                        @(h.ChangeQuantity > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100")">
+                                        @(h.ChangeQuantity > 0 ? "+" : "")@h.ChangeQuantity
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-7">
+                                <div class="text-slate-500 font-medium italic text-xs max-w-[400px] leading-relaxed">
+                                    @h.Reason
+                                </div>
+                            </td>
+                            <td class="pe-10 py-7 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-slate-900 font-black">@h.ChangedBy</span>
+                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Hệ thống</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-8 py-6 border-t border-slate-50 bg-slate-50/30 flex items-center justify-between">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Hiển thị <span class="text-slate-900">@Model.Items.Count()</span> trên <span class="text-slate-900">@Model.TotalItems</span> bản ghi
+            </p>
+            
+            <div class="flex items-center gap-2">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="@Url.Action("History", new { page = Model.CurrentPage - 1 })" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 transition-premium shadow-sm">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </a>
+                }
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                    {
+                        <a href="@Url.Action("History", new { page = i })" 
+                           class="w-10 h-10 flex items-center justify-center rounded-xl font-black text-xs transition-premium shadow-sm
+                           @(i == Model.CurrentPage ? "bg-blue-600 text-white shadow-blue-500/20" : "bg-white border border-slate-100 text-slate-400 hover:border-blue-600 hover:text-blue-600")">
+                            @i
+                        </a>
+                    }
+                    else if (i == 2 || i == Model.TotalPages - 1)
+                    {
+                        <span class="px-1 text-slate-300">...</span>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="@Url.Action("History", new { page = Model.CurrentPage + 1 })" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 transition-premium shadow-sm">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

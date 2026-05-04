@@ -1,0 +1,112 @@
+@model BookStore.Application.DTO.OrderFullDetailDTO
+
+<div class="modal-header border-0 px-5 pt-5 pb-0">
+    <div>
+        <h4 class="fw-black text-slate-800 mb-0">Đơn hàng #@Model.OrderNumber</h4>
+        <p class="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Chi tiết giao dịch & Vận hành</p>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body px-5 py-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Cột trái: Thông tin khách hàng -->
+        <div class="bg-slate-50/50 rounded-[24px] p-5 border border-slate-100">
+            <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Thông tin người nhận</h6>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-blue-500 text-lg">person</span>
+                    <span class="text-slate-700 fw-bold">@Model.ShippingName</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-blue-500 text-lg">call</span>
+                    <span class="text-slate-600 fw-medium">@Model.ShippingPhone</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-blue-500 text-lg">location_on</span>
+                    <span class="text-slate-500 text-sm leading-relaxed">@Model.ShippingAddress</span>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-slate-100">
+                <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Phương thức thanh toán</h6>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg font-black text-[10px] uppercase">
+                    <span class="material-symbols-outlined text-sm">payments</span> @Model.PaymentMethod
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Trạng thái & Vận hành -->
+        <div class="bg-slate-50/50 rounded-[24px] p-5 border border-slate-100">
+            <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Trạng thái hiện tại</h6>
+            <div class="mb-6">
+                <span class="status-badge status-@Model.Status.ToLower() px-4 py-2 text-xs">
+                    @Model.Status
+                </span>
+            </div>
+
+            <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Cập nhật đơn hàng</h6>
+            <div class="flex flex-col gap-2">
+                @if (Model.Status != "Completed" && Model.Status != "Cancelled")
+                {
+                    <button class="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-xs transition-premium hover:bg-blue-700 btn-update-status" data-id="@Model.Id" data-status="Shipping">
+                        <span class="material-symbols-outlined text-sm">local_shipping</span> Bắt đầu giao hàng
+                    </button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs transition-premium hover:bg-emerald-700 btn-update-status" data-id="@Model.Id" data-status="Completed">
+                            <span class="material-symbols-outlined text-sm">check_circle</span> Hoàn thành
+                        </button>
+                        <button class="flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 font-bold text-xs transition-premium hover:bg-rose-600 hover:text-white btn-update-status" data-id="@Model.Id" data-status="Cancelled">
+                            <span class="material-symbols-outlined text-sm">cancel</span> Hủy đơn
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="flex items-center justify-center gap-2 p-4 bg-white border border-dashed border-slate-200 rounded-xl text-slate-400 italic text-xs">
+                        <span class="material-symbols-outlined text-sm">lock</span> Giao dịch đã đóng
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <div class="bg-white rounded-[24px] border border-slate-100 overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-bottom border-slate-50 bg-slate-50/30">
+            <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0">Sản phẩm đã mua</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-borderless align-middle mb-0">
+                <thead>
+                    <tr class="text-slate-400 font-bold" style="font-size: 10px; text-transform: uppercase;">
+                        <th class="ps-5">Sản phẩm</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end pe-5">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr class="border-top border-slate-50">
+                            <td class="ps-5 py-3">
+                                <div class="flex items-center gap-3">
+                                    <img src="/uploads/@item.ImageUrl" class="rounded-xl object-cover" style="width: 48px; height: 48px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" />
+                                    <div class="fw-bold text-slate-700" style="font-size: 13px;">@item.ProductName</div>
+                                </div>
+                            </td>
+                            <td class="text-center fw-medium text-slate-600">x@(item.Quantity)</td>
+                            <td class="text-end text-slate-500 font-bold" style="font-size: 12px;">@item.Price.ToString("N0")</td>
+                            <td class="text-end pe-5 fw-black text-slate-800" style="font-size: 13px;">@item.SubTotal.ToString("N0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="px-5 py-4 bg-slate-900 flex justify-between items-center">
+            <span class="text-slate-400 font-black text-[10px] uppercase tracking-widest">Tổng cộng thanh toán</span>
+            <span class="text-white fw-black fs-5">@Model.TotalPrice.ToString("N0")đ</span>
+        </div>
+    </div>
+</div>

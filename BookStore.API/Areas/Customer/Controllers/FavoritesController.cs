@@ -1,4 +1,4 @@
-﻿using BookStore.Application.Services;
+using BookStore.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -12,14 +12,13 @@ public class FavoritesController : ControllerBase
     private readonly FavoriteService _service;
     public FavoritesController(FavoriteService service) => _service = service;
 
-    [HttpPost("toggle/{bookId}")]
-    public async Task<IActionResult> Toggle(int bookId)
+    [HttpPost("toggle/{productId}")]
+    public async Task<IActionResult> Toggle(int productId)
     {
-        // Lấy UserId từ Token JWT đã đăng nhập
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
-        var result = await _service.ToggleFavoriteAsync(userId, bookId);
+        var result = await _service.ToggleFavoriteAsync(userId, productId);
         return Ok(new { isFavorited = result });
     }
 

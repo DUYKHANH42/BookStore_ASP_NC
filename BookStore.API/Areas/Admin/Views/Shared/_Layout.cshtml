@@ -1,13 +1,413 @@
-﻿<!DOCTYPE html>
-
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width" />
-    <title>@ViewBag.Title</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lumen Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dark Mode Instant Apply (Prevent Flash)
+        (function() {
+            const theme = localStorage.getItem('admin-dark-mode');
+            if (theme === 'enabled') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: rgba(255, 255, 255, 0.9);
+            --bg-header: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.05);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        html.dark {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: rgba(15, 23, 42, 0.9);
+            --bg-header: rgba(15, 23, 42, 0.8);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s ease;
+        }
+        .glass-sidebar { 
+            background: var(--bg-sidebar); 
+            backdrop-filter: blur(16px); 
+            border-right: 1px solid var(--border-color); 
+        }
+        .glass-header { 
+            background: var(--bg-header); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 1px solid var(--border-color); 
+        }
+        .glass-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Dark mode overrides for common components */
+        html.dark .bg-white { background-color: var(--bg-card) !important; }
+        html.dark .bg-slate-50, html.dark .bg-slate-100 { background-color: #334155 !important; }
+        html.dark .border-slate-100, html.dark .border-slate-200 { border-color: var(--border-color) !important; }
+        html.dark .text-slate-900 { color: var(--text-main) !important; }
+        html.dark .text-slate-600, html.dark .text-slate-500 { color: var(--text-muted) !important; }
+        html.dark input, html.dark select, html.dark textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+
+        .nav-link-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+            color: white !important;
+        }
+        .nav-link-active span { color: white !important; }
+        
+        .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .transition-premium {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <div>
-        @RenderBody()
+<body class="bg-[#f8fafc] text-slate-900 overflow-x-hidden">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-80 glass-sidebar text-slate-900 flex-shrink-0 flex flex-col sticky top-0 h-screen z-[100]">
+            <div class="p-10 flex flex-col items-center">
+                <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="block group">
+                    <img src="/uploads/imgs/logo_sach.png" alt="Lumen Logo" 
+                         class="h-28 w-auto object-contain transition-transform group-hover:scale-105" />
+                </a>
+            </div>
+            
+            <nav class="flex-1 px-6 space-y-1 overflow-y-auto hide-scrollbar">
+                <div class="pb-4">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Điều khiển chính</p>
+                    <a asp-area="Admin" asp-controller="Home" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "text-white" : "text-slate-400")">grid_view</span> Dashboard
+                    </a>
+                </div>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Kho hàng & Sản phẩm</p>
+                    <a asp-area="Admin" asp-controller="Product" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "text-white" : "text-slate-400")">inventory_2</span> Quản lý sản phẩm
+                    </a>
+                    <a asp-area="Admin" asp-controller="Category" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "text-white" : "text-slate-400")">account_tree</span> Cây danh mục
+                    </a>
+                    <a asp-area="Admin" asp-controller="Inventory" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "text-white" : "text-slate-400")">inventory</span> Quản lý tồn kho
+                    </a>
+                </div>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Vận hành kinh doanh</p>
+                    <a asp-area="Admin" asp-controller="Order" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <div class="relative">
+                            <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "text-white" : "text-slate-400")">receipt_long</span>
+                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        Quản lý đơn hàng
+                    </a>
+                    <a asp-area="Admin" asp-controller="Customer" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "text-white" : "text-slate-400")">group</span> Khách hàng
+                    </a>
+                    <a asp-area="Admin" asp-controller="Review" asp-action="Index" 
+                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "text-white" : "text-slate-400")">chat</span> Quản lý đánh giá
+                    </a>
+                </div>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Hệ thống</p>
+                    <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
+                        <span class="material-symbols-outlined text-slate-400">analytics</span> Báo cáo chi tiết
+                    </a>
+                    <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
+                        <span class="material-symbols-outlined text-slate-400">tune</span> Cấu hình App
+                    </a>
+                </div>
+            </nav>
+
+            <div class="p-8">
+                <a href="/" class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
+                    <span class="material-symbols-outlined text-lg group-hover:translate-x-[-4px] transition-premium">logout</span> 
+                    Quay về Client
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Header -->
+            <header class="h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-12 sticky top-0 z-[90] transition-all duration-300">
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                            <span class="material-symbols-outlined text-sm">home</span>
+                        </div>
+                        <span class="hover:text-blue-600 cursor-pointer transition-colors">Hệ thống</span>
+                        <span class="material-symbols-outlined text-sm text-slate-300">chevron_right</span>
+                        <span class="text-slate-900 font-black">@ViewData["Title"]</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-8">
+                    <!-- Global Search -->
+                    <div class="hidden xl:flex items-center bg-slate-100 rounded-full px-6 py-3 w-80 group focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 transition-premium border border-transparent focus-within:border-blue-100">
+                        <span class="material-symbols-outlined text-slate-400 text-lg">search</span>
+                        <input type="text" placeholder="Tìm nhanh tính năng..." class="bg-transparent border-none outline-none text-xs font-bold px-3 w-full text-slate-600 placeholder:text-slate-400" />
+                    </div>
+
+                    <!-- Action Icons -->
+                    <div class="flex items-center gap-3">
+                        <div class="relative" id="notificationDropdown">
+                            <button class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-premium relative group" id="notificationBtn">
+                                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">notifications</span>
+                                <span id="notificationBadge" class="hidden absolute top-3 right-3 w-4 h-4 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div id="notificationMenu" class="hidden absolute right-0 mt-4 w-96 bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden z-[200] transform transition-all origin-top-right">
+                                <div class="p-8 border-b border-slate-50 flex items-center justify-between">
+                                    <h3 class="font-black text-slate-900">Thông báo mới</h3>
+                                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full" id="unreadCountText">0 mới</span>
+                                </div>
+                                <div id="notificationList" class="max-h-[440px] overflow-y-auto">
+                                    <div class="p-12 text-center text-slate-400 font-medium">Đang tải thông báo...</div>
+                                </div>
+                                <div class="p-5 bg-slate-50/50 text-center border-t border-slate-50">
+                                    <a href="/Admin/Notification" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                        Xem tất cả thông báo <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="darkModeBtn" class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-2xl transition-premium">
+                            <span class="material-symbols-outlined" id="darkModeIcon">light_mode</span>
+                        </button>
+                    </div>
+
+                    <div class="h-10 w-[1px] bg-slate-200/50"></div>
+
+                    <!-- Profile Section -->
+                    <div class="flex items-center gap-4 group cursor-pointer">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Administrator</p>
+                            <p class="text-xs font-black text-slate-900">Quản trị viên tối cao</p>
+                        </div>
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 p-0.5 shadow-xl shadow-blue-500/20 group-hover:scale-110 transition-premium">
+                                <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                                    <span class="text-white font-black text-sm tracking-tighter">AD</span>
+                                </div>
+                            </div>
+                            <span class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full ring-2 ring-emerald-500/20"></span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <main class="p-12 flex-1">
+                <div class="max-w-[1600px] mx-auto">
+                    @RenderBody()
+                </div>
+            </main>
+
+            <!-- Copyright -->
+            <footer class="px-12 py-8 border-t border-slate-100 flex justify-between items-center bg-white/50">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2026 Lumen BookStore • Enterprise Edition</p>
+                <div class="flex gap-6">
+                    <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Tài liệu</a>
+                    <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Hỗ trợ kĩ thuật</a>
+                </div>
+            </footer>
+        </div>
     </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/notificationHub")
+            .withAutomaticReconnect()
+            .build();
+
+        function loadNotifications() {
+            $.get('/Admin/Notification/GetLatest', function (data) {
+                const list = $('#notificationList');
+                list.empty();
+                let unreadCount = 0;
+
+                if (!data || data.length === 0) {
+                    list.append('<div class="p-10 text-center text-slate-400 font-medium">Không có thông báo nào</div>');
+                } else {
+                    data.forEach(n => {
+                        if (!n.isRead) unreadCount++;
+                        list.append(renderNotification(n));
+                    });
+                }
+
+                updateBadge(unreadCount);
+            });
+        }
+
+        function renderNotification(n) {
+            const timeStr = new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <a href="${n.link || '#'}" onclick="markAsRead(${n.id})" class="flex items-start gap-4 p-6 hover:bg-blue-50/50 transition-premium border-b border-slate-50 ${!n.isRead ? 'bg-blue-50/20' : ''}">
+                    <div class="w-10 h-10 rounded-xl ${!n.isRead ? 'bg-blue-600' : 'bg-slate-100'} flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-sm ${!n.isRead ? 'text-white' : 'text-slate-400'}">shopping_bag</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="text-xs font-black text-slate-900">${n.title}</p>
+                            <span class="text-[10px] font-bold text-slate-400">${timeStr}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 line-clamp-2">${n.message}</p>
+                    </div>
+                </a>
+            `;
+        }
+
+        function updateBadge(count) {
+            const badge = $('#notificationBadge');
+            const countText = $('#unreadCountText');
+            if (count > 0) {
+                badge.removeClass('hidden');
+                countText.text(count + ' mới').removeClass('hidden');
+            } else {
+                badge.addClass('hidden');
+                countText.text('0 mới');
+            }
+        }
+
+        function markAsRead(id) {
+            if(id > 0) $.post('/Admin/Notification/MarkAsRead', { id: id });
+        }
+
+        connection.on("ReceiveOrderNotification", function (data) {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "10000",
+                "onclick": function() {
+                    if (data.link) window.location.href = data.link;
+                }
+            };
+            toastr.success(data.message, data.title);
+            
+            const list = $('#notificationList');
+            const emptyMsg = list.find('.text-center');
+            if (emptyMsg.length) emptyMsg.remove();
+            
+            const newNotify = {
+                id: 0,
+                title: data.title,
+                message: data.message,
+                link: data.link,
+                isRead: false,
+                createdAt: new Date()
+            };
+            list.prepend(renderNotification(newNotify));
+            
+            const currentUnread = parseInt($('#unreadCountText').text()) || 0;
+            updateBadge(currentUnread + 1);
+
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log("Audio play failed"));
+        });
+
+        $('#notificationBtn').click(function(e) {
+            e.stopPropagation();
+            $('#notificationMenu').toggleClass('hidden');
+        });
+
+        $(document).click(function() {
+            $('#notificationMenu').addClass('hidden');
+        });
+
+        connection.start().then(() => {
+            console.log("Connected to SignalR");
+            connection.invoke("JoinAdminGroup").then(() => {
+                console.log("Joined Admin Group");
+            }).catch(err => console.error("JoinAdminGroup failed: ", err));
+            loadNotifications();
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        // Dark Mode Logic
+        const darkModeBtn = document.getElementById('darkModeBtn');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const html = document.documentElement;
+
+        darkModeBtn.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
+            }
+        });
+
+        function enableDarkMode() {
+            html.classList.add('dark');
+            darkModeIcon.textContent = 'dark_mode';
+            localStorage.setItem('admin-dark-mode', 'enabled');
+            darkModeBtn.classList.add('text-amber-500', 'bg-amber-50');
+        }
+
+        function disableDarkMode() {
+            html.classList.remove('dark');
+            darkModeIcon.textContent = 'light_mode';
+            localStorage.setItem('admin-dark-mode', 'disabled');
+            darkModeBtn.classList.remove('text-amber-500', 'bg-amber-50');
+        }
+
+        // Sync initial icon state
+        if (html.classList.contains('dark')) {
+            darkModeIcon.textContent = 'dark_mode';
+            darkModeBtn.classList.add('text-amber-500', 'bg-amber-50');
+        }
+    </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { BookService } from '../../services/book.service';
+import { ProductService } from '../../services/product.service'; // BookService -> ProductService
 import { CategoryService } from '../../services/category.service';
 import { SubCategoryService } from '../../services/subcategory.service';
 import { FavoriteService } from '../../services/favorite.service';
@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { CartService } from '../../services/cart.service';
 import { Router } from '@angular/router';
-import { Book } from '../models/book.model';
+import { Product } from '../models/product.model'; // Book -> Product
 import { Category } from '../models/category.model';
 import { SubCategory } from '../models/subcategory.model';
 import { forkJoin, finalize, of, Subject, takeUntil } from 'rxjs';
@@ -18,7 +18,7 @@ import { catchError } from 'rxjs/operators';
   templateUrl: './home.component.html'
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  private bookService = inject(BookService);
+  private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private subCategoryService = inject(SubCategoryService);
   private favoriteService = inject(FavoriteService);
@@ -27,10 +27,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   private cartService = inject(CartService);
   private router = inject(Router);
 
-  addToCart(book: Book) {
-    this.cartService.addToCart(book.id, 1).subscribe({
+  addToCart(product: Product) {
+    this.cartService.addToCart(product.id, 1).subscribe({
       next: () => {
-        this.toastService.show(`Đã thêm "${book.title}" vào giỏ hàng!`, 'success');
+        this.toastService.show(`Đã thêm "${product.name}" vào giỏ hàng!`, 'success');
       },
       error: (err) => {
         console.error('Add to cart error:', err);
@@ -38,28 +38,26 @@ export class HomeComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  books: Book[] = [];
+  products: Product[] = []; 
   togglingId: number | null = null;
 
-  toggleFavorite(book: Book) {
+  toggleFavorite(product: Product) {
     if (!this.authService.isLoggedIn()) {
       this.toastService.show('Đăng nhập ngay để "thả tim" bạn nhé! ❤️', 'info');
       this.router.navigate(['/login']);
       return;
     }
 
-    this.togglingId = book.id;
-    this.favoriteService.toggleFavorite(book.id).pipe(
+    this.togglingId = product.id;
+    this.favoriteService.toggleFavorite(product.id).pipe(
       finalize(() => this.togglingId = null)
     ).subscribe({
       next: (res: any) => {
         const isFav = res.isFavorited ?? (res as any).IsFavorited;
-        // Không cần gán book.isFavorited ở đây nữa vì Subject sẽ lo việc đó
         if (isFav) {
-          this.toastService.show('Đã thêm thẻ sách vào Yêu thích! 💖', 'success');
+          this.toastService.show('Đã thêm vào Yêu thích! 💖', 'success');
         } else {
-          this.toastService.show('Đã bỏ sách khỏi Yêu thích.', 'info');
+          this.toastService.show('Đã bỏ khỏi Yêu thích.', 'info');
         }
       },
       error: (err) => {
@@ -72,8 +70,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   subCategories: SubCategory[] = [];
   
   navCategories: Category[] = [];
-  flashSaleBooks: Book[] = [];
-  myFavoriteBooks: Book[] = []; // Chứa danh sách sách yêu thích người dùng
+  flashSaleProducts: Product[] = []; // flashSaleBooks -> flashSaleProducts
+  myFavoriteProducts: Product[] = []; 
   countdown = { hours: '00', minutes: '00', seconds: '00' };
   private countdownInterval: any;
   private destroy$ = new Subject<void>();
@@ -92,7 +90,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Đăng ký nhận thay đổi danh sách yêu thích
   initFavoriteSubscription() {
     this.favoriteService.favoriteIds$
       .pipe(takeUntil(this.destroy$))
@@ -102,16 +99,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   syncFavoriteState(favIds: number[]) {
-    // 1. Cập nhật flag cho tất cả sách
-    this.books.forEach(b => {
-      b.isFavorited = favIds.includes(b.id);
+    this.products.forEach(p => {
+      p.isFavorited = favIds.includes(p.id);
     });
-
-    // 2. Cập nhật danh sách hiển thị ở mục "Sách bạn đã thích"
-    this.myFavoriteBooks = this.books.filter(b => b.isFavorited);
-    
-    // Cập nhật flash sale nếu cần
-    this.flashSaleBooks = this.books.filter(book => book.isFlashSale);
+    this.myFavoriteProducts = this.products.filter(p => p.isFavorited);
+    this.flashSaleProducts = this.products.filter(p => !!p.flashSale);
   }
 
   loadData() {
@@ -120,28 +112,35 @@ export class HomeComponent implements OnInit, OnDestroy {
       : of([]);
 
     forkJoin({
-      booksPaged: this.bookService.getBooksPaged(1, 20, undefined, undefined, 'newest'),
+      productsPaged: this.productService.getProductsPaged(1, 20, undefined, undefined, 'newest'),
       categories: this.categoryService.getCategories(),
       subCategories: this.subCategoryService.getSubcategories(),
+      flashSaleProducts: this.productService.getFlashSale(10),
       userFavorites: userFavorites$
     }).subscribe({
-      next: (result) => {
-        // Trích xuất danh sách ID sách yêu thích
+      next: (result: any) => {
         const favData = this.ensureArray(result.userFavorites);
-        const favIds = favData.map(f => f.bookId || f.BookId);
+        const favIds = favData.map((f: any) => f.productId || f.ProductId);
 
-        // Handle PagedResult & Mapping
-        const rawBooks = result.booksPaged.items || (result.booksPaged as any).$values || [];
-        this.books = rawBooks.map((b: any) => {
-          let mappedBook = this.mapBook(b);
-          if (favIds.includes(mappedBook.id)) {
-            mappedBook.isFavorited = true;
+        const rawProducts = result.productsPaged.items || (result.productsPaged as any).$values || [];
+        this.products = rawProducts.map((p: any) => {
+          let mapped = this.mapProduct(p);
+          if (favIds.includes(mapped.id)) {
+            mapped.isFavorited = true;
           }
-          return mappedBook;
-        });
+          return mapped;
+        }).filter((p: Product) => p.isActive);
         
-        this.myFavoriteBooks = this.books.filter(b => b.isFavorited);
+        const rawFlashSale = this.ensureArray(result.flashSaleProducts);
+        this.flashSaleProducts = rawFlashSale.map((p: any) => {
+          let mapped = this.mapProduct(p);
+          if (favIds.includes(mapped.id)) {
+            mapped.isFavorited = true;
+          }
+          return mapped;
+        }).filter((p: Product) => p.isActive);
 
+        this.myFavoriteProducts = this.products.filter(p => p.isFavorited);
         this.subCategories = this.ensureArray(result.subCategories);
         
         this.categories = this.ensureArray(result.categories).map(cat => ({
@@ -150,13 +149,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         }));
         
         this.navCategories = this.categories;
-        this.flashSaleBooks = this.books.filter(book => book.isFlashSale);
       },
       error: (err) => console.error('Lỗi khi tải dữ liệu Home:', err)
     });
   }
 
-  // Tiện ích đảm bảo mảng
   private ensureArray(data: any): any[] {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -167,20 +164,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   startCountdown() {
     const endTime = new Date();
     endTime.setHours(endTime.getHours() + 5); 
-
     this.countdownInterval = setInterval(() => {
       const now = new Date().getTime();
       const distance = endTime.getTime() - now;
-
       if (distance < 0) {
         clearInterval(this.countdownInterval);
         return;
       }
-
       const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const s = Math.floor((distance % (1000 * 60)) / 1000);
-
       this.countdown = {
         hours: h.toString().padStart(2, '0'),
         minutes: m.toString().padStart(2, '0'),
@@ -189,8 +182,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  getBooksByCategory(categoryId: number): Book[] {
-    return this.books.filter(book => book.categoryId === categoryId).slice(0, 4);
+  getProductsByCategory(categoryId: number): Product[] {
+    return this.products.filter(p => p.categoryId === categoryId).slice(0, 4);
   }
 
   getCategoryIcon(name: string): string {
@@ -203,20 +196,23 @@ export class HomeComponent implements OnInit, OnDestroy {
       'Sổ Tay': 'auto_stories',
       'Văn Phòng Phẩm': 'edit_note'
     };
-    return iconMap[name] || 'book_2';
+    return iconMap[name] || 'inventory_2'; // book_2 -> inventory_2
   }
 
-  private mapBook(rawData: any): Book {
+  private mapProduct(rawData: any): Product {
     return {
       ...rawData,
       id: rawData.id ?? rawData.Id,
-      title: rawData.title ?? rawData.Title,
-      author: rawData.author ?? rawData.Author,
+      name: rawData.name ?? rawData.Name ?? rawData.title ?? rawData.Title,
+      brand: rawData.brand ?? rawData.Brand ?? rawData.author ?? rawData.Author,
       price: rawData.price ?? rawData.Price,
+      quantity: rawData.quantity ?? rawData.Quantity ?? 0,
       imageUrl: rawData.imageUrl ?? rawData.ImageUrl,
-      discountPrice: rawData.discountPrice ?? rawData.DiscountPrice,
+      discountPrice: rawData.flashSale?.salePrice ?? rawData.FlashSale?.SalePrice ?? rawData.discountPrice ?? rawData.DiscountPrice,
       categoryId: rawData.categoryId ?? rawData.CategoryId,
-      isFavorited: rawData.isFavorited ?? rawData.IsFavorited ?? false
-    } as Book;
+      isFavorited: rawData.isFavorited ?? rawData.IsFavorited ?? false,
+      flashSale: rawData.flashSale ?? rawData.FlashSale,
+      isActive: rawData.isActive ?? rawData.IsActive ?? true
+    } as Product;
   }
 }

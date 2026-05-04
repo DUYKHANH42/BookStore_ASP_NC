@@ -12,7 +12,7 @@ namespace BookStore.Domain.Entities
         public int CategoryId { get; set; }
         public Category Category { get; set; }
 
-        public ICollection<Book> Books { get; set; } = new List<Book>();
+        public ICollection<Product> Products { get; set; } = new List<Product>();
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

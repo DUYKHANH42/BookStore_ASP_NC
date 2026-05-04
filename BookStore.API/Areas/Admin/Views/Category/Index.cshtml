@@ -1,0 +1,92 @@
+@using BookStore.Application.DTO
+@model IEnumerable<CategoryDTO>
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="/admin/css/category-management.css" />
+}
+
+<div class="space-y-8 animate-fadeIn">
+    <!-- Header & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Quản lý danh mục</h2>
+            <p class="text-slate-500 font-medium">Tổ chức phân loại sách và sản phẩm của bạn.</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="openCategoryModal(0)" class="flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-[1.25rem] font-bold shadow-xl shadow-slate-900/20 hover:bg-black transition-premium active:scale-95">
+                <span class="material-symbols-outlined">add_box</span> Danh mục chính
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content: Category Tree/Grid -->
+    <div id="categoryListContainer">
+        @await Html.PartialAsync("_CategoryListPartial", Model)
+    </div>
+</div>
+
+<!-- Modal Category -->
+<div id="categoryModal" class="modal-overlay" onclick="if(event.target === this) closeCategoryModal()">
+    <div class="modal-content">
+        <div class="p-8 space-y-6">
+            <div class="flex justify-between items-center">
+                <h3 id="categoryModalTitle" class="text-xl font-black text-slate-900">Danh mục chính</h3>
+                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-900 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="categoryForm" class="space-y-6">
+                <input type="hidden" name="id" id="categoryId" value="0">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Tên danh mục</label>
+                    <input type="text" name="name" required placeholder="VD: Văn học, Kinh tế..." 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeCategoryModal()" class="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50">Hủy</button>
+                    <button type="submit" class="flex-1 py-4 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal SubCategory -->
+<div id="subCategoryModal" class="modal-overlay" onclick="if(event.target === this) closeSubCategoryModal()">
+    <div class="modal-content">
+        <div class="p-8 space-y-6">
+            <div class="flex justify-between items-center">
+                <h3 id="subCategoryModalTitle" class="text-xl font-black text-slate-900">Danh mục phụ</h3>
+                <button onclick="closeSubCategoryModal()" class="text-slate-400 hover:text-slate-900 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="subCategoryForm" class="space-y-6">
+                <input type="hidden" name="id" id="subCategoryId" value="0">
+                <input type="hidden" name="categoryId" id="parentCategoryId">
+                
+                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                    <p class="text-[10px] font-black uppercase text-blue-600 mb-1">Thuộc danh mục chính</p>
+                    <p id="parentCategoryName" class="font-bold text-slate-700">Tên danh mục...</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Tên danh mục phụ</label>
+                    <input type="text" name="name" required placeholder="VD: Tiểu thuyết, Kỹ năng sống..." 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeSubCategoryModal()" class="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50">Hủy</button>
+                    <button type="submit" class="flex-1 py-4 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="/admin/js/category-management.js"></script>
+}

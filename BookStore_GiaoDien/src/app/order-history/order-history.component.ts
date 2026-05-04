@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { OrderService } from '../../services/order.service';
 import { Order, OrderFullDetail } from '../models/order.model';
 import { ToastService } from '../../services/toast.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-order-history',
@@ -10,21 +11,31 @@ import { ToastService } from '../../services/toast.service';
 export class OrderHistoryComponent implements OnInit {
   private orderService = inject(OrderService);
   private toastService = inject(ToastService);
+  env = environment;
 
   orders: Order[] = [];
   isLoading = false;
   selectedOrder: OrderFullDetail | null = null;
   showDetail = false;
 
+  // Phân trang
+  currentPage = 1;
+  pageSize = 5;
+  totalItems = 0;
+  totalPages = 0;
+
   ngOnInit() {
     this.loadOrders();
   }
 
-  loadOrders() {
+  loadOrders(page: number = 1) {
+    this.currentPage = page;
     this.isLoading = true;
-    this.orderService.getHistory().subscribe({
+    this.orderService.getHistory(this.currentPage, this.pageSize).subscribe({
       next: (res) => {
-        this.orders = res;
+        this.orders = res.items;
+        this.totalItems = res.totalItems;
+        this.totalPages = res.totalPages;
         this.isLoading = false;
       },
       error: () => {
@@ -32,6 +43,23 @@ export class OrderHistoryComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  cancelOrder(orderId: number) {
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+      this.orderService.cancelOrder(orderId).subscribe({
+        next: (res) => {
+          this.toastService.show(res.message, 'success');
+          this.loadOrders(this.currentPage);
+          if (this.selectedOrder && this.selectedOrder.id === orderId) {
+            this.closeDetail();
+          }
+        },
+        error: (err) => {
+          this.toastService.show(err.error?.message || 'Không thể hủy đơn hàng', 'error');
+        }
+      });
+    }
   }
 
   viewDetail(orderId: number) {
@@ -53,16 +81,5 @@ export class OrderHistoryComponent implements OnInit {
   closeDetail() {
     this.showDetail = false;
     this.selectedOrder = null;
-  }
-
-  getStatusClass(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'chờ xác nhận': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
-      case 'đã xác nhận': return 'bg-blue-50 text-blue-600 border-blue-100';
-      case 'đang giao': return 'bg-purple-50 text-purple-600 border-purple-100';
-      case 'đã giao': return 'bg-green-50 text-green-600 border-green-100';
-      case 'đã hủy': return 'bg-red-50 text-red-600 border-red-100';
-      default: return 'bg-slate-50 text-slate-600 border-slate-100';
-    }
   }
 }

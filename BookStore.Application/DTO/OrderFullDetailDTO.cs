@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,7 @@ namespace BookStore.Application.DTO
         public DateTime CreatedAt { get; set; }
         public string Status { get; set; } = string.Empty;
         public decimal TotalPrice { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
 
         // Thông tin giao hàng
         public string ShippingName { get; set; } = string.Empty;

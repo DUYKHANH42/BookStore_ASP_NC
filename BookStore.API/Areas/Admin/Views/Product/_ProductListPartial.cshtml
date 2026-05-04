@@ -1,0 +1,132 @@
+@using BookStore.Application.DTO
+@model PagedResultDTO<ProductDTO>
+
+<div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="border-b border-slate-50">
+                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Sản phẩm</th>
+                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Giá bán</th>
+                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Tồn kho</th>
+                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Trạng thái</th>
+                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Items.Any())
+            {
+                <tr>
+                    <td colspan="5" class="px-8 py-20 text-center">
+                        <div class="flex flex-col items-center">
+                            <span class="material-symbols-outlined text-5xl text-slate-200 mb-4">inventory_2</span>
+                            <p class="font-bold text-slate-400">Không tìm thấy sản phẩm nào khớp với bộ lọc.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @foreach (var item in Model.Items)
+            {
+                <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group @(item.IsActive ? "" : "opacity-50 grayscale-[0.5]")">
+                    <td class="px-8 py-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 shadow-sm">
+                                <img src="@((item.ImageUrl ?? "").StartsWith("http") ? item.ImageUrl : "/uploads/" + item.ImageUrl)" 
+                                     class="w-full h-full object-cover" />
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-black text-slate-800 text-sm line-clamp-1">@item.Name</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">@item.Brand</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-8 py-6">
+                        <div class="space-y-0.5">
+                            @if (item.FlashSale != null)
+                            {
+                                <p class="font-black text-slate-900">@item.FlashSale.SalePrice.ToString("N0") <span class="text-[10px]">₫</span></p>
+                                <p class="text-[10px] text-rose-500 font-bold line-through opacity-60">@item.Price.ToString("N0") ₫</p>
+                            }
+                            else
+                            {
+                                <p class="font-black text-slate-900">@item.Price.ToString("N0") <span class="text-[10px]">₫</span></p>
+                            }
+                        </div>
+                    </td>
+                    <td class="px-8 py-6">
+                        <div class="flex items-center gap-2">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden max-w-[60px]">
+                                <div class="bg-blue-500 h-full" style="width: @(Math.Min(100, item.Quantity))%"></div>
+                            </div>
+                            <span class="font-bold text-slate-700 text-xs">@item.Quantity</span>
+                        </div>
+                    </td>
+                    <td class="px-8 py-6">
+                        @if (!item.IsActive)
+                        {
+                            <span class="flex items-center gap-1.5 text-slate-400 font-black text-[10px] uppercase tracking-widest">
+                                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span> Đã tạm ẩn
+                            </span>
+                        }
+                        else if (item.Quantity > 0)
+                        {
+                            <span class="flex items-center gap-1.5 text-emerald-600 font-black text-[10px] uppercase tracking-widest">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Còn hàng
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="flex items-center gap-1.5 text-rose-500 font-black text-[10px] uppercase tracking-widest">
+                                <span class="w-1.5 h-1.5 bg-rose-500 rounded-full"></span> Hết hàng
+                            </span>
+                        }
+                    </td>
+                    <td class="px-8 py-6 text-right">
+                        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-premium">
+                            <button onclick="manageFlashSale(@item.Id, '@item.Name')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-rose-500 hover:bg-rose-600 hover:text-white transition-premium" title="Quản lý Flash Sale">
+                                <span class="material-symbols-outlined text-lg">bolt</span>
+                            </button>
+                            <button onclick="editProduct(@item.Id)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium" title="Chỉnh sửa">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                            </button>
+                            <button onclick="toggleProductStatus(@item.Id)" 
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 transition-premium @(item.IsActive ? "text-rose-500 hover:bg-rose-600" : "text-emerald-500 hover:bg-emerald-600") hover:text-white"
+                                    title="@(item.IsActive ? "Tạm ẩn sản phẩm" : "Khôi phục sản phẩm")">
+                                <span class="material-symbols-outlined text-lg">@(item.IsActive ? "visibility_off" : "visibility")</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+<div class="px-8 py-6 bg-slate-50/50 flex items-center justify-between border-t border-slate-50">
+    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        Hiển thị @Model.Items.Count() / @Model.TotalItems sản phẩm
+    </div>
+    
+    <div class="flex items-center gap-1">
+        @if (Model.CurrentPage > 1)
+        {
+            <button data-page="@(Model.CurrentPage - 1)" class="pagination-link w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-blue-600 hover:text-blue-600 transition-premium">
+                <span class="material-symbols-outlined text-lg">chevron_left</span>
+            </button>
+        }
+
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <button data-page="@i" class="pagination-link w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xs @(i == Model.CurrentPage ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white border border-slate-200 text-slate-600 hover:border-blue-600 hover:text-blue-600") transition-premium">
+                @i
+            </button>
+        }
+
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <button data-page="@(Model.CurrentPage + 1)" class="pagination-link w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:border-blue-600 hover:text-blue-600 transition-premium">
+                <span class="material-symbols-outlined text-lg">chevron_right</span>
+            </button>
+        }
+    </div>
+</div>

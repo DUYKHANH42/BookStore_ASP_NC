@@ -1,4 +1,4 @@
-﻿using BookStore.Application.DTO;
+using BookStore.Application.DTO;
 using BookStore.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace BookStore.API.Areas.Customer.Controllers
             _services = services;
         }
         [HttpGet]
-        public async Task<ActionResult<SubCategoryDTO>> GetAllCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetAllCategories()
         {
             var categories = await _services.GetAll();
             return Ok(categories);

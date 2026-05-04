@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace BookStore.Domain.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
-        IBookRepository Books { get; }
+        IProductRepository Products { get; }
         ICategoryRepository Categories { get; }
         ISubCategoryRepository SubCategories { get; }
         IOrderRepository Orders { get; }
@@ -14,7 +14,15 @@ namespace BookStore.Domain.Interfaces
         IReviewRepository Reviews { get; }
         IStockHistoryRepository StockHistories { get; }
         IShippingAddressRepository ShippingAddresses { get; }
+        IInventoryReceiptRepository InventoryReceipts { get; }
+        IInventoryReceiptDetailRepository InventoryReceiptDetails { get; }
+        ISupplierRepository Suppliers { get; }
+        IFlashSaleRepository FlashSales { get; }
+        INotificationRepository Notifications { get; }
 
-        Task<int> SaveChangesAsync(); // Hàm quan trọng nhất để thực thi Transaction
+        Task<int> SaveChangesAsync();
+        Task BeginTransactionAsync();
+        Task CommitAsync();
+        Task RollbackAsync();
     }
 }

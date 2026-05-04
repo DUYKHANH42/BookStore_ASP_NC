@@ -1,6 +1,6 @@
 export interface OrderItem {
-  bookId: number;
-  bookTitle: string;
+  productId: number;
+  productName: string;
   imageUrl: string;
   price: number;
   quantity: number;

@@ -1,0 +1,206 @@
+@using BookStore.Application.DTO
+@model DashboardDataDTO
+@{
+    ViewData["Title"] = "Thống kê hệ thống";
+}
+
+<div class="space-y-12 animate-fadeIn">
+    <!-- Header Welcome & Filters -->
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-4xl font-black text-slate-900 tracking-tighter mb-2">Báo cáo hoạt động 📊</h2>
+            <p class="text-sm font-medium text-slate-400">Theo dõi chỉ số kinh doanh và hiệu suất bán hàng.</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-4 bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="material-symbols-outlined text-slate-400 text-sm">calendar_today</span>
+                <input type="date" id="startDate" class="bg-transparent border-none outline-none text-xs font-bold text-slate-600" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
+            </div>
+            <span class="text-slate-300 font-bold">đến</span>
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="material-symbols-outlined text-slate-400 text-sm">event</span>
+                <input type="date" id="endDate" class="bg-transparent border-none outline-none text-xs font-bold text-slate-600" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+            </div>
+            <button id="btnFilter" class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-premium">
+                Lọc dữ liệu
+            </button>
+            <div class="h-8 w-[1px] bg-slate-200 hidden md:block"></div>
+            <div class="flex items-center gap-2">
+                <button onclick="setQuickFilter(7)" class="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">7 ngày</button>
+                <button onclick="setQuickFilter(30)" class="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">30 ngày</button>
+                <button onclick="setQuickFilter('month')" class="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">Tháng này</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Revenue Card -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-50 hover:shadow-2xl hover:-translate-y-2 transition-premium group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-premium"></div>
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-[1.25rem] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-premium">
+                    <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+                </div>
+            </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Tổng doanh thu</p>
+            <h3 id="statRevenue" class="text-3xl font-black text-slate-900 tracking-tighter">@Model.Summary.TotalRevenue.ToString("N0")đ</h3>
+        </div>
+
+        <!-- Orders Card -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-50 hover:shadow-2xl hover:-translate-y-2 transition-premium group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-premium"></div>
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-14 h-14 bg-rose-50 text-rose-600 rounded-[1.25rem] flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition-premium">
+                    <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+                </div>
+            </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Đơn hàng</p>
+            <h3 id="statOrders" class="text-3xl font-black text-slate-900 tracking-tighter">@Model.Summary.TotalOrders.ToString("N0")</h3>
+        </div>
+
+        <!-- Customers Card -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-50 hover:shadow-2xl hover:-translate-y-2 transition-premium group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-premium"></div>
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-[1.25rem] flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-premium">
+                    <span class="material-symbols-outlined text-2xl">person_add</span>
+                </div>
+            </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Khách hàng</p>
+            <h3 id="statCustomers" class="text-3xl font-black text-slate-900 tracking-tighter">@Model.Summary.TotalCustomers.ToString("N0")</h3>
+        </div>
+
+        <!-- Books Card -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-50 hover:shadow-2xl hover:-translate-y-2 transition-premium group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-premium"></div>
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-[1.25rem] flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-premium">
+                    <span class="material-symbols-outlined text-2xl">book_2</span>
+                </div>
+            </div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Số lượng sản phẩm</p>
+            <h3 id="statBooks" class="text-3xl font-black text-slate-900 tracking-tighter">@Model.Summary.TotalProducts.ToString("N0")</h3>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- Revenue Chart -->
+        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-50 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-10">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tighter">Xu hướng doanh thu</h3>
+                    <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Biểu đồ biến động theo thời gian</p>
+                </div>
+            </div>
+            <div class="h-[400px]">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Order Status Chart -->
+        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-50 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-10">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tighter">Trạng thái đơn hàng</h3>
+                    <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Tỷ lệ xử lý đơn hàng</p>
+                </div>
+            </div>
+            <div class="h-[400px] flex items-center justify-center">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Sections -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-12">
+        <!-- Top Selling Books -->
+        <div class="xl:col-span-2 bg-white rounded-[3rem] p-10 border border-slate-50 shadow-sm relative overflow-hidden">
+            <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-8">Top sách bán chạy</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-separate border-spacing-y-4">
+                    <thead>
+                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <th class="px-6 py-2">Tên sách</th>
+                            <th class="px-6 py-2">Đã bán</th>
+                            <th class="px-6 py-2 text-right">Doanh thu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topSellingTable" class="text-sm">
+                        @foreach (var book in Model.TopSellingProducts)
+                        {
+                            <tr class="group">
+                                <td class="px-6 py-5 bg-slate-50/50 rounded-l-[1.5rem] group-hover:bg-slate-100 transition-premium font-black text-slate-900">
+                                    @book.Name
+                                </td>
+                                <td class="px-6 py-5 bg-slate-50/50 group-hover:bg-slate-100 transition-premium font-bold text-slate-600">
+                                    @book.SoldCount
+                                </td>
+                                <td class="px-6 py-5 bg-slate-50/50 rounded-r-[1.5rem] group-hover:bg-slate-100 transition-premium text-right font-black text-blue-600">
+                                    @book.Revenue.ToString("N0")đ
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Inventory Alerts -->
+        <div class="bg-slate-950 rounded-[3rem] p-10 text-white shadow-2xl shadow-blue-900/20 relative overflow-hidden h-fit">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+            <h3 class="text-2xl font-black mb-8 tracking-tighter">Cảnh báo tồn kho</h3>
+            
+            <div id="lowStockList" class="space-y-6">
+                @foreach (var book in Model.LowStockProducts.Take(5))
+                {
+                    <div class="flex items-center gap-5 group cursor-pointer">
+                        <div class="w-12 h-16 bg-white/5 rounded-xl overflow-hidden flex-shrink-0 border border-white/5 group-hover:border-blue-500/50 transition-premium">
+                            <img src="~/uploads/@book.ImageUrl" alt="@book.Name" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-premium" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-black text-white group-hover:text-blue-400 transition-colors truncate">@book.Name</h4>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Còn lại: @book.Quantity</p>
+                            <div class="w-full bg-white/5 h-1 rounded-full mt-2 overflow-hidden">
+                                <div class="h-full bg-rose-500" style="width: @(Math.Min(100, book.Quantity * 10))%"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.LowStockProducts.Any())
+                {
+                    <p class="text-xs text-slate-500 italic">Hiện không có cảnh báo nào.</p>
+                }
+            </div>
+
+            <button class="w-full mt-10 py-4 bg-white/5 hover:bg-white/10 rounded-2xl font-black text-[9px] uppercase tracking-[0.3em] transition-premium border border-white/10 flex items-center justify-center gap-3">
+                Xem chi tiết kho
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Truyền dữ liệu ban đầu từ C# sang Javascript thông qua các biến toàn cục
+        const initialRevenueLabels = @Html.Raw(Json.Serialize(Model.RevenueChart.Select(x => x.Date)));
+        const initialRevenueData = @Html.Raw(Json.Serialize(Model.RevenueChart.Select(x => x.Revenue)));
+        const initialStatusLabels = @Html.Raw(Json.Serialize(Model.OrderStatusChart.Select(x => x.Status)));
+        const initialStatusData = @Html.Raw(Json.Serialize(Model.OrderStatusChart.Select(x => x.Count)));
+    </script>
+    <script src="/admin/js/dashboard.js"></script>
+}
+
+<style>
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+        animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+</style>

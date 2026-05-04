@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, forkJoin } from 'rxjs';
-import { map, tap, switchMap, catchError } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { Cart, CartItem } from '../app/models/cart.model';
-import { BookService } from './book.service';
+import { ProductService } from './product.service'; 
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ import { BookService } from './book.service';
 export class CartService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private bookService = inject(BookService);
+  private productService = inject(ProductService);
   private apiUrl = `${environment.apiUrl}/cart`;
 
   private cartSubject = new BehaviorSubject<Cart>({ id: 0, items: [], totalPrice: 0, totalItems: 0 });
@@ -49,50 +49,59 @@ export class CartService {
     }
   }
 
-  addToCart(bookId: number, quantity: number = 1): Observable<any> {
+  addToCart(productId: number, quantity: number = 1): Observable<any> {
     if (this.authService.isLoggedIn()) {
-      return this.http.post(`${this.apiUrl}/add`, null, {
-        params: { bookId: bookId.toString(), quantity: quantity.toString() }
+      return this.http.post<any>(`${this.apiUrl}/add`, null, {
+        params: { productId: productId.toString(), quantity: quantity.toString() }
       }).pipe(
-        tap(() => this.loadCartFromServer())
+        tap(res => {
+          const cart = this.mapServerCart(res);
+          this.cartSubject.next(cart);
+        })
       );
     } else {
       const currentItems = this.getGuestItems();
-      const existingItem = currentItems.find(i => i.bookId === bookId);
+      const existingItem = currentItems.find(i => i.productId === productId);
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        currentItems.push({ bookId, quantity } as CartItem);
+        currentItems.push({ productId, quantity } as CartItem);
       }
       this.updateGuestCart(currentItems);
       return of({ success: true });
     }
   }
 
-  removeFromCart(bookId: number): Observable<any> {
+  removeFromCart(productId: number): Observable<any> {
     if (this.authService.isLoggedIn()) {
-      return this.http.delete(`${this.apiUrl}/remove/${bookId}`).pipe(
-        tap(() => this.loadCartFromServer())
+      return this.http.delete<any>(`${this.apiUrl}/remove/${productId}`).pipe(
+        tap(res => {
+          const cart = this.mapServerCart(res);
+          this.cartSubject.next(cart);
+        })
       );
     } else {
-      const currentItems = this.getGuestItems().filter(i => i.bookId !== bookId);
+      const currentItems = this.getGuestItems().filter(i => i.productId !== productId);
       this.updateGuestCart(currentItems);
       return of({ success: true });
     }
   }
 
-  updateQuantity(bookId: number, quantity: number): Observable<any> {
-    if (quantity <= 0) return this.removeFromCart(bookId);
+  updateQuantity(productId: number, quantity: number): Observable<any> {
+    if (quantity <= 0) return this.removeFromCart(productId);
 
     if (this.authService.isLoggedIn()) {
-      return this.http.put(`${this.apiUrl}/update-quantity`, null, {
-        params: { bookId: bookId.toString(), quantity: quantity.toString() }
+      return this.http.put<any>(`${this.apiUrl}/update-quantity`, null, {
+        params: { productId: productId.toString(), quantity: quantity.toString() }
       }).pipe(
-        tap(() => this.loadCartFromServer())
+        tap(res => {
+          const cart = this.mapServerCart(res);
+          this.cartSubject.next(cart);
+        })
       );
     } else {
       const currentItems = this.getGuestItems();
-      const item = currentItems.find(i => i.bookId === bookId);
+      const item = currentItems.find(i => i.productId === productId);
       if (item) {
         item.quantity = quantity;
         this.updateGuestCart(currentItems);
@@ -107,7 +116,7 @@ export class CartService {
   }
 
   private updateGuestCart(items: CartItem[]) {
-    localStorage.setItem('guest_cart', JSON.stringify(items.map(i => ({ bookId: i.bookId, quantity: i.quantity }))));
+    localStorage.setItem('guest_cart', JSON.stringify(items.map(i => ({ productId: i.productId, quantity: i.quantity }))));
     
     if (items.length === 0) {
       this.cartSubject.next({ id: 0, items: [], totalPrice: 0, totalItems: 0 });
@@ -115,34 +124,24 @@ export class CartService {
     }
 
     const requests = items.map(item => 
-      this.bookService.getBookById(item.bookId).pipe(
+      this.productService.getProductById(item.productId).pipe(
         map((res: any) => {
-          let rawBook = res.data || res;
-          
-          const book = {
-            id: rawBook.id ?? rawBook.Id,
-            bookTitle: rawBook.title ?? rawBook.Title,
-            author: rawBook.author ?? rawBook.Author,
-            imageUrl: rawBook.imageUrl ?? rawBook.ImageUrl,
-            originalPrice: rawBook.price ?? rawBook.Price,
-            price: (rawBook.isFlashSale && rawBook.discountPrice) ? rawBook.discountPrice : (rawBook.price ?? rawBook.Price)
-          };
-          
+          let raw = res.data || res;
           return {
             ...item,
-            bookTitle: book.bookTitle,
-            imageUrl: book.imageUrl,
-            author: book.author || 'Ẩn danh',
-            originalPrice: book.originalPrice,
-            price: book.price,
-            subTotal: book.price * (item.quantity || 1)
+            productName: raw.name || raw.Name,
+            imageUrl: raw.imageUrl || raw.ImageUrl,
+            brand: raw.brand || raw.Brand || 'N/A',
+            originalPrice: raw.price || raw.Price,
+            price: (raw.flashSale || raw.FlashSale) ? (raw.flashSale?.salePrice ?? raw.FlashSale?.SalePrice) : (raw.price || raw.Price),
+            subTotal: ( (raw.flashSale || raw.FlashSale) ? (raw.flashSale?.salePrice ?? raw.FlashSale?.SalePrice) : (raw.price || raw.Price) ) * (item.quantity || 1)
           };
         }),
       )
     );
     forkJoin(requests).subscribe(fullItems => {
       const typedItems = fullItems as CartItem[];
-      const totalPrice = typedItems.reduce((acc: number, item: CartItem) => acc + ((item.price || 0) * item.quantity), 0);
+      const totalPrice = typedItems.reduce((acc: number, item: CartItem) => acc + (item.price * item.quantity), 0);
       const totalItems = typedItems.reduce((acc: number, item: CartItem) => acc + item.quantity, 0);
       this.cartSubject.next({ id: 0, items: typedItems, totalPrice, totalItems });
     });
@@ -153,11 +152,11 @@ export class CartService {
     
     const items: CartItem[] = rawItems.map((ri: any) => ({
       id: ri.id ?? ri.Id,
-      bookId: ri.bookId ?? ri.BookId,
+      productId: ri.productId ?? ri.ProductId,
       quantity: ri.quantity ?? ri.Quantity,
-      bookTitle: ri.bookTitle ?? ri.BookTitle ?? ri.title ?? ri.Title,
+      productName: ri.productName ?? ri.ProductName ?? ri.name ?? ri.Name,
       imageUrl: ri.imageUrl ?? ri.ImageUrl,
-      author: ri.author ?? ri.Author ?? '',
+      brand: ri.brand ?? ri.Brand ?? '',
       originalPrice: ri.originalPrice ?? ri.OriginalPrice ?? ri.price ?? ri.Price,
       price: ri.price ?? ri.Price,
       subTotal: ri.subTotal ?? ri.SubTotal ?? ((ri.price ?? ri.Price) * (ri.quantity ?? ri.Quantity))

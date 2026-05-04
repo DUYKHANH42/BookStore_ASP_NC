@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { BookService } from '../services/book.service';
+import { Component, OnInit, inject } from '@angular/core';
+import { ProductService } from '../services/product.service'; // BookService -> ProductService
 import { CategoryService } from '../services/category.service';
 import { SubCategoryService } from '../services/subcategory.service';
-import { Book } from './models/book.model';
+import { Product } from './models/product.model'; // Book -> Product
 import { Category } from './models/category.model';
 import { SubCategory } from './models/subcategory.model';
 import { forkJoin } from 'rxjs';
@@ -22,7 +22,7 @@ export class AppComponent implements OnInit {
   public cartService = inject(CartService);
   private categoryService = inject(CategoryService);
   private subCategoryService = inject(SubCategoryService);
-  private bookService = inject(BookService);
+  private productService = inject(ProductService);
   private router = inject(Router);
 
   categories: Category[] = [];
@@ -32,38 +32,33 @@ export class AppComponent implements OnInit {
   toast$ = this.toastService.toastState$;
   cart$ = this.cartService.cart$;
 
-  // Live Search State
   searchTerm: string = '';
-  suggestions: Book[] = [];
+  suggestions: Product[] = [];
   searchTimeout: any;
-
-  // Trạng thái đóng mở Menu Mobile
   isMenuOpen = false;
 
   onSearchInput() {
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
-
     if (!this.searchTerm.trim()) {
       this.suggestions = [];
       return;
     }
-
     this.searchTimeout = setTimeout(() => {
-      this.bookService.searchBooks(this.searchTerm, 1, 5).subscribe({
+      this.productService.getProductsPaged(1, 5, undefined, undefined, 'newest').subscribe({
         next: (res) => {
           this.suggestions = res.items || (res as any).$values || [];
         },
         error: (err) => console.error('Search error:', err)
       });
-    }, 300); // 300ms debounce
+    }, 300);
   }
 
-  onSelectBook(bookId: number) {
+  onSelectProduct(productId: number) {
     this.suggestions = [];
     this.searchTerm = '';
-    this.router.navigate(['/book', bookId]);
+    this.router.navigate(['/product', productId]);
   }
 
   logout() {
@@ -73,7 +68,6 @@ export class AppComponent implements OnInit {
 
   onKeywordSearch() {
     if (!this.searchTerm.trim()) return;
-    
     const query = this.searchTerm;
     this.suggestions = [];
     this.searchTerm = '';
@@ -81,13 +75,10 @@ export class AppComponent implements OnInit {
   }
 
   closeSearch() {
-    // Để timeout nhẹ để kịp nhận sự kiện click vào item
     setTimeout(() => {
       this.suggestions = [];
     }, 200);
   }
-
-  constructor() { }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
@@ -101,7 +92,6 @@ export class AppComponent implements OnInit {
       next: (result) => {
         const categories = this.ensureArray(result.categories);
         const subCategories = this.ensureArray(result.subCategories);
-        
         this.categories = categories.map(cat => ({
           ...cat,
           subCategories: subCategories.filter(sub => (sub.categoryId || (sub as any).CategoryId) === cat.id)
@@ -112,7 +102,6 @@ export class AppComponent implements OnInit {
     });
   }
 
-  // Hàm tiện ích để đảm bảo luôn trả về Mảng
   private ensureArray(data: any): any[] {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -130,6 +119,6 @@ export class AppComponent implements OnInit {
       'Sổ Tay': 'auto_stories',
       'Văn Phòng Phẩm': 'edit_note'
     };
-    return iconMap[name] || 'book_2';
+    return iconMap[name] || 'inventory_2';
   }
 }

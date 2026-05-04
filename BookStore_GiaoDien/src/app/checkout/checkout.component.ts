@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
 import { UserAddressService } from '../../services/user-address.service';
 import { OrderService } from '../../services/order.service';
@@ -29,10 +30,17 @@ export class CheckoutComponent implements OnInit {
     shippingName: ['', Validators.required],
     shippingPhone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
     shippingAddress: ['', Validators.required],
-    paymentMethod: [0, Validators.required] // 0: COD mặc định
+    paymentMethod: [0, Validators.required] 
   });
 
+  private authService = inject(AuthService);
+
   ngOnInit() {
+    if (!this.authService.isLoggedIn()) {
+      this.toastService.show('Vui lòng đăng nhập để tiến hành đặt hàng!', 'warning');
+      this.router.navigate(['/login']);
+      return;
+    }
     this.loadAddresses();
   }
 
@@ -40,7 +48,6 @@ export class CheckoutComponent implements OnInit {
     this.addressService.getAddresses().subscribe({
       next: (res) => {
         this.addresses = res;
-        // Tự động chọn địa chỉ mặc định nếu có
         const defaultAddr = res.find(a => a.isDefault);
         if (defaultAddr) {
           this.selectAddress(defaultAddr);
@@ -69,10 +76,15 @@ export class CheckoutComponent implements OnInit {
     const checkoutDto: CheckoutDto = this.checkoutForm.value;
 
     this.orderService.checkout(checkoutDto).subscribe({
-      next: (res) => {
+      next: (res: any) => {
+        // Nếu là thanh toán Online (ZaloPay) và có URL
+        if (res.paymentUrl) {
+           window.location.href = res.paymentUrl;
+           return;
+        }
+
         this.toastService.show('Đặt hàng thành công!', 'success');
-        this.cartService.clearLocalCart(); // Xóa giỏ hàng local nếu có
-        // Chuyển hướng đến lịch sử đơn hàng hoặc trang thành công
+        this.cartService.clearLocalCart(); 
         this.router.navigate(['/orders']); 
       },
       error: (err) => {
