@@ -121,7 +121,7 @@ namespace BookStore.API
                         .WithOrigins(
                             "http://localhost:4200",
                             "http://localhost:53214",
-                            "https://lumenBookStore.somee.com",
+                            "https://book-store-giao-dien.vercel.app",
                             "https://book-store-giao-dien-iixqkx84y-duykhanh42s-projects.vercel.app"
                         )
                         .AllowAnyHeader()
@@ -171,12 +171,14 @@ namespace BookStore.API
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseMiddleware<ExceptionMiddleware>();
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookStore.API v1"));
             QuestPDF.Settings.License = LicenseType.Community;
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookStore.API v1"));
+               
+
             }
 
             app.UseHttpsRedirection();
