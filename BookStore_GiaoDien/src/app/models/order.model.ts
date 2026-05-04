@@ -26,5 +26,15 @@ export interface CheckoutDto {
   shippingName: string;
   shippingPhone: string;
   shippingAddress: string;
-  paymentMethod: number; // 0: COD, 1: Credit Card
+  paymentMethod: PaymentMethod;
+}
+
+export enum PaymentMethod {
+  COD = 0,
+  CreditCard = 1,
+  PayPal = 2,
+  BankTransfer = 3,
+  ZaloPay = 4,
+  PayOS = 5,
+  VNPay = 6
 }

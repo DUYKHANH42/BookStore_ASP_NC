@@ -22,7 +22,6 @@ namespace BookStore.Tests
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockCache = new Mock<IMemoryCache>();
             
-            // Cấu hình cache giả lập (trả về null khi tìm kiếm cache để luôn chạy vào database)
             object? cacheEntry = null;
             _mockCache.Setup(m => m.TryGetValue(It.IsAny<object>(), out cacheEntry)).Returns(false);
             _mockCache.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(Mock.Of<ICacheEntry>());

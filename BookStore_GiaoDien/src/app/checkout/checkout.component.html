@@ -88,7 +88,7 @@
             [class.border-slate-100]="checkoutForm.get('paymentMethod')?.value !== 4">
             <input type="radio" [value]="4" [formControl]="$any(checkoutForm.get('paymentMethod'))" class="hidden">
             <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm overflow-hidden p-2">
-              <img src="https://img.mservice.io/momo-payment/2020/01/zalopay.png" class="w-full h-full object-contain" alt="ZaloPay">
+              <img src="./imgs/payment/zalopay.jpeg" class="w-full h-full object-contain" alt="ZaloPay">
             </div>
             <div>
               <p class="font-black text-slate-800">Ví ZaloPay</p>
@@ -99,18 +99,18 @@
           </label>
 
           <label class="flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all"
-            [class.border-blue-600]="checkoutForm.get('paymentMethod')?.value === 5"
-            [class.bg-blue-50]="checkoutForm.get('paymentMethod')?.value === 5"
-            [class.border-slate-100]="checkoutForm.get('paymentMethod')?.value !== 5">
-            <input type="radio" [value]="5" [formControl]="$any(checkoutForm.get('paymentMethod'))" class="hidden">
+            [class.border-blue-600]="checkoutForm.get('paymentMethod')?.value === 6"
+            [class.bg-blue-50]="checkoutForm.get('paymentMethod')?.value === 6"
+            [class.border-slate-100]="checkoutForm.get('paymentMethod')?.value !== 6">
+            <input type="radio" [value]="6" [formControl]="$any(checkoutForm.get('paymentMethod'))" class="hidden">
             <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm overflow-hidden p-2">
-              <img src="https://payos.vn/wp-content/uploads/2023/07/Logo-payOS-Color.png" class="w-full h-full object-contain" alt="PayOS">
+              <img src="/imgs/payment/vnpay.svg" class="w-full h-full object-contain" alt="VNPay">
             </div>
             <div>
-              <p class="font-black text-slate-800">VietQR (PayOS)</p>
-              <p class="text-xs text-slate-500 font-medium">Quét mã QR Ngân hàng (Nhanh & Tiện).</p>
+              <p class="font-black text-slate-800">Cổng thanh toán VNPAY</p>
+              <p class="text-xs text-slate-500 font-medium">Thanh toán qua Thẻ ATM, Visa, Master hoặc QR.</p>
             </div>
-            <span *ngIf="checkoutForm.get('paymentMethod')?.value === 5"
+            <span *ngIf="checkoutForm.get('paymentMethod')?.value === 6"
               class="material-symbols-outlined text-blue-600 ml-auto">check_circle</span>
           </label>
 
@@ -149,7 +149,9 @@
               <h4 class="font-bold text-sm text-slate-800 line-clamp-1">{{item.productName}}</h4>
               <p class="text-xs text-slate-400 font-medium">x {{item.quantity}}</p>
               <div class="flex items-center gap-2 mt-1">
-                <span *ngIf="item.originalPrice > item.price" class="text-[10px] text-slate-400 line-through font-bold">{{item.originalPrice | currency:'VND':'symbol':'1.0-0'}}</span>
+                <span *ngIf="item.originalPrice > item.price"
+                  class="text-[10px] text-slate-400 line-through font-bold">{{item.originalPrice |
+                  currency:'VND':'symbol':'1.0-0'}}</span>
                 <p class="text-sm font-black text-slate-700">{{item.price | currency:'VND':'symbol':'1.0-0'}}</p>
               </div>
             </div>

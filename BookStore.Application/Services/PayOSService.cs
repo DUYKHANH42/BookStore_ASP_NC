@@ -6,9 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using BookStore.Application.Interfaces;
+
 namespace BookStore.Application.Services
 {
-    public class PayOSService
+    public class PayOSService : IPayOSService
     {
         private readonly PayOS _payOS;
 

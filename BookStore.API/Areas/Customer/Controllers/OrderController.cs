@@ -32,13 +32,13 @@ namespace BookStore.API.Areas.Customer.Controllers
 
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var result = await _orderService.ProcessCheckoutAsync(userId, checkoutDto, userName);
-            
+            var result = await _orderService.ProcessCheckoutAsync(userId, checkoutDto, userName, HttpContext);
+
             if (result.Success)
             {
                 return Ok(result);
             }
-            
+
             return BadRequest(new { message = result.Message });
         }
 
@@ -50,7 +50,7 @@ namespace BookStore.API.Areas.Customer.Controllers
             var requestMac = cbData.mac;
 
             var callbackResult = await _orderService.ProcessZaloPayCallbackAsync(dataStr, requestMac);
-            
+
             var result = new Dictionary<string, object>();
             if (callbackResult.Success)
             {
@@ -64,6 +64,14 @@ namespace BookStore.API.Areas.Customer.Controllers
             }
 
             return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("vnpay-callback")]
+        public async Task<IActionResult> VNPayCallback()
+        {
+            // Logic xử lý kết quả trả về từ VNPay (Thành công/Thất bại)
+            return Redirect("http://localhost:53214/profile");
         }
         [HttpGet("history")]
         public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 5)
@@ -84,12 +92,12 @@ namespace BookStore.API.Areas.Customer.Controllers
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var cancelResult = await _orderService.CancelOrderForUserAsync(id, userId);
-            
+
             if (cancelResult.Success)
             {
                 return Ok(new { success = cancelResult.Success, message = cancelResult.Message });
             }
-            
+
             return BadRequest(new { success = cancelResult.Success, message = cancelResult.Message });
         }
 

@@ -80,7 +80,10 @@ export class ProfileComponent implements OnInit {
     });
 
     this.orderService.getHistory().subscribe({
-      next: (res: any) => this.orders = this.ensureArray(res)
+      next: (res: any) => {
+        // Lấy danh sách items từ kết quả phân trang
+        this.orders = this.ensureArray(res.items || res);
+      }
     });
   }
 

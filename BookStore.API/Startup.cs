@@ -22,6 +22,8 @@ using BookStore.API.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
+using BookStore.Application.VnpayProvider.Extensions;
+
 namespace BookStore.API
 {
     public class Startup
@@ -39,6 +41,7 @@ namespace BookStore.API
             services.AddControllers();
             services.AddControllersWithViews();
             services.AddMemoryCache();
+            services.AddHttpContextAccessor();
             services.AddDbContext<BookStoreDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")
@@ -115,7 +118,12 @@ namespace BookStore.API
             {
                 options.AddPolicy("AllowAngular",
                     builder => builder
-                        .WithOrigins("http://localhost:53214", "https://lumenBookStore.somee.com")
+                        .WithOrigins(
+                            "http://localhost:4200",
+                            "http://localhost:53214",
+                            "https://lumenBookStore.somee.com",
+                            "https://book-store-giao-dien-iixqkx84y-duykhanh42s-projects.vercel.app"
+                        )
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials());
@@ -130,7 +138,7 @@ namespace BookStore.API
             services.AddSignalR();
             services.AddHttpClient();
             services.Configure<ZaloPayConfig>(Configuration.GetSection(ZaloPayConfig.ConfigName));
-            services.AddScoped<ZaloPayService>();
+            services.AddHttpClient<IZaloPayService, ZaloPayService>();
             services.AddRateLimiter(options =>
             {
                 options.AddFixedWindowLimiter("forgot-password", opt =>
@@ -142,7 +150,21 @@ namespace BookStore.API
                 options.RejectionStatusCode = 429;
             });
             services.Configure<PayOSConfig>(Configuration.GetSection("PayOS"));
-            services.AddScoped<PayOSService>();
+            services.AddScoped<IPayOSService, PayOSService>();
+            
+            services.Configure<VnPayConfig>(Configuration.GetSection(VnPayConfig.ConfigName));
+            
+            services.AddVnpayClient(options =>
+            {
+                options.TmnCode = Configuration["VnPay:TmnCode"];
+                options.HashSecret = Configuration["VnPay:HashSecret"];
+                options.BaseUrl = Configuration["VnPay:BaseUrl"];
+                options.CallbackUrl = Configuration["VnPay:ReturnUrl"];
+            });
+
+            services.AddScoped<IVnPayService, VnPayService>();
+
+            services.AddHostedService<OrderCleanupService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

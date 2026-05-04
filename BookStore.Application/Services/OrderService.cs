@@ -12,19 +12,22 @@ namespace BookStore.Application.Services
     public class OrderService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ZaloPayService _zaloPayService;
-        private readonly PayOSService _payOSService;
+        private readonly IZaloPayService _zaloPayService;
+        private readonly IPayOSService _payOSService;
+        private readonly IVnPayService _vnPayService;
         private readonly INotificationService _notificationService;
 
         public OrderService(
             IUnitOfWork unitOfWork,
-            ZaloPayService zaloPayService,
-            PayOSService payOSService,
+            IZaloPayService zaloPayService,
+            IPayOSService payOSService,
+            IVnPayService vnPayService,
             INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _zaloPayService = zaloPayService;
             _payOSService = payOSService;
+            _vnPayService = vnPayService;
             _notificationService = notificationService;
         }
 
@@ -134,7 +137,7 @@ namespace BookStore.Application.Services
             };
         }
 
-        public async Task<CheckoutResultDTO> ProcessCheckoutAsync(string userId, CheckoutDTO checkoutDto, string userName)
+        public async Task<CheckoutResultDTO> ProcessCheckoutAsync(string userId, CheckoutDTO checkoutDto, string userName, Microsoft.AspNetCore.Http.HttpContext httpContext)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
@@ -157,23 +160,27 @@ namespace BookStore.Application.Services
                         return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch ZaloPay." };
                     }
                 }
-                else if (checkoutDto.PaymentMethod == PaymentMethod.PayOS)
+                else if (checkoutDto.PaymentMethod == PaymentMethod.VNPay)
                 {
-                    var paymentResult = await _payOSService.CreatePaymentLinkAsync(orderDto.Id, orderDto.TotalPrice, orderDto.OrderNumber, $"Thanh toan don hang {orderDto.OrderNumber}");
-                    paymentUrl = paymentResult.checkoutUrl;
+                    paymentUrl = _vnPayService.CreatePaymentUrl(httpContext, orderDto.Id, orderDto.TotalPrice, $"ThanhToanDonHang_{orderDto.OrderNumber}");
                     if (string.IsNullOrEmpty(paymentUrl))
                     {
                         await _unitOfWork.RollbackAsync();
-                        return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch PayOS." };
+                        return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch VNPay." };
                     }
+                }
+                else if (checkoutDto.PaymentMethod == PaymentMethod.PayOS)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return new CheckoutResultDTO { Success = false, Message = "Phương thức thanh toán PayOS hiện đang bảo trì." };
                 }
 
                 await _unitOfWork.CommitAsync();
 
-                // Thông báo
+                // Thông báo qua SignalR
                 await _notificationService.SendAdminNotificationAsync(
-                    "Đơn hàng mới", 
-                    $"Có đơn hàng mới {orderDto.OrderNumber} tổng trị giá {orderDto.TotalPrice:N0}đ",
+                    "Đơn hàng mới",
+                    $"Đơn hàng mới {orderDto.OrderNumber} đang chờ khách quét mã thanh toán ({checkoutDto.PaymentMethod}).", 
                     $"/Admin/Order?orderId={orderDto.Id}");
 
                 return new CheckoutResultDTO
@@ -213,12 +220,11 @@ namespace BookStore.Application.Services
                 await _unitOfWork.Orders.UpdateAsync(order);
                 await _unitOfWork.SaveChangesAsync();
 
-                // Thông báo cho Admin
+                // Thông báo cho Admin qua SignalR
                 await _notificationService.SendAdminNotificationAsync(
-                    "Thanh toán ZaloPay",
-                    $"Đơn hàng {order.OrderNumber} đã thanh toán thành công qua ZaloPay.",
-                    $"/admin/order/details/{order.Id}"
-                );
+                    "Thanh toán thành công",
+                    $"Đơn hàng {order.OrderNumber} đã thanh toán thành công qua ZaloPay.", 
+                    $"/Admin/Order?orderId={order.Id}");
             }
 
             return (true, "success");
@@ -445,8 +451,51 @@ namespace BookStore.Application.Services
                     });
                 }
             }
-
             return result;
+        }
+
+        public async Task<bool> CancelExpiredOrderAsync(int orderId)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var order = await _unitOfWork.Orders.GetOrderByIdWithDetailsAsync(orderId);
+                if (order == null || order.Status != OrderStatus.Pending) return false;
+
+                // 1. Cập nhật trạng thái đơn hàng
+                order.Status = OrderStatus.Cancelled;
+
+                // 2. Hoàn lại tồn kho cho từng sản phẩm
+                foreach (var detail in order.OrderDetails)
+                {
+                    var product = await _unitOfWork.Products.GetByIdAsync(detail.ProductId);
+                    if (product != null)
+                    {
+                        var oldQty = product.Quantity;
+                        product.Quantity += detail.Quantity;
+
+                        // Ghi log lịch sử kho (Hệ thống tự động hoàn kho)
+                        var history = new StockHistory
+                        {
+                            ProductId = product.Id,
+                            ChangeQuantity = detail.Quantity,
+                            Reason = $"Hoàn kho tự động cho đơn hàng quá hạn #{order.OrderNumber}",
+                            ChangedBy = "System-Cleanup",
+                            CreatedAt = DateTime.Now
+                        };
+                        await _unitOfWork.StockHistories.AddAsync(history);
+                    }
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackAsync();
+                return false;
+            }
         }
     }
 }

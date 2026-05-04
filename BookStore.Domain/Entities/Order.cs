@@ -34,7 +34,8 @@ public enum PaymentMethod
     PayPal,
     BankTransfer,
     ZaloPay,
-    PayOS
+    PayOS,
+    VNPay
 }
 public enum OrderStatus
 {

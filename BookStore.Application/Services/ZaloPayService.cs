@@ -9,9 +9,11 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Linq;
 
+using BookStore.Application.Interfaces;
+
 namespace BookStore.Application.Services
 {
-    public class ZaloPayService
+    public class ZaloPayService : IZaloPayService
     {
         private readonly ZaloPayConfig _config;
         private readonly HttpClient _httpClient;

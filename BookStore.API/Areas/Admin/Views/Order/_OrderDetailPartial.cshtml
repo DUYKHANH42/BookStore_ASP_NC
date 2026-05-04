@@ -40,8 +40,18 @@
         <div class="bg-slate-50/50 rounded-[24px] p-5 border border-slate-100">
             <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Trạng thái hiện tại</h6>
             <div class="mb-6">
+                @{
+                    var statusText = Model.Status switch {
+                        "Pending" => "Chờ thanh toán",
+                        "Paid" => "Đã thanh toán",
+                        "Shipping" => "Đang giao hàng",
+                        "Completed" => "Đã hoàn thành",
+                        "Cancelled" => "Đã hủy",
+                        _ => Model.Status
+                    };
+                }
                 <span class="status-badge status-@Model.Status.ToLower() px-4 py-2 text-xs">
-                    @Model.Status
+                    @statusText
                 </span>
             </div>
 
