@@ -127,5 +127,13 @@ namespace BookStore.API.Areas.Customer.Controllers
             if (!result.IsSuccess) return BadRequest(result);
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync("Cookies");
+            return Ok(new { success = true, message = "Đã đăng xuất thành công." });
+        }
     }
 }

@@ -34,6 +34,12 @@ namespace BookStore.Application.Services
             };
         }
 
+        public async Task<IEnumerable<ProductDTO>> GetAllProductsAsync()
+        {
+            var (items, _) = await _unitOfWork.Products.GetFilteredPagedAsync(new ProductQueryParameters { PageSize = 1000 });
+            return items.Select(b => MapToDTO(b));
+        }
+
         public async Task<ProductDTO?> GetProductByIdAsync(int id)
         {
             var product = await _unitOfWork.Products.GetProductWithDetailsAsync(id);

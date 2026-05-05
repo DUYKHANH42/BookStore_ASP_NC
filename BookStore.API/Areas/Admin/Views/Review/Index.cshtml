@@ -5,22 +5,34 @@
 }
 
 <div class="space-y-8 animate-fadeIn">
-    <!-- Header -->
+    <!-- Filters & Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Quản lý đánh giá</h2>
             <p class="text-slate-500 font-medium">Lắng nghe phản hồi từ <span class="text-blue-600 font-bold">khách hàng</span> để cải thiện dịch vụ.</p>
         </div>
+        
+        <div class="flex items-center gap-3 bg-white pl-5 rounded-2xl border border-slate-100 shadow-sm focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+            <span class="material-symbols-outlined text-slate-400">filter_list</span>
+            <select id="productFilter" onchange="filterByProduct(this.value)" 
+                    class="bg-transparent border-none outline-none text-[11px] font-black uppercase tracking-widest text-slate-700 pr-12 py-4 cursor-pointer min-w-[240px]">
+                <option value="">Tất cả sản phẩm</option>
+                @foreach(var p in ViewBag.Products as IEnumerable<ProductDTO>)
+                {
+                    <option value="@p.Id" selected="@(ViewBag.SelectedProductId == p.Id)">@p.Name</option>
+                }
+            </select>
+        </div>
     </div>
 
-    <!-- Stats Summary (Optional) -->
+    <!-- Stats Summary -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="glass-card p-6 rounded-[2rem] premium-shadow bg-white flex items-center gap-4">
             <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <span class="material-symbols-outlined">reviews</span>
             </div>
             <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng đánh giá</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lượt đánh giá</p>
                 <p class="text-xl font-black text-slate-900">@Model.Count()</p>
             </div>
         </div>
@@ -29,10 +41,22 @@
                 <span class="material-symbols-outlined">star</span>
             </div>
             <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trung bình</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trung bình sao</p>
                 <p class="text-xl font-black text-slate-900">@(Model.Any() ? Model.Average(x => x.Rating).ToString("F1") : "0") / 5</p>
             </div>
         </div>
+        @if (ViewBag.SelectedProductId != null)
+        {
+            <div class="md:col-span-2 glass-card p-6 rounded-[2rem] premium-shadow bg-blue-600 flex items-center gap-4 text-white">
+                <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-black text-white/60 uppercase tracking-widest">Đang xem sản phẩm</p>
+                    <p class="text-sm font-black truncate">@((ViewBag.Products as IEnumerable<ProductDTO>).FirstOrDefault(x => x.Id == ViewBag.SelectedProductId)?.Name)</p>
+                </div>
+            </div>
+        }
     </div>
 
     <!-- Reviews Table -->
@@ -50,6 +74,17 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="px-8 py-20 text-center">
+                                <div class="flex flex-col items-center gap-4">
+                                    <span class="material-symbols-outlined text-5xl text-slate-200">reviews</span>
+                                    <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Không có đánh giá nào</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
                     @foreach (var r in Model)
                     {
                         <tr class="hover:bg-slate-50/30 transition-all duration-300 group">
@@ -117,7 +152,7 @@
 
 <!-- Reply Modal -->
 <div id="replyModal" class="modal-overlay hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onclick="if(event.target === this) closeReplyModal()">
-    <div class="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl animate-modalIn flex flex-col">
+    <div class="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl animate-modalIn flex flex-col overflow-hidden">
         <div class="p-8 border-b border-slate-50 flex justify-between items-center shrink-0">
             <div>
                 <h3 class="text-2xl font-black text-slate-900 tracking-tight">Phản hồi đánh giá</h3>
@@ -128,12 +163,11 @@
             </button>
         </div>
         <div class="p-8 space-y-6">
-            <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Nội dung phản hồi</label>
-                <textarea id="replyContent" rows="4" placeholder="Nhập phản hồi của bạn..." 
-                          class="w-full bg-slate-50 border border-slate-100 rounded-3xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all resize-none"></textarea>
-            </div>
-            <button onclick="submitReply()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-slate-900/20 hover:bg-black transition-premium active:scale-95">
+            <textarea id="replyContent" name="reply" rows="4" placeholder="Nhập phản hồi của bạn..." 
+                      class="w-full bg-slate-50 border border-slate-100 rounded-3xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all resize-none"></textarea>
+            <span class="invalid-feedback hidden text-rose-500 text-[10px] font-bold uppercase tracking-widest pl-4"></span>
+            
+            <button onclick="submitReply()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-slate-900/20 hover:bg-black transition-premium active:scale-95 mt-4">
                 Gửi phản hồi
             </button>
         </div>
@@ -144,8 +178,13 @@
     <script>
         let currentReviewId = null;
 
+        function filterByProduct(productId) {
+            window.location.href = '/Admin/Review?productId=' + productId;
+        }
+
         function openReplyModal(id, userName, currentReply) {
             currentReviewId = id;
+            ValidationHelper.clearErrors($('#replyModal'));
             $('#replyTarget').text('Gửi tới: ' + userName);
             $('#replyContent').val(currentReply);
             $('#replyModal').removeClass('hidden').addClass('flex');
@@ -157,34 +196,57 @@
 
         function submitReply() {
             const reply = $('#replyContent').val();
+            ValidationHelper.clearErrors($('#replyModal'));
+
             if (!reply) {
-                alert('Vui lòng nhập nội dung phản hồi');
+                ValidationHelper.showFieldError($('#replyContent'), 'Vui lòng nhập nội dung phản hồi');
                 return;
             }
 
-            fetch('/Admin/Review/Reply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reviewId: currentReviewId, reply: reply })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.message);
+            const btn = $('#replyModal button[onclick="submitReply()"]');
+            const originalText = btn.text();
+            btn.prop('disabled', true).text('Đang gửi...');
+
+            $.ajax({
+                url: '/Admin/Review/Reply',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ reviewId: currentReviewId, reply: reply }),
+                success: function (data) {
+                    if (data.success) {
+                        Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
+                    } else {
+                        if (data.errors) {
+                            ValidationHelper.showErrors($('#replyModal'), data.errors);
+                        } else {
+                            Swal.fire('Lỗi', data.message, 'error');
+                        }
+                    }
+                },
+                complete: function() {
+                    btn.prop('disabled', false).text(originalText);
                 }
             });
         }
 
         function toggleReviewStatus(id) {
-            fetch('/Admin/Review/ToggleStatus/' + id, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.message);
+            Swal.fire({
+                title: 'Xác nhận?',
+                text: "Bạn muốn thay đổi trạng thái hiển thị của đánh giá này?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/Admin/Review/ToggleStatus/' + id, function (data) {
+                        if (data.success) {
+                            toastr.success(data.message);
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            Swal.fire('Lỗi', data.message, 'error');
+                        }
+                    });
                 }
             });
         }

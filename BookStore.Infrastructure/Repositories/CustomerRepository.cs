@@ -1,7 +1,9 @@
 ﻿using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Persistence;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookStore.Infrastructure.Repositories
@@ -15,5 +17,6 @@ namespace BookStore.Infrastructure.Repositories
             return await _context.Customers
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
+      
     }
 }

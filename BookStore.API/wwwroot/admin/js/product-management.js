@@ -93,15 +93,25 @@ $(document).ready(function () {
             contentType: false,
             success: function (res) {
                 if (res.success) {
-                    alert(res.message);
+                    Swal.fire({
+                        title: 'Thành công!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                     closeProductModal();
                     loadProducts(currentPage);
                 } else {
-                    alert(res.message);
+                    if (res.errors) {
+                        ValidationHelper.showErrors($('#productForm'), res.errors);
+                    } else {
+                        Swal.fire('Lỗi', res.message, 'error');
+                    }
                 }
             },
             error: function () {
-                alert('Có lỗi xảy ra trong quá trình xử lý.');
+                Swal.fire('Lỗi', 'Có lỗi hệ thống xảy ra trong quá trình xử lý.', 'error');
             },
             complete: function () {
                 // Restore button
@@ -132,11 +142,11 @@ $(document).ready(function () {
 
         $.post('/Admin/FlashSale/Create', formData, function (res) {
             if (res.success) {
-                alert(res.message);
+                Swal.fire('Thành công', res.message, 'success');
                 loadFlashSales(productId);
                 $('#flashSaleForm')[0].reset();
             } else {
-                alert(res.message);
+                Swal.fire('Lỗi', res.message, 'error');
             }
         });
     });
@@ -169,6 +179,7 @@ function loadProducts(page = 1) {
  * Modal Controls
  */
 window.openProductModal = function (id) {
+    ValidationHelper.clearErrors($('#productForm'));
     $('#productForm')[0].reset();
     $('#productId').val(id);
     $('#imagePreview').html('<span class="material-symbols-outlined text-slate-200 text-5xl">add_photo_alternate</span>');
@@ -225,11 +236,23 @@ window.editProduct = function (id) {
 };
 
 window.toggleProductStatus = function (id) {
-    if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái sản phẩm này?')) return;
-
-    $.post('/Admin/Product/ToggleStatus', { id: id }, function (res) {
-        if (res.success) {
-            loadProducts(currentPage);
+    Swal.fire({
+        title: 'Xác nhận?',
+        text: "Bạn có chắc chắn muốn thay đổi trạng thái sản phẩm này?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#0f172a',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Đồng ý',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('/Admin/Product/ToggleStatus', { id: id }, function (res) {
+                if (res.success) {
+                    loadProducts(currentPage);
+                    toastr.success('Cập nhật trạng thái thành công');
+                }
+            });
         }
     });
 };

@@ -62,7 +62,11 @@ namespace BookStore.API.Areas.Admin.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại." });
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return Json(new { success = false, message = "Thông tin sản phẩm không hợp lệ", errors = errors });
             }
 
             try

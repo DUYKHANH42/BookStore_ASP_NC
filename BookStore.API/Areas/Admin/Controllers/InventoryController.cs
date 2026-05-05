@@ -85,8 +85,11 @@ namespace BookStore.API.Areas.Admin.Controllers
         {
             if (!ModelState.IsValid) 
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + errors });
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return Json(new { success = false, message = "Dữ liệu nhập vào không hợp lệ", errors = errors });
             }
 
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");

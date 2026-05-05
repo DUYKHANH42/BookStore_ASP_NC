@@ -31,7 +31,10 @@
                     <select name="SupplierId" id="supplierSelect" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none cursor-pointer">
                         @if (suppliers != null)
                         {
-                            foreach(var s in suppliers) { <option value="@s.Id">@s.Name</option> }
+                            foreach (var s in suppliers)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
                         }
                     </select>
                 </div>
@@ -39,6 +42,7 @@
                     <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Ghi chú phiếu nhập</label>
                     <input type="text" name="Notes" id="receiptNotes" placeholder="Ghi chú chung cho toàn bộ lô hàng..."
                            class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm">
+                    <span class="invalid-feedback hidden"></span>
                 </div>
             </div>
 
@@ -57,8 +61,9 @@
                     <div class="space-y-2">
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mã SKU</label>
                         <div class="sku-input-wrapper">
-                            <input type="text" id="skuInput" placeholder="Gõ SKU..." 
+                            <input type="text" id="skuInput" placeholder="Gõ SKU..."
                                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-700 outline-none focus:border-blue-600 transition-all">
+                            <span class="invalid-feedback hidden"></span>
                             <div class="sku-status-icon"></div>
                         </div>
                     </div>
@@ -66,11 +71,13 @@
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Số lượng nhập</label>
                         <input type="number" id="qtyInput" min="1" value="1"
                                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-700 outline-none focus:border-blue-600 transition-all">
+                        <span class="invalid-feedback hidden"></span>
                     </div>
                     <div class="space-y-2">
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Giá nhập (₫)</label>
                         <input type="number" id="priceInput" min="0" placeholder="0"
                                class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-700 outline-none focus:border-blue-600 transition-all">
+                        <span class="invalid-feedback hidden"></span>
                     </div>
                 </div>
 
@@ -85,6 +92,7 @@
                         <div class="space-y-2 md:col-span-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Tên sản phẩm/Sách</label>
                             <input type="text" id="nameInput" placeholder="Nhập tên..." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700">
+                            <span class="invalid-feedback hidden"></span>
                         </div>
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Thương hiệu/Tác giả</label>
@@ -93,12 +101,19 @@
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Giá bán niêm yết (₫)</label>
                             <input type="number" id="sellingPriceInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-blue-600">
+                            <span class="invalid-feedback hidden"></span>
                         </div>
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Danh mục chính</label>
                             <select id="categorySelect" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-700">
                                 <option value="">-- Chọn danh mục --</option>
-                                @if (categories != null) { foreach(var cat in categories) { <option value="@cat.Id">@cat.Name</option> } }
+                                @if (categories != null)
+                                {
+                                    foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                }
                             </select>
                         </div>
                         <div class="space-y-2">
@@ -115,23 +130,21 @@
                         <div class="md:col-span-2 grid grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Ảnh chính</label>
-                                <div class="trigger-image-input flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-dashed border-slate-200 cursor-pointer">
+                                <label for="inventoryMainImage" class="trigger-image-input flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-dashed border-slate-200 cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all">
                                     <div id="imagePreview" class="w-20 h-20 rounded-lg bg-slate-50 flex items-center justify-center overflow-hidden">
                                         <span class="material-symbols-outlined text-slate-200">add_photo_alternate</span>
                                     </div>
-                                    <input type="file" id="imageInput" accept="image/*" class="hidden">
                                     <span class="text-[9px] font-black uppercase text-blue-600">Chọn ảnh</span>
-                                </div>
+                                </label>
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Ảnh phụ</label>
-                                <div class="trigger-gallery-input flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-dashed border-slate-200 cursor-pointer">
+                                <label for="inventoryGalleryImages" class="trigger-gallery-input flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-dashed border-slate-200 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/30 transition-all">
                                     <div id="galleryPreview" class="w-full h-20 bg-slate-50 rounded-lg flex flex-wrap gap-1 p-1 overflow-y-auto justify-center items-center">
                                         <span class="material-symbols-outlined text-slate-200">collections</span>
                                     </div>
-                                    <input type="file" id="additionalImagesInput" accept="image/*" multiple class="hidden">
                                     <span class="text-[9px] font-black uppercase text-emerald-600">Chọn nhiều</span>
-                                </div>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -152,7 +165,7 @@
                         Tổng cộng: <span id="totalItemsCount">0</span> SP
                     </div>
                 </div>
-                
+
                 <div class="border border-slate-100 rounded-3xl overflow-hidden shadow-sm bg-white">
                     <table class="w-full text-xs" id="tempProductTable">
                         <thead class="bg-slate-50 border-b border-slate-100">
@@ -186,10 +199,14 @@
                     Xác nhận nhập kho (<span class="count">0</span> SP)
                 </button>
             </div>
+            <!-- Đặt ở cuối form, ngoài mọi div hidden -->
+            <input type="file" id="inventoryMainImage" accept="image/*" class="hidden">
+            <input type="file" id="inventoryGalleryImages" accept="image/*" multiple class="hidden">
         </form>
     </div>
 </div>
 
 @section Scripts {
-    <script src="~/admin/js/inventory-management.js"></script>
+    <script src="~/admin/js/validation-helper.js"></script>
+    <script src="~/admin/js/inventory-management-v2.js"></script>
 }

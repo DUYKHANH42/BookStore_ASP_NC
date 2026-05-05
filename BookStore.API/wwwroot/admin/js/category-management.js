@@ -4,11 +4,19 @@ $(document).ready(function () {
         e.preventDefault();
         const formData = $(this).serialize();
         
+        ValidationHelper.clearErrors($(this));
+        
         $.post('/Admin/Category/UpsertCategory', formData, function (res) {
             if (res.success) {
                 closeCategoryModal();
                 loadCategoryList();
-                showToast(res.message, 'success');
+                toastr.success(res.message);
+            } else {
+                if (res.errors) {
+                    ValidationHelper.showErrors($('#categoryForm'), res.errors);
+                } else {
+                    Swal.fire('Lỗi', res.message, 'error');
+                }
             }
         });
     });
@@ -18,11 +26,19 @@ $(document).ready(function () {
         e.preventDefault();
         const formData = $(this).serialize();
         
+        ValidationHelper.clearErrors($(this));
+        
         $.post('/Admin/Category/UpsertSubCategory', formData, function (res) {
             if (res.success) {
                 closeSubCategoryModal();
                 loadCategoryList();
-                showToast(res.message, 'success');
+                toastr.success(res.message);
+            } else {
+                if (res.errors) {
+                    ValidationHelper.showErrors($('#subCategoryForm'), res.errors);
+                } else {
+                    Swal.fire('Lỗi', res.message, 'error');
+                }
             }
         });
     });
@@ -36,6 +52,7 @@ function loadCategoryList() {
 
 // Modal Category
 window.openCategoryModal = function (id) {
+    ValidationHelper.clearErrors($('#categoryForm'));
     $('#categoryForm')[0].reset();
     $('#categoryId').val(id);
     
@@ -57,6 +74,7 @@ window.closeCategoryModal = function () {
 
 // Modal SubCategory
 window.openSubCategoryModal = function (id, categoryId, categoryName) {
+    ValidationHelper.clearErrors($('#subCategoryForm'));
     $('#subCategoryForm')[0].reset();
     $('#subCategoryId').val(id);
     $('#parentCategoryId').val(categoryId);
@@ -80,33 +98,52 @@ window.closeSubCategoryModal = function () {
 
 // Delete Category
 window.deleteCategory = function (id) {
-    if (confirm('Bạn có chắc chắn muốn xóa danh mục này? Các danh mục phụ liên quan cũng có thể bị ảnh hưởng.')) {
-        $.post('/Admin/Category/DeleteCategory', { id: id }, function (res) {
-            if (res.success) {
-                loadCategoryList();
-                showToast(res.message, 'success');
-            } else {
-                showToast(res.message, 'error');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Xác nhận xóa?',
+        text: "Các danh mục phụ liên quan cũng có thể bị ảnh hưởng.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('/Admin/Category/DeleteCategory', { id: id }, function (res) {
+                if (res.success) {
+                    loadCategoryList();
+                    toastr.success(res.message);
+                } else {
+                    Swal.fire('Lỗi', res.message, 'error');
+                }
+            });
+        }
+    });
 }
 
 // Delete SubCategory
 window.deleteSubCategory = function (id) {
-    if (confirm('Bạn có chắc chắn muốn xóa danh mục phụ này?')) {
-        $.post('/Admin/Category/DeleteSubCategory', { id: id }, function (res) {
-            if (res.success) {
-                loadCategoryList();
-                showToast(res.message, 'success');
-            } else {
-                showToast(res.message, 'error');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Xác nhận xóa?',
+        text: "Bạn có chắc chắn muốn xóa danh mục phụ này?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('/Admin/Category/DeleteSubCategory', { id: id }, function (res) {
+                if (res.success) {
+                    loadCategoryList();
+                    toastr.success(res.message);
+                } else {
+                    Swal.fire('Lỗi', res.message, 'error');
+                }
+            });
+        }
+    });
 }
 
-function showToast(message, type) {
-    // Giả sử có toast component, nếu chưa có thì dùng alert tạm
-    alert(message);
-}
+

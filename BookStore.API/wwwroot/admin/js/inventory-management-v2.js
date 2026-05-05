@@ -14,7 +14,7 @@ $(document).ready(function () {
         clearTimeout(skuTimer);
 
         if (sku.length < 3) {
-            $('#productDetailSection').slideUp(300);
+            $('#productDetailSection').slideUp(300, function () { $(this).addClass('hidden'); });
             return;
         }
 
@@ -28,7 +28,7 @@ $(document).ready(function () {
         icon.html('<span class="material-symbols-outlined animate-spin text-slate-300">refresh</span>');
 
         $.get('/Admin/Inventory/CheckSKU', { sku: sku }, function (res) {
-            $('#productDetailSection').slideDown(400);
+            $('#productDetailSection').removeClass('hidden').hide().slideDown(400);
             currentProductData = res;
 
             if (res.exists) {
@@ -41,7 +41,8 @@ $(document).ready(function () {
                 $('#brandInput').val(res.brand);
                 $('#sellingPriceInput').val(res.price);
                 $('#descriptionInput').val(res.description);
-                $('#categorySelect').val(res.categoryId).trigger('change', [res.subCategoryId]);
+                $('#categorySelect').val(res.categoryId);
+                loadSubCategories(res.categoryId, res.subCategoryId);
 
                 // Hiển thị ảnh cũ
                 if (res.imageUrl) {
@@ -80,16 +81,27 @@ $(document).ready(function () {
         }
     }
     $('#btnAddToList').on('click', function () {
+        ValidationHelper.clearErrors($('#addProductSection'));
+
         const sku = $('#skuInput').val();
         const qty = parseInt($('#qtyInput').val());
         const price = parseFloat($('#priceInput').val());
 
-        if (!sku || sku.length < 3) { alert('Vui lòng nhập SKU hợp lệ'); return; }
-        if (!qty || qty <= 0) { alert('Số lượng phải > 0'); return; }
-        if (isNaN(price) || price < 0) { alert('Giá nhập không hợp lệ'); return; }
+        if (!sku || sku.length < 3) { 
+            ValidationHelper.showFieldError($('#skuInput'), 'Vui lòng nhập SKU hợp lệ (ít nhất 3 ký tự)'); 
+            return; 
+        }
+        if (!qty || qty <= 0) { 
+            ValidationHelper.showFieldError($('#qtyInput'), 'Số lượng phải lớn hơn 0'); 
+            return; 
+        }
+        if (isNaN(price) || price < 0) { 
+            ValidationHelper.showFieldError($('#priceInput'), 'Giá nhập không hợp lệ'); 
+            return; 
+        }
 
         if (productList.some(p => p.sku === sku)) {
-            alert('Sản phẩm này đã có trong danh sách chờ');
+            ValidationHelper.showFieldError($('#skuInput'), 'Sản phẩm này đã có trong danh sách chờ');
             return;
         }
 
@@ -106,18 +118,31 @@ $(document).ready(function () {
             subCategoryId: $('#subCategorySelect').val(),
             description: $('#descriptionInput').val(),
             // Lưu trữ File object
-            mainImage: $('#imageInput')[0].files[0],
-            galleryImages: $('#additionalImagesInput')[0].files
+            mainImage: $('#inventoryMainImage')[0].files[0],
+            galleryImages: $('#inventoryGalleryImages')[0].files
         };
 
         productList.push(product);
         updateTable();
         resetProductForm(true);
         $('#skuInput').val('').focus();
-        $('#productDetailSection').slideUp();
+        $('#productDetailSection').slideUp(300, function () { $(this).addClass('hidden'); });
         $('.sku-status-icon').html('');
     });
 
+    function loadSubCategories(catId, selectedSubId) {
+        const subSelect = $('#subCategorySelect');
+        if (!catId) {
+            subSelect.html('<option value="">-- Chọn danh mục con --</option>');
+            return;
+        }
+        $.get('/Admin/Inventory/GetSubCategories', { categoryId: catId }, function (res) {
+            let html = '<option value="">-- Chọn danh mục con --</option>';
+            res.forEach(item => html += `<option value="${item.id}">${item.name}</option>`);
+            subSelect.html(html);
+            if (selectedSubId) subSelect.val(selectedSubId);
+        });
+    }
     function updateTable() {
         const tbody = $('#tempProductTable tbody');
         const emptyRow = $('#emptyRow');
@@ -209,10 +234,16 @@ $(document).ready(function () {
             contentType: false,
             success: function (res) {
                 if (res.success) {
-                    alert(res.message);
-                    window.location.href = '/Admin/Inventory/Index';
+                    Swal.fire('Thành công', res.message, 'success').then(() => {
+                        window.location.href = '/Admin/Inventory/Index';
+                    });
                 } else {
-                    alert(res.message);
+                    if (res.errors) {
+                        ValidationHelper.showErrors($('#importStockForm'), res.errors);
+                        Swal.fire('Lỗi', 'Vui lòng kiểm tra lại thông tin các trường bị đỏ', 'error');
+                    } else {
+                        Swal.fire('Lỗi', res.message, 'error');
+                    }
                     btn.prop('disabled', false).html(originalText);
                 }
             },
@@ -224,46 +255,41 @@ $(document).ready(function () {
     });
 
     // Các hàm phụ trợ (Preview ảnh, Load Category...)
-    $(document).on('click', '.trigger-image-input', function () { $('#imageInput').click(); });
-    $(document).on('click', '.trigger-gallery-input', function () { $('#additionalImagesInput').click(); });
 
-    $('#imageInput').change(function () {
+
+    $('#inventoryMainImage').on('change', function (e) {
         const file = this.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = e => $('#imagePreview').html(`<img src="${e.target.result}" class="w-full h-full object-cover">`);
+            reader.onload = e => {
+                $('#imagePreview').empty().append(`<img src="${e.target.result}" class="w-full h-full object-cover">`);
+            };
             reader.readAsDataURL(file);
         }
     });
 
-    $('#additionalImagesInput').change(function () {
+    $('#inventoryGalleryImages').on('change', function (e) {
         const files = this.files;
-        $('#galleryPreview').html('');
-        for (let i = 0; i < files.length; i++) {
-            const reader = new FileReader();
-            reader.onload = e => $('#galleryPreview').append(`<div class="w-8 h-8 rounded overflow-hidden shadow-sm"><img src="${e.target.result}" class="w-full h-full object-cover"></div>`);
-            reader.readAsDataURL(files[i]);
+        if (files && files.length > 0) {
+            $('#galleryPreview').empty();
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    $('#galleryPreview').append(`<div class="w-8 h-8 rounded bg-white overflow-hidden shadow-sm border border-slate-100"><img src="${e.target.result}" class="w-full h-full object-cover"></div>`);
+                };
+                reader.readAsDataURL(file);
+            });
         }
     });
-
-    $('#categorySelect').on('change', function (e, subId) {
-        const catId = $(this).val();
-        const subSelect = $('#subCategorySelect');
-        if (!catId) { subSelect.html('<option value="">-- Chọn danh mục con --</option>'); return; }
-
-        $.get('/Admin/Inventory/GetSubCategories', { categoryId: catId }, function (res) {
-            let html = '<option value="">-- Chọn danh mục con --</option>';
-            res.forEach(item => html += `<option value="${item.id}">${item.name}</option>`);
-            subSelect.html(html);
-            if (subId) subSelect.val(subId);
-        });
+    $('#categorySelect').on('change', function () {
+        loadSubCategories($(this).val(), null);
     });
 
     function resetProductForm(includeSKU) {
         if (includeSKU) $('#skuInput').val('');
         $('#qtyInput').val(1);
         $('#priceInput').val('');
-        $('#nameInput, #brandInput, #sellingPriceInput, #descriptionInput, #imageInput, #additionalImagesInput').val('');
+        $('#nameInput, #brandInput, #sellingPriceInput, #descriptionInput, #inventoryMainImage, #inventoryGalleryImages').val('');
         $('#categorySelect').val('');
         $('#subCategorySelect').html('<option value="">-- Chọn danh mục con --</option>');
         $('#imagePreview').html('<span class="material-symbols-outlined text-slate-200">add_photo_alternate</span>');

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookStore.Application.DTO
 {
@@ -47,14 +48,26 @@ namespace BookStore.Application.DTO
 
     public class ProductCreateDTO
     {
+        [Required(ErrorMessage = "Tên sản phẩm là bắt buộc")]
         public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Thương hiệu là bắt buộc")]
         public string Brand { get; set; } = string.Empty;
+
         public string Description { get; set; } = string.Empty;
+
+        [Range(1000, double.MaxValue, ErrorMessage = "Giá bán phải từ 1,000₫")]
         public decimal Price { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "Số lượng không được âm")]
         public int Quantity { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng chọn danh mục chính")]
         public int CategoryId { get; set; }
+
         public int? SubCategoryId { get; set; }
+
+        [Required(ErrorMessage = "SKU là bắt buộc")]
         public string? SKU { get; set; }
-        // Không còn các trường Sale ở đây
     }
 }

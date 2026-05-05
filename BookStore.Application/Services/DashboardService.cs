@@ -2,6 +2,8 @@ using BookStore.Application.DTO;
 using BookStore.Application.Interfaces;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,17 +14,19 @@ namespace BookStore.Application.Services
     public class DashboardService : IDashboardService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DashboardService(IUnitOfWork unitOfWork)
+        public DashboardService(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
         {
             _unitOfWork = unitOfWork;
+            _userManager = userManager;
         }
 
         public async Task<DashboardDataDTO> GetDashboardDataAsync(DateTime startDate, DateTime endDate)
         {
             var orders = await _unitOfWork.Orders.GetOrdersByDateRangeAsync(startDate, endDate);
             var allProducts = await _unitOfWork.Products.GetAllAsync();
-            var allCustomers = await _unitOfWork.Customers.GetAllAsync();
+            var totalCustomers = await _userManager.Users.CountAsync();
 
             var data = new DashboardDataDTO();
 
@@ -32,7 +36,7 @@ namespace BookStore.Application.Services
                 TotalOrders = orders.Count(),
                 TotalRevenue = orders.Where(o => o.Status != OrderStatus.Cancelled).Sum(o => o.TotalPrice),
                 TotalProducts = allProducts.Count(),
-                TotalCustomers = allCustomers.Count()
+                TotalCustomers = totalCustomers
             };
 
             // 2. Dữ liệu biểu đồ doanh thu (Revenue Chart)

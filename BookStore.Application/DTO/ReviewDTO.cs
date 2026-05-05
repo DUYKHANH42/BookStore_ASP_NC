@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookStore.Application.DTO
 {
@@ -27,6 +28,7 @@ namespace BookStore.Application.DTO
     public class AdminReplyDTO
     {
         public int ReviewId { get; set; }
+        [Required(ErrorMessage = "Nội dung phản hồi không được để trống")]
         public string Reply { get; set; } = string.Empty;
     }
 }

@@ -2,6 +2,7 @@ using BookStore.Application.DTO;
 using BookStore.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookStore.API.Areas.Admin.Controllers
@@ -41,6 +42,15 @@ namespace BookStore.API.Areas.Admin.Controllers
         [HttpPost]
         public async Task<IActionResult> UpsertCategory(CategoryDTO dto)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ", errors = errors });
+            }
+
             if (dto.Id == 0)
             {
                 await _categoryService.CreateAsync(dto);
@@ -72,6 +82,15 @@ namespace BookStore.API.Areas.Admin.Controllers
         [HttpPost]
         public async Task<IActionResult> UpsertSubCategory(SubCategoryDTO dto)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                );
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ", errors = errors });
+            }
+
             if (dto.Id == 0)
             {
                 await _subCategoryService.CreateAsync(dto);
