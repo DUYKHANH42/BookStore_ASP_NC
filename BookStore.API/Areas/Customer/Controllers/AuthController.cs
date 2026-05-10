@@ -160,7 +160,6 @@ namespace BookStore.API.Areas.Customer.Controllers
             return Ok(result);
         }
 
-        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
