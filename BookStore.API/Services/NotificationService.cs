@@ -1,4 +1,4 @@
-using BookStore.Application.Interfaces;
+﻿using BookStore.Application.Interfaces;
 using BookStore.API.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
@@ -29,7 +29,7 @@ namespace BookStore.API.Services
                     Title = title,
                     Message = message,
                     Link = link,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime()
                 };
                 await _unitOfWork.Notifications.AddAsync(notification);
                 await _unitOfWork.SaveChangesAsync();
@@ -49,3 +49,4 @@ namespace BookStore.API.Services
         }
     }
 }
+

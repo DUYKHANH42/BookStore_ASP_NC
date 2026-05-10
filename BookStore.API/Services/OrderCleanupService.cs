@@ -1,4 +1,4 @@
-using BookStore.Application.Services;
+﻿using BookStore.Application.Services;
 using BookStore.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,7 +35,7 @@ namespace BookStore.API.Services
                         var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
 
                         // Lấy đơn hàng Pending > 15 phút
-                        var expirationTime = DateTime.Now.AddMinutes(-15);
+                        var expirationTime = BookStore.Domain.Common.TimeHelper.GetVnTime().AddMinutes(-15);
                         var expiredOrders = await unitOfWork.Orders.GetAllAsync();
                         var ordersToCancel = expiredOrders.Where(o => o.Status == OrderStatus.Pending && o.CreatedAt <= expirationTime).ToList();
 
@@ -57,3 +57,4 @@ namespace BookStore.API.Services
         }
     }
 }
+

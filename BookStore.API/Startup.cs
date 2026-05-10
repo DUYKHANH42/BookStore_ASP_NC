@@ -7,6 +7,7 @@ using BookStore.Infrastructure.Identity;
 using BookStore.Infrastructure.Persistence;
 using BookStore.Infrastructure.Repositories;
 using BookStore.Infrastructure.Shared;
+using BookStore.Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -57,6 +58,7 @@ namespace BookStore.API
             .AddEntityFrameworkStores<BookStoreDbContext>()
             .AddDefaultTokenProviders();
             services.AddScoped<IAuthService, AuthRepository>();
+            services.AddSingleton<IRedisService, BookStore.Infrastructure.Services.RedisService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -84,7 +86,7 @@ namespace BookStore.API
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<PricingService>();
             services.AddScoped<INotificationService, NotificationService>();
-            services.AddScoped<IFileService, FileService>();
+            services.AddScoped<IFileService, CloudinaryService>();
             var key = System.Text.Encoding.UTF8.GetBytes(Configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_123");
             services.AddAuthentication(options =>
             {
@@ -111,6 +113,27 @@ namespace BookStore.API
                     ValidAudience = Configuration["JWT:ValidAudience"],
                     ValidIssuer = Configuration["JWT:ValidIssuer"],
                     IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(key)
+                };
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var redisService = context.HttpContext.RequestServices.GetRequiredService<BookStore.Domain.Interfaces.IRedisService>();
+                        var userId = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        var tokenVersionStr = context.Principal?.FindFirst("TokenVersion")?.Value;
+
+                        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(tokenVersionStr) || !int.TryParse(tokenVersionStr, out int tokenVersion))
+                        {
+                            context.Fail("Invalid token payload.");
+                            return;
+                        }
+
+                        var currentTokenVersion = await redisService.GetAsync<int>($"TokenVersion:{userId}");
+                        if (currentTokenVersion != tokenVersion)
+                        {
+                            context.Fail("Token is revoked or expired.");
+                        }
+                    }
                 };
             });
 

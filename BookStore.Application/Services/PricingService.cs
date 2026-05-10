@@ -1,4 +1,4 @@
-using BookStore.Domain.Entities;
+﻿using BookStore.Domain.Entities;
 using System;
 using System.Linq;
 
@@ -10,7 +10,7 @@ namespace BookStore.Application.Services
         {
             if (product == null) return 0;
 
-            var now = DateTime.Now;
+            var now = BookStore.Domain.Common.TimeHelper.GetVnTime();
             // Tìm Flash Sale đang hoạt động
             var activeSale = product.FlashSales?.FirstOrDefault(s => 
                 s.IsActive && 
@@ -32,3 +32,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

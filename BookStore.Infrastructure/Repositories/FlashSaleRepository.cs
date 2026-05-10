@@ -1,4 +1,4 @@
-using BookStore.Domain.Entities;
+﻿using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +14,7 @@ namespace BookStore.Infrastructure.Repositories
 
         public async Task<FlashSale?> GetActiveSaleByProductIdAsync(int productId)
         {
-            var now = DateTime.Now;
+            var now = BookStore.Domain.Common.TimeHelper.GetVnTime();
             return await _context.FlashSales
                 .Where(s => s.ProductId == productId && s.IsActive && s.StartTime <= now && s.EndTime >= now && s.SoldCount < s.SaleStock)
                 .OrderByDescending(s => s.StartTime)
@@ -30,3 +30,4 @@ namespace BookStore.Infrastructure.Repositories
         }
     }
 }
+

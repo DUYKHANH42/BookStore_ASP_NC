@@ -1,4 +1,4 @@
-using BookStore.Application.Configurations;
+﻿using BookStore.Application.Configurations;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ namespace BookStore.Application.Services
 
         public async Task<string?> CreateOrderAsync(int orderId, decimal amount, string orderNumber)
         {
-            var app_trans_id = $"{DateTime.Now:yyMMdd}_{orderId}_{DateTime.Now.Millisecond}"; 
+            var app_trans_id = $"{BookStore.Domain.Common.TimeHelper.GetVnTime():yyMMdd}_{orderId}_{BookStore.Domain.Common.TimeHelper.GetVnTime().Millisecond}"; 
             var embed_data = "{}";
             var item = "[]";
             var app_time = DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
@@ -86,3 +86,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

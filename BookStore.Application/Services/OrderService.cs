@@ -1,4 +1,4 @@
-using BookStore.Application.DTO;
+﻿using BookStore.Application.DTO;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using System;
@@ -39,14 +39,14 @@ namespace BookStore.Application.Services
 
             var order = new Order
             {
-                OrderNumber = $"ORD-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}",
+                OrderNumber = $"ORD-{BookStore.Domain.Common.TimeHelper.GetVnTime():yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}",
                 UserId = userId,
                 ShippingName = checkoutDto.ShippingName,
                 ShippingPhone = checkoutDto.ShippingPhone,
                 ShippingAddress = checkoutDto.ShippingAddress,
                 PaymentMethod = checkoutDto.PaymentMethod,
                 Status = OrderStatus.Pending,
-                CreatedAt = DateTime.Now
+                CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime()
             };
 
             decimal total = 0;
@@ -115,7 +115,7 @@ namespace BookStore.Application.Services
                     ProductId = product.Id,
                     ChangeQuantity = -item.Quantity,
                     Reason = $"Bán hàng (Đơn hàng {order.OrderNumber})",
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                     ChangedBy = operatorName
                 };
                 await _unitOfWork.StockHistories.AddAsync(stockLog);
@@ -257,7 +257,7 @@ namespace BookStore.Application.Services
                                 {
                                     flashSale.SoldCount = Math.Max(0, flashSale.SoldCount - detail.Quantity);
                                     // Nếu trước đó sale bị tắt do hết suất, giờ có suất lại thì bật lên (Tùy nghiệp vụ, ở đây t bật lại)
-                                    if (flashSale.SoldCount < flashSale.SaleStock && flashSale.EndTime > DateTime.Now)
+                                    if (flashSale.SoldCount < flashSale.SaleStock && flashSale.EndTime > BookStore.Domain.Common.TimeHelper.GetVnTime())
                                     {
                                         flashSale.IsActive = true;
                                     }
@@ -269,7 +269,7 @@ namespace BookStore.Application.Services
                                 ProductId = detail.ProductId,
                                 ChangeQuantity = detail.Quantity,
                                 Reason = $"Hoàn kho & Sale (Hủy đơn hàng {order.OrderNumber})",
-                                CreatedAt = DateTime.Now,
+                                CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                                 ChangedBy = operatorName
                             };
                             await _unitOfWork.StockHistories.AddAsync(stockLog);
@@ -481,7 +481,7 @@ namespace BookStore.Application.Services
                             ChangeQuantity = detail.Quantity,
                             Reason = $"Hoàn kho tự động cho đơn hàng quá hạn #{order.OrderNumber}",
                             ChangedBy = "System-Cleanup",
-                            CreatedAt = DateTime.Now
+                            CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime()
                         };
                         await _unitOfWork.StockHistories.AddAsync(history);
                     }
@@ -499,3 +499,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

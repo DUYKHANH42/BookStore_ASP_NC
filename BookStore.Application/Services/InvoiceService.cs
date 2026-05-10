@@ -1,4 +1,4 @@
-using BookStore.Application.DTO;
+﻿using BookStore.Application.DTO;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -122,7 +122,7 @@ namespace BookStore.Application.Services
                                 {
                                     cc.Item().AlignCenter().Text("ĐÃ XÁC THỰC").FontSize(8).Bold().FontColor(Colors.Red.Medium);
                                     cc.Item().AlignCenter().Text("LUMEN BOOKSTORE").FontSize(7).Bold().FontColor(Colors.Red.Medium);
-                                    cc.Item().AlignCenter().Text(DateTime.Now.ToString("dd/MM/yyyy")).FontSize(7).FontColor(Colors.Red.Medium);
+                                    cc.Item().AlignCenter().Text(BookStore.Domain.Common.TimeHelper.GetVnTime().ToString("dd/MM/yyyy")).FontSize(7).FontColor(Colors.Red.Medium);
                                 });
                             });
                         });
@@ -259,7 +259,7 @@ namespace BookStore.Application.Services
                                 {
                                     cc.Item().AlignCenter().Text("ĐÃ NHẬP KHO").FontSize(8).Bold().FontColor(Colors.Green.Medium);
                                     cc.Item().AlignCenter().Text("LUMEN BOOKSTORE").FontSize(7).Bold().FontColor(Colors.Green.Medium);
-                                    cc.Item().AlignCenter().Text(DateTime.Now.ToString("dd/MM/yyyy")).FontSize(7).FontColor(Colors.Green.Medium);
+                                    cc.Item().AlignCenter().Text(BookStore.Domain.Common.TimeHelper.GetVnTime().ToString("dd/MM/yyyy")).FontSize(7).FontColor(Colors.Green.Medium);
                                 });
                             });
                         });
@@ -276,3 +276,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

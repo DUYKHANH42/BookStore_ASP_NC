@@ -35,7 +35,7 @@ namespace BookStore.Application.Services
                 // Cập nhật đánh giá cũ
                 existingReview.Rating = dto.Rating;
                 existingReview.Comment = dto.Comment;
-                existingReview.UpdatedAt = DateTime.Now;
+                existingReview.UpdatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime();
                 await _unitOfWork.Reviews.UpdateAsync(existingReview);
                 await _unitOfWork.SaveChangesAsync();
                 return (true, "Đánh giá của bạn đã được cập nhật.");
@@ -49,7 +49,7 @@ namespace BookStore.Application.Services
                     UserId = userId,
                     Rating = dto.Rating,
                     Comment = dto.Comment,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                     IsActive = true
                 };
                 await _unitOfWork.Reviews.AddAsync(review);
@@ -62,7 +62,39 @@ namespace BookStore.Application.Services
         public async Task<IEnumerable<ReviewDTO>> GetAllReviewsAsync()
         {
             var reviews = await _unitOfWork.Reviews.GetAllWithIncludeAsync();
-            return reviews.Select(r => new ReviewDTO
+            return reviews.Select(r => MapToDTO(r)).OrderByDescending(x => x.CreatedAt);
+        }
+
+        public async Task<PagedResultDTO<ReviewDTO>> GetPagedReviewsAsync(int? productId, int pageNumber, int pageSize)
+        {
+            var reviews = await _unitOfWork.Reviews.GetAllWithIncludeAsync();
+            var query = reviews.AsQueryable();
+
+            if (productId.HasValue && productId.Value > 0)
+            {
+                query = query.Where(r => r.ProductId == productId.Value);
+            }
+
+            var totalCount = query.Count();
+            var items = query.OrderByDescending(r => r.CreatedAt)
+                             .Skip((pageNumber - 1) * pageSize)
+                             .Take(pageSize)
+                             .Select(r => MapToDTO(r))
+                             .ToList();
+
+            return new PagedResultDTO<ReviewDTO>
+            {
+                Items = items,
+                TotalItems = totalCount,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+        }
+
+        private ReviewDTO MapToDTO(Review r)
+        {
+            return new ReviewDTO
             {
                 Id = r.Id,
                 ProductId = r.ProductId,
@@ -75,7 +107,7 @@ namespace BookStore.Application.Services
                 CreatedAt = r.CreatedAt,
                 UpdatedAt = r.UpdatedAt,
                 IsActive = r.IsActive
-            }).OrderByDescending(x => x.CreatedAt);
+            };
         }
 
         // ADMIN: Phản hồi đánh giá
@@ -85,7 +117,7 @@ namespace BookStore.Application.Services
             if (review == null) return false;
 
             review.AdminReply = dto.Reply;
-            review.UpdatedAt = DateTime.Now;
+            review.UpdatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime();
             await _unitOfWork.Reviews.UpdateAsync(review);
             return await _unitOfWork.SaveChangesAsync() > 0;
         }
@@ -126,3 +158,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

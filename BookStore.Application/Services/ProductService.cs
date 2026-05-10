@@ -6,16 +6,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BookStore.Application.Interfaces;
 
 namespace BookStore.Application.Services
 {
     public class ProductService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IFileService _fileService;
 
-        public ProductService(IUnitOfWork unitOfWork)
+        public ProductService(IUnitOfWork unitOfWork, IFileService fileService)
         {
             _unitOfWork = unitOfWork;
+            _fileService = fileService;
         }
 
         public async Task<PagedResultDTO<ProductDTO>> GetProductsAsync(ProductQueryParameters parameters)
@@ -82,7 +85,7 @@ namespace BookStore.Application.Services
                 SKU = dto.SKU,
                 ImageUrl = imageUrl,
                 IsActive = true,
-                CreatedAt = DateTime.Now,
+                CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                 CreatedBy = userName
             };
 
@@ -115,7 +118,7 @@ namespace BookStore.Application.Services
 
         public async Task<bool> UpdateProductAsync(int id, ProductCreateDTO dto, string? imageUrl, string userName, List<string>? additionalImages = null)
         {
-            var product = await _unitOfWork.Products.GetByIdAsync(id);
+            var product = await _unitOfWork.Products.GetProductWithDetailsAsync(id);
             if (product == null) return false;
 
             product.Name = dto.Name;
@@ -126,25 +129,51 @@ namespace BookStore.Application.Services
             product.CategoryId = dto.CategoryId;
             product.SubCategoryId = dto.SubCategoryId;
             product.SKU = dto.SKU;
-            product.UpdatedAt = DateTime.Now;
+            product.UpdatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime();
             product.UpdatedBy = userName;
 
             if (!string.IsNullOrEmpty(imageUrl))
             {
+                // BƯỚC QUAN TRỌNG: XÓA FILE CŨ TRÊN CLOUD
+                if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl != "default_product.png")
+                {
+                    await _fileService.DeleteFileAsync(product.ImageUrl);
+                }
+
                 product.ImageUrl = imageUrl;
                 
-                // Add new main image to ProductImage
-                product.Images.Add(new ProductImage
+                // Cập nhật / Thay thế ảnh Main trong bảng ProductImages
+                var existingMain = product.Images.FirstOrDefault(i => i.IsMain);
+                if (existingMain != null)
                 {
-                    ImageUrl = imageUrl,
-                    IsMain = true,
-                    DisplayOrder = 0
-                });
+                    existingMain.ImageUrl = imageUrl;
+                }
+                else
+                {
+                    product.Images.Add(new ProductImage
+                    {
+                        ImageUrl = imageUrl,
+                        IsMain = true,
+                        DisplayOrder = 0
+                    });
+                }
             }
 
             if (additionalImages != null && additionalImages.Any())
             {
-                int order = product.Images.Count > 0 ? product.Images.Max(i => i.DisplayOrder) + 1 : 1;
+                // 1. XÓA BỘ SƯU TẬP CŨ KHỎI CẢ CLOUDINARY VÀ CSDL ĐỂ THAY THẾ
+                var oldAdditional = product.Images.Where(i => !i.IsMain).ToList();
+                foreach (var oldImg in oldAdditional)
+                {
+                    if (!string.IsNullOrEmpty(oldImg.ImageUrl) && oldImg.ImageUrl.StartsWith("http"))
+                    {
+                        await _fileService.DeleteFileAsync(oldImg.ImageUrl);
+                    }
+                    product.Images.Remove(oldImg);
+                }
+
+                // 2. THÊM BỘ SƯU TẬP MỚI
+                int order = 1;
                 foreach (var img in additionalImages)
                 {
                     product.Images.Add(new ProductImage
@@ -196,7 +225,7 @@ namespace BookStore.Application.Services
             };
 
             // TÌM FLASH SALE ĐANG HIỆU LỰC
-            var now = DateTime.Now;
+            var now = BookStore.Domain.Common.TimeHelper.GetVnTime();
             var activeSale = product.FlashSales?.FirstOrDefault(s => 
                 s.IsActive && s.StartTime <= now && s.EndTime >= now && s.SoldCount < s.SaleStock);
 

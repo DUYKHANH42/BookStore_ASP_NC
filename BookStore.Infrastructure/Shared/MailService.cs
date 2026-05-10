@@ -1,4 +1,4 @@
-﻿using BookStore.Application.Interfaces;
+using BookStore.Application.Interfaces;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
@@ -26,9 +26,13 @@ namespace BookStore.Infrastructure.Shared
             email.Body = new TextPart(TextFormat.Html) { Text = body };
 
             using var smtp = new SmtpClient();
+            
+            // Bỏ qua xác thực Certificate nếu môi trường Hosting yêu cầu (khắc phục lỗi SSL handshake trên Linux/Docker)
+            smtp.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
             // Kết nối tới server Gmail
             await smtp.ConnectAsync(_config["MailSettings:Host"],
-                                   int.Parse(_config["MailSettings:Port"]),
+                                   int.Parse(_config["MailSettings:Port"] ?? "587"),
                                    SecureSocketOptions.StartTls);
 
             // Xác thực tài khoản

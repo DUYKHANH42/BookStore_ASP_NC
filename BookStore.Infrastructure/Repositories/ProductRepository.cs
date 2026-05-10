@@ -1,4 +1,4 @@
-using BookStore.Domain.Common;
+﻿using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Persistence;
@@ -48,7 +48,7 @@ namespace BookStore.Infrastructure.Repositories
 
             if (query.IsFlashSale)
             {
-                var now = DateTime.Now;
+                var now = BookStore.Domain.Common.TimeHelper.GetVnTime();
                 // Lọc những sản phẩm có Flash Sale đang hiệu lực
                 result = result.Where(b => b.FlashSales.Any(s => 
                     s.IsActive && s.StartTime <= now && s.EndTime >= now && s.SoldCount < s.SaleStock));

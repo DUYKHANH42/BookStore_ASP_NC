@@ -153,26 +153,82 @@
             color: var(--text-main);
             font-weight: 600;
         }
+
+        /* Dark Mode Deep Overrides */
+        html.dark .glass-card { background-color: var(--bg-card) !important; }
+        html.dark .modal-content { background-color: var(--bg-card) !important; color: #fff; border: 1px solid var(--border-color); }
+        html.dark table tbody tr { background-color: transparent !important; border-color: var(--border-color) !important; }
+        html.dark table tbody tr:hover { background-color: rgba(255,255,255,0.03) !important; }
+        html.dark thead tr { background-color: rgba(255,255,255,0.02) !important; }
+        
+        html.dark .bg-white { background-color: var(--bg-card) !important; }
+        html.dark .badge, html.dark span[class*="bg-"] { 
+            box-shadow: none; 
+        }
+        
+        /* Advanced Fix for Admin Modals in Dark Mode */
+        html.dark #productModal .modal-content, 
+        html.dark #orderModal .modal-content,
+        html.dark #flashSaleModal > div,
+        html.dark #replyModal > div {
+            background-color: #0f172a !important; 
+            color: #f1f5f9 !important;
+            border: 1px solid #1e293b !important;
+        }
+        html.dark .bg-slate-900\/60 { background-color: rgba(2, 6, 23, 0.8) !important; }
+
+        /* Mobile Sidebar Transition and Fix */
+        @@media (max-width: 1024px) {
+            .glass-sidebar {
+                position: fixed;
+                left: -320px;
+                width: 320px;
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .glass-sidebar.sidebar-open {
+                transform: translateX(320px);
+            }
+            .sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(2, 6, 23, 0.6);
+                backdrop-filter: blur(4px);
+                z-index: 90;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s;
+            }
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="overflow-x-hidden">
+    <!-- Overlay for Mobile Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-80 glass-sidebar text-slate-900 flex-shrink-0 flex flex-col sticky top-0 h-screen z-[100]">
-            <div class="p-10 flex flex-col items-center">
+        <aside id="sidebarMenu" class="w-80 glass-sidebar text-slate-900 flex-shrink-0 flex flex-col sticky top-0 h-screen z-[100]">
+            <div class="p-8 lg:p-10 flex flex-col items-center relative">
+                <button id="closeSidebarBtn" class="lg:hidden absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
                 <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="block group">
                     <img src="/uploads/imgs/logo_sach.png" alt="Lumen Logo" 
-                         class="h-28 w-auto object-contain transition-transform group-hover:scale-105" />
+                         class="h-20 lg:h-28 w-auto object-contain transition-transform group-hover:scale-105" />
                 </a>
             </div>
             
-            <nav class="flex-1 px-6 space-y-1 overflow-y-auto hide-scrollbar">
+            <nav class="flex-1 px-4 lg:px-6 space-y-1 overflow-y-auto hide-scrollbar">
                 <div class="pb-4">
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Điều khiển chính</p>
                     <a asp-area="Admin" asp-controller="Home" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "text-white" : "text-slate-400")">grid_view</span> Dashboard
                     </a>
                 </div>
@@ -180,15 +236,15 @@
                 <div class="py-4 border-t border-slate-100">
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Kho hàng & Sản phẩm</p>
                     <a asp-area="Admin" asp-controller="Product" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "text-white" : "text-slate-400")">inventory_2</span> Quản lý sản phẩm
                     </a>
                     <a asp-area="Admin" asp-controller="Category" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "text-white" : "text-slate-400")">account_tree</span> Cây danh mục
                     </a>
                     <a asp-area="Admin" asp-controller="Inventory" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "text-white" : "text-slate-400")">inventory</span> Quản lý tồn kho
                     </a>
                 </div>
@@ -196,7 +252,7 @@
                 <div class="py-4 border-t border-slate-100">
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Vận hành kinh doanh</p>
                     <a asp-area="Admin" asp-controller="Order" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <div class="relative">
                             <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "text-white" : "text-slate-400")">receipt_long</span>
                             <span class="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
@@ -204,34 +260,34 @@
                         Quản lý đơn hàng
                     </a>
                     <a asp-area="Admin" asp-controller="Customer" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "text-white" : "text-slate-400")">group</span> Khách hàng
                     </a>
                     <a asp-area="Admin" asp-controller="Review" asp-action="Index" 
-                       class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
                         <span class="material-symbols-outlined @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "text-white" : "text-slate-400")">chat</span> Quản lý đánh giá
                     </a>
                 </div>
 
                 <div class="py-4 border-t border-slate-100">
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Hệ thống</p>
-                    <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
+                    <a href="#" class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
                         <span class="material-symbols-outlined text-slate-400">analytics</span> Báo cáo chi tiết
                     </a>
-                    <a href="#" class="flex items-center gap-4 px-5 py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
+                    <a href="#" class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50/50">
                         <span class="material-symbols-outlined text-slate-400">tune</span> Cấu hình App
                     </a>
                 </div>
             </nav>
 
-            <div class="p-8 space-y-3">
-                <a href="https://book-store-giao-dien.vercel.app/" class="flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
+            <div class="p-6 lg:p-8 space-y-3">
+                <a href="https://book-store-giao-dien.vercel.app/" class="flex items-center justify-center gap-3 px-6 py-3.5 lg:py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
                     <span class="material-symbols-outlined text-lg group-hover:translate-x-[-4px] transition-premium">arrow_back</span> 
                     Quay về Client
                 </a>
-                <button onclick="adminLogout()" class="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-rose-50 border border-rose-100 hover:bg-rose-600 hover:text-white transition-premium font-black text-[10px] uppercase tracking-widest text-rose-600 group">
+                <button onclick="adminLogout()" class="w-full flex items-center justify-center gap-3 px-6 py-3.5 lg:py-4 rounded-2xl bg-rose-50 border border-rose-100 hover:bg-rose-600 hover:text-white transition-premium font-black text-[10px] uppercase tracking-widest text-rose-600 group">
                     <span class="material-symbols-outlined text-lg group-hover:rotate-180 transition-premium">logout</span> 
-                    Đăng xuất hệ thống
+                    Đăng xuất
                 </button>
             </div>
         </aside>
@@ -239,10 +295,15 @@
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col min-w-0">
             <!-- Header -->
-            <header class="h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-12 sticky top-0 z-[90] transition-all duration-300">
-                <div class="flex items-center gap-8">
+            <header class="h-20 lg:h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-6 lg:px-12 sticky top-0 z-[90] transition-all duration-300">
+                <div class="flex items-center gap-4 lg:gap-8">
+                    <!-- Burger Button for Mobile -->
+                    <button id="openSidebarBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+
                     <div class="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                        <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                        <div class="hidden sm:flex w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                             <span class="material-symbols-outlined text-sm">home</span>
                         </div>
                         <span class="hover:text-blue-600 cursor-pointer transition-colors">Hệ thống</span>
@@ -308,14 +369,14 @@
             </header>
 
             <!-- Page Body -->
-            <main class="p-12 flex-1">
+            <main class="p-6 lg:p-12 flex-1">
                 <div class="max-w-[1600px] mx-auto">
                     @RenderBody()
                 </div>
             </main>
 
             <!-- Copyright -->
-            <footer class="px-12 py-8 border-t border-slate-100 flex justify-between items-center bg-white/50">
+            <footer class="px-6 lg:px-12 py-6 lg:py-8 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/50">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2026 Lumen BookStore • Enterprise Edition</p>
                 <div class="flex gap-6">
                     <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Tài liệu</a>
@@ -509,6 +570,35 @@
                         }
                     });
                 }
+            });
+        }
+
+        // Mobile Sidebar Toggle Script
+        const openSidebarBtn = document.getElementById('openSidebarBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if(openSidebarBtn && sidebarMenu && sidebarOverlay) {
+            const toggleSidebar = (show) => {
+                if (show) {
+                    sidebarMenu.classList.add('sidebar-open');
+                    sidebarOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Prevent underlying scroll
+                } else {
+                    sidebarMenu.classList.remove('sidebar-open');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            };
+
+            openSidebarBtn.addEventListener('click', () => toggleSidebar(true));
+            if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+            sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+            
+            // Auto close on navigate (important for dynamic apps, less so here, but good safety)
+            sidebarMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => toggleSidebar(false));
             });
         }
     </script>

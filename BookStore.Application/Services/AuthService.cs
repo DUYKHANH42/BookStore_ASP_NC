@@ -19,13 +19,15 @@ namespace BookStore.Application.Services
         private readonly IMailService _mailService;
         private readonly IFileService _fileService;
         private readonly IConfiguration _configuration;
+        private readonly IRedisService _redisService;
 
-        public AuthService(IAuthService identityService, IMailService mailService, IFileService fileService, IConfiguration configuration)
+        public AuthService(IAuthService identityService, IMailService mailService, IFileService fileService, IConfiguration configuration, IRedisService redisService)
         {
             _identityService = identityService;
             _mailService = mailService;
             _fileService = fileService;
             _configuration = configuration;
+            _redisService = redisService;
         }
 
         // Logic Đăng ký
@@ -36,7 +38,7 @@ namespace BookStore.Application.Services
                 UserName = registerDto.Email,
                 Email = registerDto.Email,
                 FullName = registerDto.FullName,
-                CreatedAt = DateTime.Now,
+                CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                 IsActive = true
             };
 
@@ -102,6 +104,14 @@ namespace BookStore.Application.Services
                 Roles = authModel.Roles.ToList()
             };
         }
+
+        public async Task LogoutAsync(string userId)
+        {
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await _redisService.RemoveAsync($"RefreshToken:{userId}");
+            }
+        }
         public async Task<AuthResponseDto> UpdateProfileAsync(string userId, UpdateProfileDto dto)
         {
             var user = await _identityService.GetUserByIdAsync(userId);
@@ -114,7 +124,7 @@ namespace BookStore.Application.Services
                 // Xóa ảnh cũ nếu có
                 if (!string.IsNullOrEmpty(user.AvtUrl))
                 {
-                    _fileService.DeleteFile(user.AvtUrl, "avatars");
+                    await _fileService.DeleteFileAsync(user.AvtUrl);
                 }
 
                 // Lưu ảnh mới

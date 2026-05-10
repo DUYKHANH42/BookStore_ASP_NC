@@ -20,19 +20,15 @@ namespace BookStore.API.Areas.Admin.Controllers
             _productService = productService;
         }
 
-        public async Task<IActionResult> Index(int? productId)
+        public async Task<IActionResult> Index(int? productId, int pageNumber = 1, int pageSize = 10)
         {
-            var reviews = await _reviewService.GetAllReviewsAsync();
-            if (productId.HasValue && productId.Value > 0)
-            {
-                reviews = reviews.Where(r => r.ProductId == productId.Value);
-            }
-
+            var pagedResult = await _reviewService.GetPagedReviewsAsync(productId, pageNumber, pageSize);
+            
             var products = await _productService.GetAllProductsAsync();
             ViewBag.Products = products;
             ViewBag.SelectedProductId = productId;
 
-            return View(reviews);
+            return View(pagedResult);
         }
 
         [HttpPost]
