@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Domain.Entities
@@ -23,6 +23,7 @@ namespace BookStore.Domain.Entities
         [NotMapped]
         public int RemainingSlots => Math.Max(0, SaleStock - SoldCount);
 
-        public bool IsValid => IsActive && DateTime.Now >= StartTime && DateTime.Now <= EndTime && RemainingSlots > 0;
+        public bool IsValid => IsActive && BookStore.Domain.Common.TimeHelper.GetVnTime() >= StartTime && BookStore.Domain.Common.TimeHelper.GetVnTime() <= EndTime && RemainingSlots > 0;
     }
 }
+

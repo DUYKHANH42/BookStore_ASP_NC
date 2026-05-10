@@ -20,6 +20,7 @@ namespace BookStore.Tests
         private readonly Mock<IMailService> _mockMailService;
         private readonly Mock<IFileService> _mockFileService;
         private readonly Mock<IConfiguration> _mockConfig;
+        private readonly Mock<IRedisService> _mockRedisService;
         private readonly AuthService _authService;
 
         public AuthServiceTests()
@@ -28,12 +29,14 @@ namespace BookStore.Tests
             _mockMailService = new Mock<IMailService>();
             _mockFileService = new Mock<IFileService>();
             _mockConfig = new Mock<IConfiguration>();
+            _mockRedisService = new Mock<IRedisService>();
 
             _authService = new AuthService(
                 _mockIdentityService.Object, 
                 _mockMailService.Object, 
                 _mockFileService.Object, 
-                _mockConfig.Object);
+                _mockConfig.Object,
+                _mockRedisService.Object);
         }
 
         [Fact]

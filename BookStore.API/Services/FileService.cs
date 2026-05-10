@@ -38,17 +38,23 @@ namespace BookStore.API.Services
             return fileName;
         }
 
-        public void DeleteFile(string fileName, string folderName)
+        public Task<bool> DeleteFileAsync(string fileUrlOrName)
         {
-            if (string.IsNullOrEmpty(fileName)) return;
+            if (string.IsNullOrEmpty(fileUrlOrName)) return Task.FromResult(false);
 
-            var contentPath = _environment.WebRootPath;
-            var path = Path.Combine(contentPath, "uploads", folderName, fileName);
-
-            if (File.Exists(path))
+            try 
             {
-                File.Delete(path);
+                var contentPath = _environment.WebRootPath;
+                var path = Path.Combine(contentPath, fileUrlOrName.Replace("/", "\\")); // Generic fallback
+                if (System.IO.File.Exists(path))
+                {
+                    System.IO.File.Delete(path);
+                    return Task.FromResult(true);
+                }
             }
+            catch { }
+
+            return Task.FromResult(false);
         }
     }
 }

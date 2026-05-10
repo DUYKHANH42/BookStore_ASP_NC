@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,7 +17,7 @@ namespace BookStore.Domain.Entities
 
         public int Quantity { get; set; } 
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = BookStore.Domain.Common.TimeHelper.GetVnTime();
         public DateTime? UpdatedAt { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
         public int CategoryId { get; set; }
@@ -32,3 +32,4 @@ namespace BookStore.Domain.Entities
         public virtual ICollection<FlashSale> FlashSales { get; set; } = new List<FlashSale>();
     }
 }
+

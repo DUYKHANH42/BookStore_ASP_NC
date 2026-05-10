@@ -1,4 +1,4 @@
-using BookStore.Application.Services;
+﻿using BookStore.Application.Services;
 using BookStore.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -69,8 +69,9 @@ namespace BookStore.API.Areas.Admin.Controllers
             var orders = await _orderService.GetAllOrdersForReportAsync(status, search);
             var excelBytes = _excelExportService.ExportOrdersToExcel(orders);
 
-            string fileName = $"Orders_Report_{DateTime.Now:yyyyMMddHHmm}.xlsx";
+            string fileName = $"Orders_Report_{BookStore.Domain.Common.TimeHelper.GetVnTime():yyyyMMddHHmm}.xlsx";
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }
+

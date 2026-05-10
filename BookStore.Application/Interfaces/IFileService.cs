@@ -6,6 +6,6 @@ namespace BookStore.Application.Interfaces
     public interface IFileService
     {
         Task<string> SaveFileAsync(IFormFile file, string folderName);
-        void DeleteFile(string fileName, string folderName);
+        Task<bool> DeleteFileAsync(string fileUrl);
     }
 }

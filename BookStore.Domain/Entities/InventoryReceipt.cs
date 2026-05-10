@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,7 +12,7 @@ namespace BookStore.Domain.Entities
         public virtual Supplier Supplier { get; set; } = null!;
         
         public string? EmployeeId { get; set; } 
-        public DateTime ReceivedDate { get; set; } = DateTime.Now;
+        public DateTime ReceivedDate { get; set; } = BookStore.Domain.Common.TimeHelper.GetVnTime();
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
@@ -30,3 +30,4 @@ namespace BookStore.Domain.Entities
         Cancelled   // Đã hủy
     }
 }
+

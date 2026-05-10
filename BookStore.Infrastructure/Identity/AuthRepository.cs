@@ -21,15 +21,18 @@ namespace BookStore.Infrastructure.Identity
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly IRedisService _redisService;
 
         public AuthRepository(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IRedisService redisService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _redisService = redisService;
         }
       
         public async Task<IdentityResult> RegisterAsync(ApplicationUser user, string password, string role)
@@ -54,9 +57,13 @@ namespace BookStore.Infrastructure.Identity
                 return null;
 
             var tokenData = await GenerateJwtToken(user);
-            var refreshToken = CreateRefreshToken();
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(2); 
+            
+            // Generate Refresh Token
+            var refreshToken = CreateRefreshToken(user.Id);
+            
+            // Store Refresh Token in Redis with TTL (7 days)
+            var expiry = TimeSpan.FromDays(7);
+            await _redisService.SetAsync($"RefreshToken:{user.Id}", refreshToken, expiry);
 
             await _userManager.UpdateAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
@@ -78,25 +85,38 @@ namespace BookStore.Infrastructure.Identity
         }
         public async Task<AuthModel?> RefreshTokenAsync(string accessToken, string refreshToken)
         {
-            // 1. Lấy thông tin User từ Token đã hết hạn
-            var principal = GetPrincipalFromExpiredToken(accessToken);
-            if (principal == null) return null;
+            var parts = refreshToken?.Split(':');
+            if (parts == null || parts.Length < 2) return null;
+            
+            var userId = parts[0];
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return null;
 
-            var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var user = await _userManager.FindByEmailAsync(email);
+            // 2. Validate RefreshToken from Redis
+            var storedRefreshToken = await _redisService.GetAsync<string>($"RefreshToken:{user.Id}");
 
-            // 2. Kiểm tra RefreshToken có khớp và còn hạn không
-            if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
+            // Reuse detection / Invalid token check
+            if (string.IsNullOrEmpty(storedRefreshToken) || storedRefreshToken != refreshToken)
             {
+                // If it doesn't match or is empty, it could be a reused/revoked token.
+                // Revoke all sessions for safety by deleting the token and incrementing TokenVersion
+                await _redisService.RemoveAsync($"RefreshToken:{user.Id}");
+                user.TokenVersion++;
+                await _userManager.UpdateAsync(user);
+                // Also update TokenVersion in Redis
+                await _redisService.SetAsync($"TokenVersion:{user.Id}", user.TokenVersion);
                 return null;
             }
 
-            // 3. Tạo bộ Token mới
+            // 3. Create new Tokens (Rotation)
             var newAccessToken = await GenerateJwtToken(user);
-            var newRefreshToken = CreateRefreshToken();
+            var newRefreshToken = CreateRefreshToken(user.Id);
 
-            // 4. Cập nhật vào DB
-            user.RefreshToken = newRefreshToken;
+            // 4. Update in Redis
+            var expiry = TimeSpan.FromDays(7);
+            await _redisService.SetAsync($"RefreshToken:{user.Id}", newRefreshToken, expiry);
+
+            // We don't need to call UpdateAsync on user unless TokenVersion changed, but let's just do it
             await _userManager.UpdateAsync(user);
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -118,12 +138,22 @@ namespace BookStore.Infrastructure.Identity
 
         public async Task<IdentityResult> UpdateUserAsync(ApplicationUser user)
         {
-            user.LastUpdatedAt = DateTime.Now;
+            user.LastUpdatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime();
             return await _userManager.UpdateAsync(user);
         }
         public async Task<IdentityResult> ChangePasswordAsync(ApplicationUser user, string currentPassword, string newPassword)
         {
-            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            if (result.Succeeded)
+            {
+                // Increment TokenVersion on password change to revoke old tokens
+                user.TokenVersion++;
+                await _userManager.UpdateAsync(user);
+                await _redisService.SetAsync($"TokenVersion:{user.Id}", user.TokenVersion);
+                // Also revoke existing refresh token
+                await _redisService.RemoveAsync($"RefreshToken:{user.Id}");
+            }
+            return result;
         }
         public async Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user)
         {
@@ -157,12 +187,12 @@ namespace BookStore.Infrastructure.Identity
 
             return principal;
         }
-        private string CreateRefreshToken()
+        private string CreateRefreshToken(string userId)
         {
             var randomNumber = new byte[64];
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
+            return $"{userId}:{Convert.ToBase64String(randomNumber)}";
         }
 
 
@@ -170,12 +200,16 @@ namespace BookStore.Infrastructure.Identity
         {
             var userRoles = await _userManager.GetRolesAsync(user);
 
+            // Ensure TokenVersion is in Redis
+            await _redisService.SetAsync($"TokenVersion:{user.Id}", user.TokenVersion);
+
             var authClaims = new List<Claim>
     {
         new Claim(ClaimTypes.Name, user.FullName),
         new Claim(ClaimTypes.Email, user.Email!),
         new Claim(ClaimTypes.NameIdentifier, user.Id),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim("TokenVersion", user.TokenVersion.ToString())
     };
 
             foreach (var userRole in userRoles)
@@ -183,8 +217,8 @@ namespace BookStore.Infrastructure.Identity
                 authClaims.Add(new Claim(ClaimTypes.Role, userRole));
             }
 
-            // Xác định thời gian hết hạn ở đây để dùng chung
-            var expirationTime = DateTime.Now.AddHours(3);
+            // Access Token usually lives for a short time (e.g. 15 mins)
+            var expirationTime = BookStore.Domain.Common.TimeHelper.GetVnTime().AddMinutes(15);
 
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!));
 
@@ -209,3 +243,4 @@ namespace BookStore.Infrastructure.Identity
         }
     }
 }
+

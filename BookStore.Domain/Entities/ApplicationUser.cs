@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +14,7 @@ namespace BookStore.Domain.Entities
         public string AvtUrl { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
+        public int TokenVersion { get; set; } = 0;
         public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
 
         // Danh sách các đơn hàng của User này

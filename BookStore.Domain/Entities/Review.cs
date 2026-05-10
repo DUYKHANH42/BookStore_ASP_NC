@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace BookStore.Domain.Entities
 {
@@ -18,9 +18,10 @@ namespace BookStore.Domain.Entities
 
         public string? AdminReply { get; set; } // Phản hồi từ Admin
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = BookStore.Domain.Common.TimeHelper.GetVnTime();
         public DateTime? UpdatedAt { get; set; }
 
         public bool IsActive { get; set; } = true; // Cho phép ẩn đánh giá xấu/vi phạm
     }
 }
+

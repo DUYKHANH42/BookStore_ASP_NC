@@ -1,4 +1,4 @@
-using BookStore.Application.DTO;
+﻿using BookStore.Application.DTO;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using System;
@@ -43,7 +43,7 @@ namespace BookStore.Application.Services
             {
                 Name = dto.Name,
                 CategoryId = dto.CategoryId,
-                CreatedAt = DateTime.Now
+                CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime()
             };
             await _unitOfWork.SubCategories.AddAsync(subCategory);
             return await _unitOfWork.SaveChangesAsync() > 0;
@@ -56,7 +56,7 @@ namespace BookStore.Application.Services
 
             subCategory.Name = dto.Name;
             subCategory.CategoryId = dto.CategoryId;
-            subCategory.UpdatedAt = DateTime.Now;
+            subCategory.UpdatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime();
 
             await _unitOfWork.SubCategories.UpdateAsync(subCategory);
             return await _unitOfWork.SaveChangesAsync() > 0;
@@ -90,3 +90,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

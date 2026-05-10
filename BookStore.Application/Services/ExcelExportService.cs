@@ -1,4 +1,4 @@
-using BookStore.Application.DTO;
+﻿using BookStore.Application.DTO;
 using ClosedXML.Excel;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace BookStore.Application.Services
             ws.Cell(1, 1).Style.Font.FontSize = 16;
             ws.Range(1, 1, 1, 4).Merge();
 
-            ws.Cell(2, 1).Value = $"Ngày xuất báo cáo: {DateTime.Now:dd/MM/yyyy HH:mm}";
+            ws.Cell(2, 1).Value = $"Ngày xuất báo cáo: {BookStore.Domain.Common.TimeHelper.GetVnTime():dd/MM/yyyy HH:mm}";
 
             // Thống kê trạng thái
             ws.Cell(4, 1).Value = "Thống kê theo trạng thái";
@@ -143,3 +143,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

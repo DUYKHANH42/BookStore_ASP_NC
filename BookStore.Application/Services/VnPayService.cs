@@ -1,4 +1,4 @@
-using BookStore.Application.Configurations;
+﻿using BookStore.Application.Configurations;
 using BookStore.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -35,7 +35,7 @@ namespace BookStore.Application.Services
                 Money = (double)amount,
                 Description = orderInfo,
                 BankCode = BankCode.ANY,
-                CreatedTime = DateTime.Now // Sử dụng giờ địa phương (Việt Nam) thay vì Utc
+                CreatedTime = BookStore.Domain.Common.TimeHelper.GetVnTime() // Sử dụng giờ địa phương (Việt Nam) thay vì Utc
             };
 
             var paymentUrlDetail = _vnpay.CreatePaymentUrl(request);
@@ -64,3 +64,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

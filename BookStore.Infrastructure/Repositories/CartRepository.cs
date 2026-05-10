@@ -15,7 +15,8 @@ namespace BookStore.Infrastructure.Repositories
         {
             return await _context.Carts
                 .Include(c => c.Items)
-                .ThenInclude(i => i.Product) // Book -> Product
+                .ThenInclude(i => i.Product)
+                .ThenInclude(p => p.FlashSales)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 

@@ -1,4 +1,4 @@
-using BookStore.Application.Configurations;
+﻿using BookStore.Application.Configurations;
 using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
@@ -23,7 +23,7 @@ namespace BookStore.Application.Services
         public async Task<CreatePaymentResult> CreatePaymentLinkAsync(int orderId, decimal amount, string orderNumber, string description)
         {
             // Mã đơn hàng phải là kiểu long (ví dụ dùng Ticks)
-            long orderCode = long.Parse(DateTime.Now.ToString("yyyyMMddHHmmss")); 
+            long orderCode = long.Parse(BookStore.Domain.Common.TimeHelper.GetVnTime().ToString("yyyyMMddHHmmss")); 
             
             var paymentData = new PaymentData(
                 orderCode: orderCode,
@@ -48,3 +48,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

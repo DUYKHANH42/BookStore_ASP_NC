@@ -1,4 +1,4 @@
-using BookStore.Application.DTO;
+﻿using BookStore.Application.DTO;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using System;
@@ -23,7 +23,7 @@ namespace BookStore.Application.Services
             if (product == null) return Enumerable.Empty<FlashSaleManagementDTO>();
 
             var sales = await _unitOfWork.FlashSales.GetSalesByProductIdAsync(productId);
-            var now = DateTime.Now;
+            var now = BookStore.Domain.Common.TimeHelper.GetVnTime();
 
             return sales.Select(s => new FlashSaleManagementDTO
             {
@@ -49,7 +49,7 @@ namespace BookStore.Application.Services
 
             // 2. Validate thời gian
             if (dto.StartTime >= dto.EndTime) throw new Exception("Thời gian bắt đầu phải trước thời gian kết thúc");
-            if (dto.EndTime <= DateTime.Now) throw new Exception("Thời gian kết thúc phải ở tương lai");
+            if (dto.EndTime <= BookStore.Domain.Common.TimeHelper.GetVnTime()) throw new Exception("Thời gian kết thúc phải ở tương lai");
 
             // 3. Kiểm tra trùng lặp thời gian cho cùng 1 sản phẩm
             var existingSales = await _unitOfWork.FlashSales.GetSalesByProductIdAsync(dto.ProductId);
@@ -106,3 +106,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

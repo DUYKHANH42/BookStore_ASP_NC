@@ -1,4 +1,4 @@
-using BookStore.Application.DTO;
+﻿using BookStore.Application.DTO;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +31,7 @@ namespace BookStore.Application.Services
                 {
                     SupplierId = bulkDto.SupplierId,
                     EmployeeId = adminId,
-                    ReceivedDate = DateTime.Now,
+                    ReceivedDate = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                     TotalAmount = 0, // Sẽ cập nhật sau khi tính tổng details
                     Notes = bulkDto.Notes ?? "Nhập hàng theo lô",
                     Status = ReceiptStatus.Completed
@@ -64,7 +64,7 @@ namespace BookStore.Application.Services
                             CategoryId = item.CategoryId ?? 1,
                             SubCategoryId = item.SubCategoryId,
                             ImageUrl = imageUrl ?? "default_product.png",
-                            CreatedAt = DateTime.Now,
+                            CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                             IsActive = true,
                             CreatedBy = adminName
                         };
@@ -90,7 +90,7 @@ namespace BookStore.Application.Services
                     else
                     {
                         product.Quantity += item.QuantityToImport;
-                        product.UpdatedAt = DateTime.Now;
+                        product.UpdatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime();
                         product.UpdatedBy = adminName;
                         await _unitOfWork.Products.UpdateAsync(product);
                     }
@@ -111,7 +111,7 @@ namespace BookStore.Application.Services
                         ProductId = product.Id,
                         ChangeQuantity = item.QuantityToImport,
                         Reason = isNewProduct ? $"Nhập hàng mới (Phiếu #{receipt.Id})" : $"Nhập bổ sung (Phiếu #{receipt.Id})",
-                        CreatedAt = DateTime.Now,
+                        CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
                         ChangedBy = adminName
                     });
                 }
@@ -252,3 +252,4 @@ namespace BookStore.Application.Services
         }
     }
 }
+

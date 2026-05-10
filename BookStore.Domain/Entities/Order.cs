@@ -1,4 +1,4 @@
-using BookStore.Domain.Entities;
+﻿using BookStore.Domain.Entities;
 using System;
 using System.Collections.Generic;
 
@@ -20,7 +20,7 @@ public class Order
     [Column(TypeName = "decimal(18,2)")]
     public decimal TotalPrice { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = BookStore.Domain.Common.TimeHelper.GetVnTime();
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.COD;
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace BookStore.Domain.Entities
 {
@@ -9,6 +9,7 @@ namespace BookStore.Domain.Entities
         public string Message { get; set; } = string.Empty;
         public string? Link { get; set; }
         public bool IsRead { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = BookStore.Domain.Common.TimeHelper.GetVnTime();
     }
 }
+

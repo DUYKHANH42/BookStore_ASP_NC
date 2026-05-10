@@ -23,18 +23,18 @@ namespace BookStore.API.Areas.Admin.Controllers
         private readonly ProductService _productService;
         private readonly CategoriesService _categoriesService;
         private readonly SubCategoriesService _subCategoriesService;
-        private readonly IWebHostEnvironment _hostingEnv;
+        private readonly BookStore.Application.Interfaces.IFileService _fileService;
 
         public ProductController(
             ProductService productService,
             CategoriesService categoriesService,
             SubCategoriesService subCategoriesService,
-            IWebHostEnvironment hostingEnv)
+            BookStore.Application.Interfaces.IFileService fileService)
         {
             _productService = productService;
             _categoriesService = categoriesService;
             _subCategoriesService = subCategoriesService;
-            _hostingEnv = hostingEnv;
+            _fileService = fileService;
         }
 
         [HttpGet("")]
@@ -72,30 +72,19 @@ namespace BookStore.API.Areas.Admin.Controllers
             try
             {
                 string? imageUrl = null;
-                string uploadsFolder = Path.Combine(_hostingEnv.WebRootPath, "uploads");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
                 if (image != null)
                 {
-                    imageUrl = Guid.NewGuid().ToString() + "_" + image.FileName;
-                    string filePath = Path.Combine(uploadsFolder, imageUrl);
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await image.CopyToAsync(fileStream);
-                    }
+                    // Cloudinary will automatically save and return Secure URL
+                    imageUrl = await _fileService.SaveFileAsync(image, "products/main");
                 }
 
-                var additionalImageUrls = new System.Collections.Generic.List<string>();
+                var additionalImageUrls = new List<string>();
                 if (additionalImages != null && additionalImages.Any())
                 {
                     foreach (var img in additionalImages)
                     {
-                        var imgUrl = Guid.NewGuid().ToString() + "_" + img.FileName;
-                        string filePath = Path.Combine(uploadsFolder, imgUrl);
-                        using (var fileStream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await img.CopyToAsync(fileStream);
-                        }
+                        var imgUrl = await _fileService.SaveFileAsync(img, "products/gallery");
                         additionalImageUrls.Add(imgUrl);
                     }
                 }

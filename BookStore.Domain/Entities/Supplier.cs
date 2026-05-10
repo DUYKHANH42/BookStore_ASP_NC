@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace BookStore.Domain.Entities
@@ -11,8 +11,9 @@ namespace BookStore.Domain.Entities
         public string? Email { get; set; }
         public string? Address { get; set; }
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = BookStore.Domain.Common.TimeHelper.GetVnTime();
 
         public virtual ICollection<InventoryReceipt> InventoryReceipts { get; set; } = new List<InventoryReceipt>();
     }
 }
+
