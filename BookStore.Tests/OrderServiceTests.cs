@@ -21,6 +21,7 @@ namespace BookStore.Tests
         private readonly Mock<IFlashSaleRepository> _mockFlashSales;
         private readonly Mock<ICartRepository> _mockCartRepo;
         private readonly Mock<IOrderRepository> _mockOrderRepo;
+        private readonly Mock<IStockHistoryRepository> _mockStockHistoryRepo;
         private readonly Mock<IVnPayService> _mockVnPay; 
         private readonly OrderService _orderService;
 
@@ -34,11 +35,13 @@ namespace BookStore.Tests
             _mockFlashSales = new Mock<IFlashSaleRepository>();
             _mockCartRepo = new Mock<ICartRepository>();
             _mockOrderRepo = new Mock<IOrderRepository>();
+            _mockStockHistoryRepo = new Mock<IStockHistoryRepository>();
 
             // Setup UOW to return mocked repositories
             _mockUnitOfWork.Setup(u => u.FlashSales).Returns(_mockFlashSales.Object);
             _mockUnitOfWork.Setup(u => u.Carts).Returns(_mockCartRepo.Object);
             _mockUnitOfWork.Setup(u => u.Orders).Returns(_mockOrderRepo.Object);
+            _mockUnitOfWork.Setup(u => u.StockHistories).Returns(_mockStockHistoryRepo.Object);
 
             _orderService = new OrderService(
                 _mockUnitOfWork.Object,
