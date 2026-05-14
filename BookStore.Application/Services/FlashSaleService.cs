@@ -1,4 +1,5 @@
-﻿using BookStore.Application.DTO;
+using BookStore.Application.DTO;
+using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using System;
@@ -43,25 +44,12 @@ namespace BookStore.Application.Services
 
         public async Task<bool> CreateFlashSaleAsync(FlashSaleCreateDTO dto)
         {
-            // 1. Kiểm tra sản phẩm tồn tại
-            var product = await _unitOfWork.Products.GetByIdAsync(dto.ProductId);
-            if (product == null) throw new Exception("Sản phẩm không tồn tại");
+            var product = await _unitOfWork.Products.GetByIdAsync(dto.ProductId) 
+                ?? throw new Exception("Sản phẩm không tồn tại");
 
-            // 2. Validate thời gian
-            if (dto.StartTime >= dto.EndTime) throw new Exception("Thời gian bắt đầu phải trước thời gian kết thúc");
-            if (dto.EndTime <= BookStore.Domain.Common.TimeHelper.GetVnTime()) throw new Exception("Thời gian kết thúc phải ở tương lai");
+            ValidateTime(dto);
+            await CheckOverlappingAsync(dto.ProductId, dto);
 
-            // 3. Kiểm tra trùng lặp thời gian cho cùng 1 sản phẩm
-            var existingSales = await _unitOfWork.FlashSales.GetSalesByProductIdAsync(dto.ProductId);
-            bool isOverlapping = existingSales.Any(s => 
-                s.IsActive && 
-                ((dto.StartTime >= s.StartTime && dto.StartTime <= s.EndTime) || 
-                 (dto.EndTime >= s.StartTime && dto.EndTime <= s.EndTime) ||
-                 (dto.StartTime <= s.StartTime && dto.EndTime >= s.EndTime)));
-
-            if (isOverlapping) throw new Exception("Sản phẩm đã có một chương trình Flash Sale khác trong khoảng thời gian này");
-
-            // 4. Tạo mới
             var flashSale = new FlashSale
             {
                 ProductId = dto.ProductId,
@@ -77,23 +65,83 @@ namespace BookStore.Application.Services
             return await _unitOfWork.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> ToggleSaleStatusAsync(int saleId)
+        public async Task<bool> UpdateFlashSaleAsync(FlashSaleUpdateDTO dto)
         {
-            var sale = await _unitOfWork.FlashSales.GetByIdAsync(saleId);
-            if (sale == null) return false;
+            var sale = await _unitOfWork.FlashSales.GetByIdAsync(dto.Id) 
+                ?? throw new Exception("Flash Sale không tồn tại");
 
-            sale.IsActive = !sale.IsActive;
+            ValidateTime(dto);
+            if (dto.SaleStock < sale.SoldCount) throw new Exception("Số lượng sale không thể ít hơn số đã bán");
+            await CheckOverlappingAsync(sale.ProductId, dto, sale.Id);
+
+            sale.SalePrice = dto.SalePrice;
+            sale.SaleStock = dto.SaleStock;
+            sale.StartTime = dto.StartTime;
+            sale.EndTime = dto.EndTime;
+
             return await _unitOfWork.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> DeleteSaleAsync(int saleId)
         {
-            var sale = await _unitOfWork.FlashSales.GetByIdAsync(saleId);
-            if (sale == null) return false;
+            var sale = await _unitOfWork.FlashSales.GetByIdAsync(saleId) 
+                ?? throw new Exception("Flash Sale không tồn tại");
             
             if (sale.SoldCount > 0) throw new Exception("Không thể xóa chương trình sale đã có lượt mua. Hãy chọn Tắt thay vì Xóa.");
+            
             await _unitOfWork.FlashSales.DeleteAsync(sale.Id);
             return await _unitOfWork.SaveChangesAsync() > 0;
+        }
+
+        public async Task<FlashSaleManagementDTO?> GetSaleByIdAsync(int saleId)
+        {
+            var sale = await _unitOfWork.FlashSales.GetByIdAsync(saleId);
+            if (sale == null) return null;
+
+            var product = await _unitOfWork.Products.GetByIdAsync(sale.ProductId);
+            var now = TimeHelper.GetVnTime();
+
+            return new FlashSaleManagementDTO
+            {
+                Id = sale.Id,
+                ProductId = sale.ProductId,
+                ProductName = product?.Name ?? "N/A",
+                OriginalPrice = product?.Price ?? 0,
+                SalePrice = sale.SalePrice,
+                SaleStock = sale.SaleStock,
+                SoldCount = sale.SoldCount,
+                StartTime = sale.StartTime,
+                EndTime = sale.EndTime,
+                IsActive = sale.IsActive,
+                Status = GetSaleStatus(sale, now)
+            };
+        }
+
+        public async Task<bool> ToggleSaleStatusAsync(int saleId)
+        {
+            var sale = await _unitOfWork.FlashSales.GetByIdAsync(saleId) 
+                ?? throw new Exception("Flash Sale không tồn tại");
+
+            sale.IsActive = !sale.IsActive;
+            return await _unitOfWork.SaveChangesAsync() > 0;
+        }
+
+        private void ValidateTime(FlashSaleBaseDTO dto)
+        {
+            if (dto.StartTime >= dto.EndTime) throw new Exception("Thời gian bắt đầu phải trước thời gian kết thúc");
+            if (dto.EndTime <= TimeHelper.GetVnTime()) throw new Exception("Thời gian kết thúc phải ở tương lai");
+        }
+
+        private async Task CheckOverlappingAsync(int productId, FlashSaleBaseDTO dto, int? excludeSaleId = null)
+        {
+            var existingSales = await _unitOfWork.FlashSales.GetSalesByProductIdAsync(productId);
+            bool isOverlapping = existingSales.Any(s =>
+                s.Id != excludeSaleId && s.IsActive &&
+                ((dto.StartTime >= s.StartTime && dto.StartTime <= s.EndTime) ||
+                 (dto.EndTime >= s.StartTime && dto.EndTime <= s.EndTime) ||
+                 (dto.StartTime <= s.StartTime && dto.EndTime >= s.EndTime)));
+
+            if (isOverlapping) throw new Exception("Sản phẩm đã có một chương trình Flash Sale khác trong khoảng thời gian này");
         }
 
         private string GetSaleStatus(FlashSale s, DateTime now) 

@@ -18,7 +18,7 @@
             <p class="text-slate-500 font-medium">Kho hàng hiện có <span class="text-blue-600 font-bold">@Model.TotalItems</span> đầu sách.</p>
         </div>
         <button onclick="openProductModal(0)" class="flex items-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-[1.25rem] font-bold shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-premium active:scale-95">
-            <span class="material-symbols-outlined">add_circle</span> Thêm sản phẩm
+            <span class="material-symbols-outlined notranslate" translate="no">add_circle</span> Thêm sản phẩm
         </button>
     </div>
 
@@ -32,7 +32,7 @@
                         <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Thông tin chi tiết sản phẩm</p>
                     </div>
                     <button onclick="closeProductModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-premium">
-                        <span class="material-symbols-outlined text-2xl">close</span>
+                        <span class="material-symbols-outlined notranslate text-2xl" translate="no">close</span>
                     </button>
                 </div>
 
@@ -124,7 +124,7 @@
                                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Hình ảnh đại diện (Ảnh chính)</label>
                                 <div id="imageSelectArea" class="flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group">
                                     <div id="imagePreview" class="w-full h-32 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden border border-white group-hover:scale-105 transition-all">
-                                        <span class="material-symbols-outlined text-slate-200 text-4xl">add_photo_alternate</span>
+                                        <span class="material-symbols-outlined notranslate text-slate-200 text-4xl" translate="no">add_photo_alternate</span>
                                     </div>
                                     <div class="flex flex-col items-center text-center space-y-2">
                                         <input type="file" name="image" id="productImage" accept="image/*" class="hidden">
@@ -135,15 +135,24 @@
                             
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Bộ sưu tập ảnh phụ (Tùy chọn)</label>
+                                
+                                <!-- Ảnh đã tồn tại -->
+                                <div id="existingImagesArea" class="hidden space-y-2 mb-4">
+                                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest ml-1">Ảnh hiện có (Nhấn X để xóa)</p>
+                                    <div id="existingImagesContainer" class="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <!-- Load via JS -->
+                                    </div>
+                                </div>
+
                                 <div id="gallerySelectArea" class="flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer group">
                                     <div class="w-full h-32 rounded-2xl bg-white shadow-lg flex items-center justify-center border border-white group-hover:scale-105 transition-all overflow-y-auto p-2">
                                         <div id="galleryPreview" class="flex flex-wrap gap-2 justify-center">
-                                            <span class="material-symbols-outlined text-slate-200 text-4xl mt-6">collections</span>
+                                            <span class="material-symbols-outlined notranslate text-slate-200 text-4xl mt-6" translate="no">collections</span>
                                         </div>
                                     </div>
                                     <div class="flex flex-col items-center text-center space-y-2">
                                         <input type="file" name="additionalImages" id="additionalImages" accept="image/*" multiple class="hidden">
-                                        <button type="button" onclick="document.getElementById('additionalImages').click()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-600/20">Chọn nhiều ảnh</button>
+                                        <button type="button" onclick="document.getElementById('additionalImages').click()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-600/20">Chọn thêm ảnh mới</button>
                                     </div>
                                 </div>
                             </div>
@@ -167,7 +176,7 @@
             <div class="filter-item-search space-y-2.5">
                 <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tìm kiếm sản phẩm</label>
                 <div class="relative group">
-                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">search</span>
+                    <span class="material-symbols-outlined notranslate absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" translate="no">search</span>
                     <input type="text" id="searchTerm" placeholder="Tên sản phẩm, thương hiệu..." 
                            class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
                 </div>
@@ -206,8 +215,8 @@
             <div class="filter-item space-y-2.5">
                 <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Trạng thái</label>
                 <select id="isActive" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none shadow-sm">
-                    <option value="true">Kinh doanh</option>
-                    <option value="false">Tạm ẩn</option>
+                    <option value="true">Đang Bán</option>
+                    <option value="false">Tạm Ngừng</option>
                     <option value="">Tất cả</option>
                 </select>
             </div>
@@ -251,11 +260,12 @@
                     <!-- Left: Create Form -->
                     <div class="lg:col-span-5 space-y-6">
                         <div class="p-6 bg-rose-50/50 rounded-3xl border border-rose-100 space-y-6">
-                            <h4 class="font-black text-slate-800 text-sm uppercase tracking-widest flex items-center gap-2">
+                            <h4 id="fsFormTitle" class="font-black text-slate-800 text-sm uppercase tracking-widest flex items-center gap-2">
                                 <span class="material-symbols-outlined text-rose-500">add_circle</span> Tạo đợt Sale mới
                             </h4>
                             <form id="flashSaleForm" class="space-y-4">
                                 <input type="hidden" id="fsProductId" name="productId">
+                                <input type="hidden" id="fsSaleId" name="id" value="0">
                                 
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Giá Sale (₫)</label>

@@ -51,6 +51,9 @@
                         </td>
                         <td class="px-4 py-4">
                             <div class="flex items-center justify-end gap-2">
+                                <button type="button" class="sale-action-btn edit" onclick="editSale(@item.Id)" title="Chỉnh sửa">
+                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                </button>
                                 <button type="button" class="sale-action-btn @(item.IsActive ? "toggle-active" : "")" onclick="toggleSaleStatus(@item.Id)" title="Bật/Tắt">
                                     <span class="material-symbols-outlined text-lg">@(item.IsActive ? "toggle_on" : "toggle_off")</span>
                                 </button>

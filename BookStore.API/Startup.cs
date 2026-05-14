@@ -87,6 +87,7 @@ namespace BookStore.API
             services.AddScoped<PricingService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IFileService, CloudinaryService>();
+            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             var key = System.Text.Encoding.UTF8.GetBytes(Configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_123");
             services.AddAuthentication(options =>
             {

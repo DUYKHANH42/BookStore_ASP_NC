@@ -244,5 +244,25 @@ namespace BookStore.Application.Services
 
             return new AuthResponseDto { IsSuccess = true, Message = "Mật khẩu đã được cập nhật thành công!" };
         }
+        public async Task<AuthResponseDto?> GetProfileAsync(string userId)
+        {
+            var user = await _identityService.GetUserByIdAsync(userId);
+            if (user == null) return null;
+
+            var roles = await _identityService.GetRolesAsync(user);
+
+            return new AuthResponseDto
+            {
+                IsSuccess = true,
+                UserId = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                AvtUrl = user.AvtUrl,
+                Address = user.Address,
+                PhoneNumber = user.PhoneNumber,
+                IsActive = user.IsActive,
+                Roles = roles.ToList()
+            };
+        }
     }
 }

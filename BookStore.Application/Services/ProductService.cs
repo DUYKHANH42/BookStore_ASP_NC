@@ -189,6 +189,21 @@ namespace BookStore.Application.Services
             return await _unitOfWork.SaveChangesAsync() > 0;
         }
 
+        public async Task<bool> DeleteImageAsync(int imageId)
+        {
+            var image = await _unitOfWork.ProductImages.GetByIdAsync(imageId);
+            if (image == null) return false;
+
+            // XÓA FILE VẬT LÝ TRÊN CLOUD
+            if (!string.IsNullOrEmpty(image.ImageUrl) && image.ImageUrl.StartsWith("http"))
+            {
+                await _fileService.DeleteFileAsync(image.ImageUrl);
+            }
+
+            await _unitOfWork.ProductImages.DeleteAsync(imageId);
+            return await _unitOfWork.SaveChangesAsync() > 0;
+        }
+
         public async Task<bool> ToggleStatusAsync(int id)
         {
             var product = await _unitOfWork.Products.GetByIdAsync(id);

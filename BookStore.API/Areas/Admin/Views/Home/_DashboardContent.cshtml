@@ -1,0 +1,205 @@
+@using BookStore.Application.DTO
+@model DashboardDataDTO
+
+<!-- Tầng 1: 4 Thẻ Summary -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Doanh thu</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.TotalRevenue.ToString("N0")đ</h3>
+        <div class="mt-2 text-[9px] font-bold @(Model.Summary.RevenueGrowth >= 0 ? "text-emerald-500" : "text-rose-500")">
+            @(Model.Summary.RevenueGrowth >= 0 ? "↑" : "↓") @Math.Abs(Model.Summary.RevenueGrowth).ToString("N1")% <span class="text-slate-400 font-medium lowercase">so với kỳ trước</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Đơn hàng</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.TotalOrders.ToString("N0")</h3>
+        <div class="mt-2 text-[9px] font-bold @(Model.Summary.OrderGrowth >= 0 ? "text-emerald-500" : "text-rose-500")">
+            @(Model.Summary.OrderGrowth >= 0 ? "↑" : "↓") @Math.Abs(Model.Summary.OrderGrowth).ToString("N1")% <span class="text-slate-400 font-medium lowercase">so với kỳ trước</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">AOV (Giá trị TB)</p>
+        <h3 class="text-2xl font-black text-slate-900">@((Model.Summary.AverageOrderValue / 1000).ToString("N1"))đ</h3>
+        <div class="mt-2 text-[9px] font-bold text-blue-500">Trung bình mỗi đơn hàng</div>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Tỷ lệ hủy đơn</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.CancellationRate.ToString("N1")%</h3>
+        <div class="mt-2 text-[9px] font-bold @(Model.Summary.CancellationRate > 10 ? "text-rose-500" : "text-emerald-500")">
+            @(Model.Summary.CancellationRate > 10 ? "Cần chú ý!" : "Trong ngưỡng an toàn")
+        </div>
+    </div>
+</div>
+
+<!-- Tầng 2: 4 Thẻ Summary Tiếp theo -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Khách hàng mới</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.TotalCustomers</h3>
+        <div class="mt-2 text-[9px] font-bold @(Model.Summary.CustomerGrowth >= 0 ? "text-emerald-500" : "text-rose-500")">
+            @(Model.Summary.CustomerGrowth >= 0 ? "↑" : "↓") @Math.Abs(Model.Summary.CustomerGrowth).ToString("N1")% <span class="text-slate-400 font-medium lowercase">so với kỳ trước</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Khách hàng quay lại</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.ReturningCustomerRate.ToString("N1")%</h3>
+        <div class="mt-2 text-[9px] font-bold text-blue-500">Tỷ lệ khách hàng quay lại</div>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Đánh giá trung bình</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.AverageRating.ToString("N1") / 5</h3>
+        <div class="mt-2 text-[9px] font-bold text-amber-500">★★★★★ <span class="text-slate-400 lowercase font-medium">dựa trên nhận xét</span></div>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-50 hover:shadow-xl transition-premium group">
+        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Hàng tồn đọng (>30n)</p>
+        <h3 class="text-2xl font-black text-slate-900">@Model.Summary.DeadStockCount sản phẩm</h3>
+        <div class="mt-2 text-[9px] font-bold text-rose-500">Cần có chính sách đẩy hàng</div>
+    </div>
+</div>
+
+<!-- Tầng 3: Xu hướng kinh doanh (50%) & Trạng thái đơn hàng (50%) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-50">
+        <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-8">Xu hướng kinh doanh</h3>
+        <div class="h-[350px]">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+    <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-50">
+        <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-8 text-center">Trạng thái đơn hàng</h3>
+        <div class="h-[350px] flex items-center justify-center">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tầng 4: Đơn hàng mới nhất (50%) & Loyal Customers + Stock Alerts (50%) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white rounded-[3rem] p-10 border border-slate-50 shadow-sm">
+        <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-8">Đơn hàng mới nhất</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                        <th class="pb-4">Mã đơn</th>
+                        <th class="pb-4">Thời gian</th>
+                        <th class="pb-4">Giá trị</th>
+                        <th class="pb-4 text-right">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.RecentOrders)
+                    {
+                        <tr class="group cursor-pointer hover:bg-slate-50 transition-colors" onclick="openOrderModal(@order.Id)">
+                            <td class="py-5 font-black text-slate-900 italic">#@order.OrderNumber</td>
+                            <td class="py-5 text-xs font-bold text-slate-500">@order.CreatedAt.ToString("dd/MM HH:mm")</td>
+                            <td class="py-5 font-black text-blue-600">@order.TotalPrice.ToString("N0")đ</td>
+                            <td class="py-5 text-right">
+                                <span class="status-badge @order.Status.ToLower()">@order.Status</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="space-y-8">
+        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-50">
+            <h3 class="text-xl font-black text-slate-900 mb-8">Khách hàng thân thiết</h3>
+            <div class="space-y-6">
+                @foreach (var customer in Model.TopCustomers)
+                {
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs">@customer.FullName.Substring(0, 1)</div>
+                            <h4 class="text-xs font-black text-slate-900">@customer.FullName</h4>
+                        </div>
+                        <div class="text-xs font-black text-slate-900">@customer.TotalSpent.ToString("N0")đ</div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="bg-slate-950 p-10 rounded-[3rem] text-white shadow-xl shadow-slate-900/20">
+            <h3 class="text-xl font-black mb-6">Cảnh báo tồn kho ⚠️</h3>
+            <div class="space-y-4">
+                @foreach (var p in Model.LowStockProducts.Take(3))
+                {
+                    <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-12 bg-white/10 rounded-lg overflow-hidden border border-white/10 flex-shrink-0">
+                                <img src="/uploads/@p.ImageUrl" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" onerror="this.src='/img/no-image.png'" />
+                            </div>
+                            <div>
+                                <h4 class="text-[11px] font-black truncate max-w-[150px]">@p.Name</h4>
+                                <p class="text-[9px] text-rose-500/60 font-bold uppercase tracking-widest">Sắp hết hàng</p>
+                            </div>
+                        </div>
+                        <span class="text-rose-500 font-black text-xs">@p.Quantity cuốn</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tầng 5: Top bán chạy (60%) & Đánh giá gần nhất (40%) -->
+<div class="grid grid-cols-1 lg:grid-cols-10 gap-8">
+    <div class="lg:col-span-6 bg-white p-10 rounded-[3.5rem] border border-slate-50 shadow-sm">
+        <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-10">Top sản phẩm bán chạy</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            @foreach (var p in Model.TopSellingProducts)
+            {
+                <div class="flex items-center gap-5 group">
+                    <div class="w-16 h-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0">
+                        <img src="/uploads/@p.ImageUrl" class="w-full h-full object-cover group-hover:scale-110 transition-transform" onerror="this.src='/img/no-image.png'" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-black text-slate-900 truncate">@p.Name</h4>
+                        <p class="text-[10px] font-bold text-blue-600 mt-1">Đã bán: @p.SoldCount</p>
+                        <p class="text-[10px] font-black text-slate-400 mt-0.5">@p.Revenue.ToString("N0")đ</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="lg:col-span-4 bg-white p-10 rounded-[3.5rem] border border-slate-50 shadow-sm">
+        <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-8 text-center">Đánh giá gần nhất</h3>
+        <div class="space-y-6">
+            @foreach (var review in Model.RecentReviews)
+            {
+                <div class="p-6 bg-slate-50/50 rounded-3xl border border-slate-100 relative overflow-hidden group">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-black text-slate-400 uppercase">@review.UserName</span>
+                        <div class="text-amber-400 text-[10px]">
+                            @for(int i=0; i<review.Rating; i++) { <span>★</span> }
+                        </div>
+                    </div>
+                    <p class="text-[11px] font-bold text-slate-600 italic leading-relaxed">"@review.Comment"</p>
+                    <div class="absolute top-0 right-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Tầng 6: Doanh thu theo thể loại -->
+<div class="bg-white p-12 rounded-[4rem] shadow-sm border border-slate-50">
+    <h3 class="text-2xl font-black text-slate-900 tracking-tighter mb-10 text-center uppercase tracking-[0.2em]">Cơ cấu doanh thu theo thể loại</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        @foreach (var cat in Model.CategoryRevenue)
+        {
+            <div class="group">
+                <div class="flex justify-between text-[11px] font-black mb-3 uppercase tracking-widest text-slate-500">
+                    <span>@cat.CategoryName</span>
+                    <span class="text-slate-900">@cat.Percentage.ToString("N1")%</span>
+                </div>
+                <div class="h-2 bg-slate-50 rounded-full overflow-hidden">
+                    <div class="h-full bg-slate-900 group-hover:bg-blue-600 transition-colors" style="width: @cat.Percentage%"></div>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 mt-2">Tổng: @cat.Revenue.ToString("N0")đ</p>
+            </div>
+        }
+    </div>
+</div>

@@ -3,6 +3,7 @@ using BookStore.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookStore.API.Areas.Admin.Controllers
@@ -57,6 +58,41 @@ namespace BookStore.API.Areas.Admin.Controllers
             {
                 var result = await _flashSaleService.DeleteSaleAsync(id);
                 return Json(new { success = result, message = result ? "Xóa thành công" : "Không tìm thấy" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetSale(int id)
+        {
+            var sale = await _flashSaleService.GetSaleByIdAsync(id);
+            if (sale == null) return Json(new { success = false, message = "Flash Sale không tồn tại" });
+            return Json(new { success = true, data = sale });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Update(FlashSaleUpdateDTO dto)
+        {
+            if (!ModelState.IsValid) 
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + errors });
+            }
+
+            try
+            {
+                var result = await _flashSaleService.UpdateFlashSaleAsync(dto);
+                if (result) 
+                {
+                    return Json(new { success = true, message = "Cập nhật Flash Sale thành công!" });
+                }
+                else 
+                {
+                    // Nếu result = false thường là do không có thay đổi nào so với dữ liệu cũ
+                    return Json(new { success = true, message = "Không có thay đổi nào được thực hiện." });
+                }
             }
             catch (Exception ex)
             {

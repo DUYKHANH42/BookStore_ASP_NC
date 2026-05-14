@@ -6,7 +6,7 @@ namespace BookStore.Application.DTO
     public class ReportSummaryDTO
     {
         public decimal TotalRevenue { get; set; }
-        public decimal NetRevenue { get; set; } // Only Completed
+        public decimal NetRevenue { get; set; }
         public int TotalOrders { get; set; }
         public int CompletedOrders { get; set; }
         public int CancelledOrders { get; set; }
@@ -21,14 +21,6 @@ namespace BookStore.Application.DTO
         public int OrderCount { get; set; }
     }
 
-
-    public class TopCustomerDTO
-    {
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public int TotalOrders { get; set; }
-        public decimal TotalSpent { get; set; }
-    }
 
     public class FullReportDTO
     {

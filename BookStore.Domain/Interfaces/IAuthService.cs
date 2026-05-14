@@ -1,4 +1,4 @@
-﻿using BookStore.Domain.Common;
+using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -25,5 +25,6 @@ namespace BookStore.Domain.Interfaces
         Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user);
         Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string newPassword);
         Task<ApplicationUser> FindByEmailAsync(string email);
+        Task<IList<string>> GetRolesAsync(ApplicationUser user);
     }
 }

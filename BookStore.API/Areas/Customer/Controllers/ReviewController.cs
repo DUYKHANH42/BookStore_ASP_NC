@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace BookStore.API.Areas.Customer.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/reviews")]
     public class ReviewController : ControllerBase
@@ -20,6 +19,7 @@ namespace BookStore.API.Areas.Customer.Controllers
         }
 
         // POST: api/reviews
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> SubmitReview([FromBody] CreateReviewDTO dto)
         {

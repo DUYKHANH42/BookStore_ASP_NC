@@ -160,6 +160,19 @@ namespace BookStore.API.Areas.Customer.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _authAppService.GetProfileAsync(userId);
+            if (result == null) return NotFound(new { message = "Người dùng không tồn tại." });
+
+            return Ok(result);
+        }
+
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {

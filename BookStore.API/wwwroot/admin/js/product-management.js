@@ -139,12 +139,17 @@ $(document).ready(function () {
         e.preventDefault();
         const formData = $(this).serialize();
         const productId = $('#fsProductId').val();
+        const saleId = $('#fsSaleId').val();
+        const url = saleId && saleId !== '0' ? '/Admin/FlashSale/Update' : '/Admin/FlashSale/Create';
 
-        $.post('/Admin/FlashSale/Create', formData, function (res) {
+        $.post(url, formData, function (res) {
             if (res.success) {
                 Swal.fire('Thành công', res.message, 'success');
                 loadFlashSales(productId);
                 $('#flashSaleForm')[0].reset();
+                $('#fsSaleId').val('0');
+                $('#fsFormTitle').html('<span class="material-symbols-outlined text-rose-500">add_circle</span> Tạo đợt Sale mới');
+                $('#flashSaleForm button[type="submit"]').text('Kích hoạt Sale');
             } else {
                 Swal.fire('Lỗi', res.message, 'error');
             }
@@ -182,8 +187,10 @@ window.openProductModal = function (id) {
     ValidationHelper.clearErrors($('#productForm'));
     $('#productForm')[0].reset();
     $('#productId').val(id);
-    $('#imagePreview').html('<span class="material-symbols-outlined text-slate-200 text-5xl">add_photo_alternate</span>');
-    $('#galleryPreview').html('<span class="material-symbols-outlined text-slate-200 text-4xl mt-6">collections</span>');
+    $('#imagePreview').html('<span class="material-symbols-outlined notranslate text-slate-200 text-5xl" translate="no">add_photo_alternate</span>');
+    $('#galleryPreview').html('<span class="material-symbols-outlined notranslate text-slate-200 text-4xl mt-6" translate="no">collections</span>');
+    $('#existingImagesArea').addClass('hidden');
+    $('#existingImagesContainer').empty();
 
     if (id === 0) {
         $('#modalTitle').text('Thêm sản phẩm mới');
@@ -208,23 +215,56 @@ window.openProductModal = function (id) {
             
             // Xử lý bộ sưu tập ảnh (Images)
             if (data.images && data.images.length > 0) {
-                $('#galleryPreview').html('');
-                const additionalImages = data.images.filter(img => !img.isMain); // Lọc ra ảnh phụ
+                const additionalImages = data.images.filter(img => !img.isMain);
                 if (additionalImages.length > 0) {
+                    $('#existingImagesArea').removeClass('hidden');
                     additionalImages.forEach(img => {
                         const imgUrl = img.imageUrl.startsWith('http') ? img.imageUrl : '/uploads/' + img.imageUrl;
-                        $('#galleryPreview').append(`<div class="w-16 h-16 rounded-xl overflow-hidden shadow-sm shrink-0"><img src="${imgUrl}" class="w-full h-full object-cover"></div>`);
+                        $('#existingImagesContainer').append(`
+                            <div class="relative group w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-slate-200" id="img-container-${img.id}">
+                                <img src="${imgUrl}" class="w-full h-full object-cover">
+                                <button type="button" onclick="deleteProductImage(${img.id})" 
+                                        class="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            </div>
+                        `);
                     });
-                } else {
-                    $('#galleryPreview').html('<span class="material-symbols-outlined text-slate-200 text-4xl mt-6">collections</span>');
                 }
-            } else {
-                $('#galleryPreview').html('<span class="material-symbols-outlined text-slate-200 text-4xl mt-6">collections</span>');
             }
 
             $('#productModal').addClass('active');
         });
     }
+};
+
+window.deleteProductImage = function(imageId) {
+    Swal.fire({
+        title: 'Xóa ảnh này?',
+        text: "Ảnh sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Xóa ngay',
+        cancelButtonText: 'Hủy'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('/Admin/Product/DeleteImage', { imageId: imageId }, function (res) {
+                if (res.success) {
+                    $(`#img-container-${imageId}`).fadeOut(300, function() {
+                        $(this).remove();
+                        if ($('#existingImagesContainer').children().length === 0) {
+                            $('#existingImagesArea').addClass('hidden');
+                        }
+                    });
+                    toastr.success(res.message);
+                } else {
+                    Swal.fire('Lỗi', res.message, 'error');
+                }
+            });
+        }
+    });
 };
 
 window.closeProductModal = function () {
@@ -263,8 +303,11 @@ window.toggleProductStatus = function (id) {
 
 window.manageFlashSale = function (id, name) {
     $('#fsProductId').val(id);
+    $('#fsSaleId').val('0');
     $('#fsProductName').text('Sản phẩm: ' + name);
+    $('#fsFormTitle').html('<span class="material-symbols-outlined text-rose-500">add_circle</span> Tạo đợt Sale mới');
     $('#flashSaleForm')[0].reset();
+    $('#flashSaleForm button[type="submit"]').text('Kích hoạt Sale');
     $('#flashSaleModal').removeClass('hidden');
     loadFlashSales(id);
 };
@@ -297,6 +340,35 @@ window.deleteSale = function (id) {
             loadFlashSales($('#fsProductId').val());
         } else {
             alert(res.message);
+        }
+    });
+};
+
+window.editSale = function (id) {
+    $.get('/Admin/FlashSale/GetSale', { id: id }, function (res) {
+        if (res.success) {
+            const data = res.data;
+            $('#fsSaleId').val(data.id);
+            $('input[name="salePrice"]').val(data.salePrice);
+            $('input[name="saleStock"]').val(data.saleStock);
+            
+            // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+            const start = new Date(data.startTime);
+            const end = new Date(data.endTime);
+            
+            const formatDate = (date) => {
+                const pad = (n) => n.toString().padStart(2, '0');
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+            };
+
+            $('input[name="startTime"]').val(formatDate(start));
+            $('input[name="endTime"]').val(formatDate(end));
+            
+            $('#fsFormTitle').html('<span class="material-symbols-outlined text-blue-500">edit_square</span> Cập nhật đợt Sale');
+            $('#flashSaleForm button[type="submit"]').text('Lưu thay đổi');
+            toastr.info('Đã tải thông tin đợt sale');
+        } else {
+            Swal.fire('Lỗi', res.message, 'error');
         }
     });
 };

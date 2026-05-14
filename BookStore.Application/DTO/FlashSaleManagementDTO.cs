@@ -3,11 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BookStore.Application.DTO
 {
-    public class FlashSaleCreateDTO
+    public class FlashSaleBaseDTO
     {
-        [Required]
-        public int ProductId { get; set; }
-
         [Required]
         [Range(0, double.MaxValue, ErrorMessage = "Giá sale phải lớn hơn hoặc bằng 0")]
         public decimal SalePrice { get; set; }
@@ -21,6 +18,18 @@ namespace BookStore.Application.DTO
 
         [Required]
         public DateTime EndTime { get; set; }
+    }
+
+    public class FlashSaleCreateDTO : FlashSaleBaseDTO
+    {
+        [Required]
+        public int ProductId { get; set; }
+    }
+
+    public class FlashSaleUpdateDTO : FlashSaleBaseDTO
+    {
+        [Required]
+        public int Id { get; set; }
     }
 
     public class FlashSaleManagementDTO

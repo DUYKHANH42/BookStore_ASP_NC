@@ -18,7 +18,9 @@ namespace BookStore.Domain.Interfaces
         IInventoryReceiptDetailRepository InventoryReceiptDetails { get; }
         ISupplierRepository Suppliers { get; }
         IFlashSaleRepository FlashSales { get; }
+        IProductImageRepository ProductImages { get; }
         INotificationRepository Notifications { get; }
+        
 
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();

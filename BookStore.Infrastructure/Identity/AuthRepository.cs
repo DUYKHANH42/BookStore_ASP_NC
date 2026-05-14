@@ -1,4 +1,4 @@
-﻿using BookStore.Application.DTO.Auth;
+using BookStore.Application.DTO.Auth;
 using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
@@ -236,11 +236,15 @@ namespace BookStore.Infrastructure.Identity
             return (tokenString, expirationTime);
         }
 
-        public async Task<ApplicationUser> FindByEmailAsync(string email)
+        public async Task<ApplicationUser?> FindByEmailAsync(string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            return user!;
+            return await _userManager.FindByEmailAsync(email);
         }
+
+        public async Task<IList<string>> GetRolesAsync(ApplicationUser user)
+        {
+            return await _userManager.GetRolesAsync(user);
+        }
+
     }
 }
-

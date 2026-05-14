@@ -57,6 +57,8 @@ namespace BookStore.Infrastructure.Repositories
             return await _context.Orders
                 .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
                 .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                        .ThenInclude(p => p.Category)
                 .ToListAsync();
         }
 

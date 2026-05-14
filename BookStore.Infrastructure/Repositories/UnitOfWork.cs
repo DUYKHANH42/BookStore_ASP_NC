@@ -21,6 +21,7 @@ public class UnitOfWork : IUnitOfWork
     public ISupplierRepository Suppliers { get; }
     public IFlashSaleRepository FlashSales { get; }
     public INotificationRepository Notifications { get; }
+    public IProductImageRepository ProductImages { get; }
 
     public UnitOfWork(BookStoreDbContext context)
     {
@@ -39,6 +40,7 @@ public class UnitOfWork : IUnitOfWork
         Suppliers = new SupplierRepository(_context);
         FlashSales = new FlashSaleRepository(_context);
         Notifications = new NotificationRepository(_context);
+        ProductImages = new ProductImageRepository(_context);
     }
 
     public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();

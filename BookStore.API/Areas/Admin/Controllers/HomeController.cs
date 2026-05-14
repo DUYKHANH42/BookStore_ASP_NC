@@ -1,4 +1,4 @@
-﻿using BookStore.Application.Interfaces;
+using BookStore.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -23,25 +23,25 @@ namespace BookStore.API.Areas.Admin.Controllers
         [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
-            // Mặc định lấy dữ liệu 30 ngày gần nhất
-            var endDate = BookStore.Domain.Common.TimeHelper.GetVnTime();
-            var startDate = endDate.AddDays(-30);
-            var data = await _dashboardService.GetDashboardDataAsync(startDate, endDate);
+            var data = await _dashboardService.GetDashboardDataAsync();
             return View(data);
         }
 
         [HttpGet("GetDashboardData")]
         public async Task<IActionResult> GetDashboardData(DateTime? from, DateTime? to)
         {
-            var endDate = to ?? BookStore.Domain.Common.TimeHelper.GetVnTime();
-            var startDate = from ?? endDate.AddDays(-30);
-
-            var data = await _dashboardService.GetDashboardDataAsync(startDate, endDate);
+            var data = await _dashboardService.GetDashboardDataAsync(from, to);
             return Json(data);
+        }
+
+        [HttpGet("GetDashboardPartial")]
+        public async Task<IActionResult> GetDashboardPartial(DateTime? from, DateTime? to)
+        {
+            var data = await _dashboardService.GetDashboardDataAsync(from, to);
+            return PartialView("_DashboardContent", data);
         }
 
         [HttpGet("/Admin")]
         public IActionResult Default() => RedirectToAction("Index");
     }
 }
-

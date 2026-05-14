@@ -118,6 +118,14 @@ namespace BookStore.API.Areas.Admin.Controllers
             return PartialView("_ProductListPartial", result);
         }
 
+        [HttpPost("DeleteImage")]
+        public async Task<IActionResult> DeleteImage(int imageId)
+        {
+            var result = await _productService.DeleteImageAsync(imageId);
+            if (!result) return BadRequest(new { success = false, message = "Không thể xóa ảnh." });
+            return Json(new { success = true, message = "Đã xóa ảnh thành công." });
+        }
+
         [HttpPost("ToggleStatus")]
         public async Task<IActionResult> ToggleStatus(int id)
         {

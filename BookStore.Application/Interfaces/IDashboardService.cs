@@ -6,6 +6,6 @@ namespace BookStore.Application.Interfaces
 {
     public interface IDashboardService
     {
-        Task<DashboardDataDTO> GetDashboardDataAsync(DateTime startDate, DateTime endDate);
+        Task<DashboardDataDTO> GetDashboardDataAsync(DateTime? startDate = null, DateTime? endDate = null);
     }
 }
