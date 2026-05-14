@@ -37,6 +37,14 @@ namespace BookStore.API
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((context, config) =>
+                {
+                    foreach (var source in config.Sources
+                        .OfType<Microsoft.Extensions.Configuration.Json.JsonConfigurationSource>())
+                    {
+                        source.ReloadOnChange = false;
+                    }
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
