@@ -145,8 +145,7 @@ namespace BookStore.API
                         .WithOrigins(
                             "http://localhost:4200",
                             "http://localhost:53214",
-                            "https://book-store-giao-dien.vercel.app",
-                            "https://book-store-giao-dien-iixqkx84y-duykhanh42s-projects.vercel.app"
+                            "https://book-lumen.vercel.app/"
                         )
                         .AllowAnyHeader()
                         .AllowAnyMethod()
