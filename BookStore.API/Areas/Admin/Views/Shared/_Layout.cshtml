@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Lumen Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Dark Mode Instant Apply (Prevent Flash)
+        (function() {
+            const theme = localStorage.getItem('admin-dark-mode');
+            if (theme === 'enabled') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: rgba(255, 255, 255, 0.9);
+            --bg-header: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.05);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        html.dark {
+            --bg-body: #020617;
+            --bg-card: #0f172a;
+            --bg-sidebar: rgba(2, 6, 23, 0.9);
+            --bg-header: rgba(2, 6, 23, 0.8);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scroll-behavior: smooth;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .glass-sidebar {
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .glass-header {
+            background: var(--bg-header);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .glass-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Comprehensive Dark Mode Overrides */
+        html.dark .bg-white {
+            background-color: var(--bg-card) !important;
+        }
+
+        html.dark .bg-white\/80 {
+            background-color: var(--bg-header) !important;
+        }
+
+        html.dark .bg-white\/90 {
+            background-color: var(--bg-sidebar) !important;
+        }
+
+        html.dark .bg-white\/95 {
+            background-color: var(--bg-sidebar) !important;
+        }
+
+        html.dark .bg-white\/50 {
+            background-color: rgba(15, 23, 42, 0.5) !important;
+        }
+
+        html.dark .bg-slate-50 {
+            background-color: #1e293b !important;
+        }
+
+        html.dark .bg-slate-100 {
+            background-color: #1e293b !important;
+        }
+
+        html.dark .bg-slate-200/50 {
+            background-color: rgba(255,255,255,0.05) !important;
+        }
+
+        html.dark .bg-blue-50 {
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+
+        html.dark .bg-emerald-50 {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        html.dark .bg-rose-50 {
+            background-color: rgba(244, 63, 94, 0.1) !important;
+        }
+
+        html.dark .bg-amber-50 {
+            background-color: rgba(245, 158, 11, 0.1) !important;
+        }
+
+        html.dark .border-slate-50,
+        html.dark .border-slate-100,
+        html.dark .border-slate-200 {
+            border-color: var(--border-color) !important;
+        }
+
+        html.dark .text-slate-900,
+        html.dark .text-slate-800,
+        html.dark .text-slate-700 {
+            color: var(--text-main) !important;
+        }
+
+        html.dark .text-slate-600,
+        html.dark .text-slate-500,
+        html.dark .text-slate-400 {
+            color: var(--text-muted) !important;
+        }
+
+        html.dark input,
+        html.dark select,
+        html.dark textarea {
+            background-color: var(--input-bg) !important;
+            color: #f8fafc !important;
+            border-color: var(--border-color) !important;
+        }
+
+            html.dark input::placeholder {
+                color: #475569 !important;
+            }
+
+        html.dark .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        html.dark .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.dark .shadow-xl {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .nav-link-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+            color: white !important;
+        }
+
+            .nav-link-active span {
+                color: white !important;
+            }
+
+        .admin-nav-navigating .glass-sidebar,
+        .admin-nav-navigating .transition-premium {
+            transition-duration: 0.05s !important;
+        }
+
+        .premium-shadow {
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+
+        html.dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+
+        .transition-premium {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Premium Select Styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.25rem center;
+            background-size: 1rem;
+            cursor: pointer;
+        }
+
+            select:focus {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b82f6' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            }
+
+        html.dark select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        }
+
+        option {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            font-weight: 600;
+            padding: 12px; /* Limited support but helps in some browsers */
+            border: none;
+            outline: none;
+        }
+
+        /* Improvement for Chromium browsers */
+        select:focus option:checked,
+        select:focus option:hover {
+            box-shadow: 0 0 10px 100px #3b82f6 inset !important;
+            color: white !important;
+        }
+
+        html.dark option {
+            background-color: #1e293b;
+            color: #f8fafc;
+        }
+
+            html.dark option:checked {
+                background-color: #3b82f6 !important;
+                color: white !important;
+            }
+
+        /* Dark Mode Deep Overrides */
+        html.dark .glass-card {
+            background-color: var(--bg-card) !important;
+        }
+
+        html.dark .modal-content {
+            background-color: var(--bg-card) !important;
+            color: #fff;
+            border: 1px solid var(--border-color);
+        }
+
+        html.dark table tbody tr {
+            background-color: transparent !important;
+            border-color: var(--border-color) !important;
+        }
+
+            html.dark table tbody tr:hover {
+                background-color: rgba(255,255,255,0.03) !important;
+            }
+
+        html.dark thead tr {
+            background-color: rgba(255,255,255,0.02) !important;
+        }
+
+        html.dark .bg-white {
+            background-color: var(--bg-card) !important;
+        }
+
+        html.dark .badge, html.dark span[class*="bg-"] {
+            box-shadow: none;
+        }
+
+        /* Advanced Fix for Admin Modals in Dark Mode */
+        html.dark #productModal .modal-content,
+        html.dark #orderModal .modal-content,
+        html.dark #flashSaleModal > div,
+        html.dark #replyModal > div {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #1e293b !important;
+        }
+
+        html.dark .bg-slate-900\/60 {
+            background-color: rgba(2, 6, 23, 0.8) !important;
+        }
+
+        /* Mobile Sidebar Transition and Fix */
+        @@media (max-width: 1024px) {
+            .glass-sidebar {
+                position: fixed;
+                left: -320px;
+                width: 320px;
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+                .glass-sidebar.sidebar-open {
+                    transform: translateX(320px);
+                }
+
+            .sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(2, 6, 23, 0.6);
+                backdrop-filter: blur(4px);
+                z-index: 90;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s;
+            }
+
+                .sidebar-overlay.active {
+                    opacity: 1;
+                    visibility: visible;
+                }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <style>
+        /* Premium Choices.js Styling */
+        .choices {
+            margin-bottom: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .choices__inner {
+            background-color: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 1rem !important;
+            padding: 0.75rem 1.25rem !important;
+            min-height: auto !important;
+            font-weight: 700 !important;
+            color: var(--text-main) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .choices[data-type*="select-one"] .choices__inner {
+            padding-bottom: 0.75rem !important;
+        }
+
+        .choices.is-focused .choices__inner {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+        }
+
+        .choices__list--dropdown {
+            background-color: var(--bg-card) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 1.25rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            margin-top: 8px !important;
+            padding: 8px !important;
+            z-index: 1000 !important;
+            overflow: hidden !important;
+            backdrop-filter: blur(16px) !important;
+        }
+
+            .choices__list--dropdown .choices__item--selectable {
+                padding-right: 1.25rem !important;
+                padding: 12px 16px !important;
+                border-radius: 0.75rem !important;
+                font-size: 0.875rem !important;
+                font-weight: 600 !important;
+                transition: all 0.2s ease !important;
+                margin-bottom: 2px !important;
+            }
+
+                .choices__list--dropdown .choices__item--selectable.is-highlighted {
+                    background-color: #3b82f6 !important;
+                    color: white !important;
+                }
+
+                .choices__list--dropdown .choices__item--selectable:after {
+                    display: none !important;
+                }
+
+        /* Dark Mode for Choices */
+        html.dark .choices__inner,
+        html.dark .choices__list--dropdown {
+            background-color: #0f172a !important;
+            border-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+
+        html.dark .choices__list--dropdown .choices__item--selectable {
+            color: #f8fafc !important;
+        }
+
+            html.dark .choices__list--dropdown .choices__item--selectable.is-highlighted {
+                background-color: #2563eb !important;
+                color: white !important;
+            }
+
+        /* Hide native select arrow since Choices has its own */
+        .choices[data-type*="select-one"]:after {
+            border-color: #64748b transparent transparent transparent !important;
+            border-width: 5px !important;
+            right: 1.5rem !important;
+        }
+
+        .choices.is-open[data-type*="select-one"]:after {
+            border-color: transparent transparent #64748b transparent !important;
+            margin-top: -7.5px !important;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="overflow-x-hidden">
+    <!-- Overlay for Mobile Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebarMenu" class="w-80 glass-sidebar text-slate-900 flex-shrink-0 flex flex-col sticky top-0 h-screen z-[100]">
+            <div class="p-8 lg:p-10 flex flex-col items-center relative">
+                <button id="closeSidebarBtn" class="lg:hidden absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <span class="material-symbols-outlined notranslate" translate="no">close</span>
+                </button>
+                <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="block group">
+                    <img src="/uploads/imgs/logo_sach.png" alt="Lumen Logo"
+                         class="h-20 lg:h-28 w-auto object-contain transition-transform group-hover:scale-105" />
+                </a>
+            </div>
+
+            <nav class="flex-1 px-4 lg:px-6 space-y-1 overflow-y-auto hide-scrollbar">
+                <div class="pb-4">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Điều khiển chính</p>
+                    <a asp-area="Admin" asp-controller="Home" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "text-white" : "text-slate-400")" translate="no">grid_view</span> Dashboard
+                    </a>
+                </div>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Kho hàng & Sản phẩm</p>
+                    <a asp-area="Admin" asp-controller="Product" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "text-white" : "text-slate-400")" translate="no">inventory_2</span> Quản lý sản phẩm
+                    </a>
+                    <a asp-area="Admin" asp-controller="Category" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "text-white" : "text-slate-400")" translate="no">account_tree</span> Cây danh mục
+                    </a>
+                    <a asp-area="Admin" asp-controller="Inventory" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "text-white" : "text-slate-400")" translate="no">inventory</span> Quản lý tồn kho
+                    </a>
+                </div>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Vận hành kinh doanh</p>
+                    <a asp-area="Admin" asp-controller="Order" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <div class="relative">
+                            <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Order" ? "text-white" : "text-slate-400")" translate="no">receipt_long</span>
+                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        Quản lý đơn hàng
+                    </a>
+                    <a asp-area="Admin" asp-controller="Customer" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Customer" ? "text-white" : "text-slate-400")" translate="no">group</span> Khách hàng
+                    </a>
+                    <a asp-area="Admin" asp-controller="Staff" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" ? "text-white" : "text-slate-400")" translate="no">badge</span> Nhân sự
+                    </a>
+                    <a asp-area="Admin" asp-controller="Review" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Review" ? "text-white" : "text-slate-400")" translate="no">chat</span> Quản lý đánh giá
+                    </a>
+                    <a asp-area="Admin" asp-controller="FlashSale" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "FlashSale" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "FlashSale" ? "text-white" : "text-slate-400")" translate="no">bolt</span> Flash Sale
+                    </a>
+                </div>
+
+                <div class="py-4 border-t border-slate-100">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-4 mb-2">Hệ thống</p>
+                    <a asp-area="Admin" asp-controller="ActivityLog" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "ActivityLog" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "ActivityLog" ? "text-white" : "text-slate-400")" translate="no">history</span> Nhật ký hoạt động
+                    </a>
+                    <a asp-area="Admin" asp-controller="Profile" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profile" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profile" ? "text-white" : "text-slate-400")" translate="no">account_circle</span> Hồ sơ của tôi
+                    </a>
+                    <a asp-area="Admin" asp-controller="Report" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Report" ? "text-white" : "text-slate-400")" translate="no">analytics</span> Báo cáo chi tiết
+                    </a>
+                    <a asp-area="Admin" asp-controller="Settings" asp-action="Index"
+                       class="flex items-center gap-4 px-5 py-3 lg:py-4 rounded-2xl transition-premium font-bold text-sm @(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "nav-link-active" : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/50")">
+                        <span class="material-symbols-outlined notranslate @(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "text-white" : "text-slate-400")" translate="no">tune</span> Cấu hình App
+                    </a>
+                </div>
+            </nav>
+
+            <div class="p-6 lg:p-8 space-y-3">
+                <a href="https://book-lumen.vercel.app/ " class="flex items-center justify-center gap-3 px-6 py-3.5 lg:py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
+                    <span class="material-symbols-outlined text-lg group-hover:translate-x-[-4px] transition-premium">arrow_back</span>
+                    Quay về Client
+                </a>
+                <button onclick="adminLogout()" class="w-full flex items-center justify-center gap-3 px-6 py-3.5 lg:py-4 rounded-2xl bg-rose-50 border border-rose-100 hover:bg-rose-600 hover:text-white transition-premium font-black text-[10px] uppercase tracking-widest text-rose-600 group">
+                    <span class="material-symbols-outlined text-lg group-hover:rotate-180 transition-premium">logout</span>
+                    Đăng xuất
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Header -->
+            <header class="h-20 lg:h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-6 lg:px-12 sticky top-0 z-[90] transition-all duration-300">
+                <div class="flex items-center gap-4 lg:gap-8">
+                    <!-- Burger Button for Mobile -->
+                    <button id="openSidebarBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+                        <span class="material-symbols-outlined notranslate" translate="no">menu</span>
+                    </button>
+
+                    <div class="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        <div class="hidden sm:flex w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                            <span class="material-symbols-outlined text-sm">home</span>
+                        </div>
+                        <span class="hover:text-blue-600 cursor-pointer transition-colors">Hệ thống</span>
+                        <span class="material-symbols-outlined text-sm text-slate-300">chevron_right</span>
+                        <span class="text-slate-900 font-black">@ViewData["Title"]</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-8">
+                    <!-- Global Search -->
+                    <div class="hidden xl:flex items-center bg-slate-100 rounded-full px-6 py-3 w-80 group focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10 transition-premium border border-transparent focus-within:border-blue-100">
+                        <span class="material-symbols-outlined notranslate text-slate-400 text-lg" translate="no">search</span>
+                        <input type="text" placeholder="Tìm nhanh tính năng..." class="bg-transparent border-none outline-none text-xs font-bold px-3 w-full text-slate-600 placeholder:text-slate-400" />
+                    </div>
+
+                    <!-- Action Icons -->
+                    <div class="flex items-center gap-3">
+                        <div class="relative" id="notificationDropdown">
+                            <button class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-premium relative group" id="notificationBtn">
+                                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">notifications</span>
+                                <span id="notificationBadge" class="hidden absolute top-3 right-3 w-4 h-4 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="notificationMenu" class="hidden absolute right-0 mt-4 w-96 bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden z-[200] transform transition-all origin-top-right">
+                                <div class="p-8 border-b border-slate-50 flex items-center justify-between">
+                                    <h3 class="font-black text-slate-900">Thông báo mới</h3>
+                                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full" id="unreadCountText">0 mới</span>
+                                </div>
+                                <div id="notificationList" class="max-h-[440px] overflow-y-auto">
+                                    <div class="p-12 text-center text-slate-400 font-medium">Đang tải thông báo...</div>
+                                </div>
+                                <div class="p-5 bg-slate-50/50 text-center border-t border-slate-50">
+                                    <a href="/Admin/Notification" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                        Xem tất cả thông báo <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="darkModeBtn" class="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-2xl transition-premium">
+                            <span class="material-symbols-outlined" id="darkModeIcon">light_mode</span>
+                        </button>
+                    </div>
+
+                    <div class="h-10 w-[1px] bg-slate-200/50"></div>
+
+                    <!-- Profile Section -->
+                    <a asp-area="Admin" asp-controller="Profile" asp-action="Index" class="flex items-center gap-4 group cursor-pointer" id="adminProfileLink">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1" id="adminHeaderRole">Administrator</p>
+                            <p class="text-xs font-black text-slate-900" id="adminHeaderName">Quản trị viên</p>
+                        </div>
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 p-0.5 shadow-xl shadow-blue-500/20 group-hover:scale-110 transition-premium">
+                                <div id="adminHeaderAvatar" class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                                    <span class="text-white font-black text-sm tracking-tighter" id="adminHeaderInitials">AD</span>
+                                </div>
+                            </div>
+                            <span class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full ring-2 ring-emerald-500/20"></span>
+                        </div>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <main class="p-6 lg:p-12 flex-1">
+                <div class="max-w-[1600px] mx-auto">
+                    @RenderBody()
+                </div>
+            </main>
+
+            <!-- Copyright -->
+            <footer class="px-6 lg:px-12 py-6 lg:py-8 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/50">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2026 Lumen BookStore • Enterprise Edition</p>
+                <div class="flex gap-6">
+                    <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Tài liệu</a>
+                    <a href="#" class="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Hỗ trợ kĩ thuật</a>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script src="~/admin/js/validation-helper.js" asp-append-version="true"></script>
+    <script>
+        window.LumenAlert = window.LumenAlert || {
+            ensureStyles: function () {
+                if (document.getElementById('lumen-alert-styles')) return;
+                const style = document.createElement('style');
+                style.id = 'lumen-alert-styles';
+                style.textContent = `
+                    .lumen-alert-popup{width:min(92vw,480px)!important;border-radius:28px!important;padding:28px!important;border:1px solid rgba(226,232,240,.9)!important;box-shadow:0 30px 90px rgba(15,23,42,.22)!important;font-family:'Plus Jakarta Sans',Arial,sans-serif!important}
+                    .lumen-alert-popup.swal2-show{animation:lumenAlertIn .28s cubic-bezier(.16,1,.3,1)!important}
+                    .lumen-alert-title{color:#0f172a!important;font-size:24px!important;font-weight:900!important;letter-spacing:0!important;padding:0!important}
+                    .lumen-alert-html,.lumen-alert-popup .swal2-html-container{color:#475569!important;font-size:14px!important;font-weight:600!important;line-height:1.65!important;margin:14px 0 0!important}
+                    .lumen-alert-confirm,.lumen-alert-cancel,.lumen-alert-danger{border:0!important;border-radius:16px!important;padding:12px 22px!important;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;text-transform:uppercase!important;box-shadow:none!important;outline:none!important}
+                    .lumen-alert-confirm{background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;color:#fff!important}
+                    .lumen-alert-danger{background:linear-gradient(135deg,#e11d48,#be123c)!important;color:#fff!important}
+                    .lumen-alert-cancel{background:#e2e8f0!important;color:#475569!important}
+                    .lumen-alert-popup .swal2-icon{margin-top:0!important;border-width:3px!important}
+                    html.dark .lumen-alert-popup{background:#0f172a!important;color:#f8fafc!important;border-color:rgba(148,163,184,.2)!important;box-shadow:0 30px 90px rgba(0,0,0,.45)!important}
+                    html.dark .lumen-alert-title{color:#f8fafc!important}
+                    html.dark .lumen-alert-html,html.dark .lumen-alert-popup .swal2-html-container{color:#cbd5e1!important}
+                    html.dark .lumen-alert-cancel{background:#1e293b!important;color:#cbd5e1!important}
+                    @@keyframes lumenAlertIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+                `;
+                document.head.appendChild(style);
+            },
+            fire: function (options) {
+                this.ensureStyles();
+                return Swal.fire({
+                    background: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
+                    color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#0f172a',
+                    buttonsStyling: false,
+                    ...options,
+                    customClass: {
+                        popup: 'lumen-alert-popup',
+                        title: 'lumen-alert-title',
+                        htmlContainer: 'lumen-alert-html',
+                        confirmButton: 'lumen-alert-confirm',
+                        cancelButton: 'lumen-alert-cancel',
+                        ...(options.customClass || {})
+                    }
+                });
+            },
+            success: function (title, text) {
+                return this.fire({ icon: 'success', title: title, text: text, timer: 1600, showConfirmButton: false });
+            },
+            error: function (title, text) {
+                return this.fire({ icon: 'error', title: title, text: text, confirmButtonText: 'Đã hiểu' });
+            },
+            warning: function (title, text) {
+                return this.fire({ icon: 'warning', title: title, text: text, confirmButtonText: 'Đã hiểu' });
+            },
+            confirm: function (options) {
+                return this.fire({
+                    icon: options.icon || 'warning',
+                    title: options.title || 'Xác nhận?',
+                    text: options.text,
+                    html: options.html,
+                    showCancelButton: true,
+                    confirmButtonText: options.confirmButtonText || 'Đồng ý',
+                    cancelButtonText: options.cancelButtonText || 'Hủy'
+                });
+            },
+            danger: function (options) {
+                return this.fire({
+                    icon: 'warning',
+                    title: options.title || 'Xác nhận?',
+                    text: options.text,
+                    showCancelButton: true,
+                    confirmButtonText: options.confirmButtonText || 'Xóa',
+                    cancelButtonText: options.cancelButtonText || 'Hủy',
+                    customClass: { confirmButton: 'lumen-alert-danger' }
+                });
+            }
+        };
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script>
+        // Global Choices.js Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            const selects = document.querySelectorAll('select:not(.no-choices)');
+            selects.forEach(select => {
+                new Choices(select, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                    shouldSort: false
+                });
+            });
+        });
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/notificationHub")
+            .withAutomaticReconnect()
+            .build();
+
+        function loadNotifications() {
+            $.get('/Admin/Notification/GetLatest', function (data) {
+                const list = $('#notificationList');
+                list.empty();
+                let unreadCount = 0;
+
+                if (!data || data.length === 0) {
+                    list.append('<div class="p-10 text-center text-slate-400 font-medium">Không có thông báo nào</div>');
+                } else {
+                    data.forEach(n => {
+                        if (!n.isRead) unreadCount++;
+                        list.append(renderNotification(n));
+                    });
+                }
+
+                updateBadge(unreadCount);
+            });
+        }
+
+        function renderNotification(n) {
+            const timeStr = new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <a href="${n.link || '#'}" onclick="markAsRead(${n.id})" class="flex items-start gap-4 p-6 hover:bg-blue-50/50 transition-premium border-b border-slate-50 ${!n.isRead ? 'bg-blue-50/20' : ''}">
+                    <div class="w-10 h-10 rounded-xl ${!n.isRead ? 'bg-blue-600' : 'bg-slate-100'} flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-sm ${!n.isRead ? 'text-white' : 'text-slate-400'}">shopping_bag</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="text-xs font-black text-slate-900">${n.title}</p>
+                            <span class="text-[10px] font-bold text-slate-400">${timeStr}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 line-clamp-2">${n.message}</p>
+                    </div>
+                </a>
+            `;
+        }
+
+        function updateBadge(count) {
+            const badge = $('#notificationBadge');
+            const countText = $('#unreadCountText');
+            if (count > 0) {
+                badge.removeClass('hidden');
+                countText.text(count + ' mới').removeClass('hidden');
+            } else {
+                badge.addClass('hidden');
+                countText.text('0 mới');
+            }
+        }
+
+        function markAsRead(id) {
+            if(id > 0) $.post('/Admin/Notification/MarkAsRead', { id: id });
+        }
+
+        connection.on("ReceiveOrderNotification", function (data) {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "10000",
+                "onclick": function() {
+                    if (data.link) window.location.href = data.link;
+                }
+            };
+            toastr.success(data.message, data.title);
+
+            const list = $('#notificationList');
+            const emptyMsg = list.find('.text-center');
+            if (emptyMsg.length) emptyMsg.remove();
+
+            const newNotify = {
+                id: 0,
+                title: data.title,
+                message: data.message,
+                link: data.link,
+                isRead: false,
+                createdAt: new Date()
+            };
+            list.prepend(renderNotification(newNotify));
+
+            const currentUnread = parseInt($('#unreadCountText').text()) || 0;
+            updateBadge(currentUnread + 1);
+
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log("Audio play failed"));
+        });
+
+        $('#notificationBtn').click(function(e) {
+            e.stopPropagation();
+            $('#notificationMenu').toggleClass('hidden');
+        });
+
+        $(document).click(function() {
+            $('#notificationMenu').addClass('hidden');
+        });
+
+        function loadAdminHeaderProfile() {
+            $.get('/Admin/Profile/GetHeaderInfo', function(res) {
+                if (!res.success) return;
+                $('#adminHeaderName').text(res.fullName || 'Quản trị viên');
+                $('#adminHeaderRole').text(res.department || 'Administrator');
+                $('#adminHeaderInitials').text(res.initials || 'AD');
+                if (res.avatarUrl) {
+                    $('#adminHeaderAvatar').html(`<img src="${res.avatarUrl}" class="w-full h-full object-cover" alt="Avatar" />`);
+                }
+            });
+        }
+
+        connection.start().then(() => {
+            console.log("Connected to SignalR");
+            connection.invoke("JoinAdminGroup").then(() => {
+                console.log("Joined Admin Group");
+            }).catch(err => console.error("JoinAdminGroup failed: ", err));
+            loadNotifications();
+            loadAdminHeaderProfile();
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        // Dark Mode Logic
+        const darkModeBtn = document.getElementById('darkModeBtn');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        const html = document.documentElement;
+
+        darkModeBtn.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
+            }
+        });
+
+        function enableDarkMode() {
+            html.classList.add('dark');
+            darkModeIcon.textContent = 'dark_mode';
+            localStorage.setItem('admin-dark-mode', 'enabled');
+            darkModeBtn.classList.add('text-amber-500', 'bg-amber-50');
+        }
+
+        function disableDarkMode() {
+            html.classList.remove('dark');
+            darkModeIcon.textContent = 'light_mode';
+            localStorage.setItem('admin-dark-mode', 'disabled');
+            darkModeBtn.classList.remove('text-amber-500', 'bg-amber-50');
+        }
+
+        // Sync initial icon state
+        if (html.classList.contains('dark')) {
+            darkModeIcon.textContent = 'dark_mode';
+            darkModeBtn.classList.add('text-amber-500', 'bg-amber-50');
+        }
+
+        function adminLogout() {
+            LumenAlert.danger({
+                title: 'Xác nhận đăng xuất?',
+                text: "Bạn sẽ được chuyển về trang đăng nhập hệ thống.",
+                confirmButtonText: 'Đăng xuất ngay',
+                cancelButtonText: 'Hủy bỏ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/auth/logout',
+                        type: 'POST',
+                        success: function (res) {
+                            // Xóa token ở client app nếu có (localStorage)
+                                const theme = localStorage.getItem('theme');
+                                const lang = localStorage.getItem('lang');
+
+                                localStorage.clear();
+
+                                window.location.href = '/api/auth/login';
+                        },
+                        error: function () {
+                            // Fallback nếu API lỗi vẫn redirect
+                            window.location.href = '/api/auth/login';
+                        }
+                    });
+                }
+            });
+        }
+
+        // Mobile Sidebar Toggle Script
+        const openSidebarBtn = document.getElementById('openSidebarBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if(openSidebarBtn && sidebarMenu && sidebarOverlay) {
+            const toggleSidebar = (show) => {
+                if (show) {
+                    sidebarMenu.classList.add('sidebar-open');
+                    sidebarOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Prevent underlying scroll
+                } else {
+                    sidebarMenu.classList.remove('sidebar-open');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            };
+
+            openSidebarBtn.addEventListener('click', () => toggleSidebar(true));
+            if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+            sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+            // Auto close on navigate (important for dynamic apps, less so here, but good safety)
+            sidebarMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => toggleSidebar(false));
+            });
+        }
+
+        // Preserve admin nav state across MVC navigations to reduce visual jump.
+        (function () {
+            const key = 'bookstore-admin-nav-state';
+            const sidebar = document.getElementById('sidebarMenu');
+            const nav = sidebar ? sidebar.querySelector('nav') : null;
+            if (!sidebar || !nav) return;
+
+            const links = Array.from(nav.querySelectorAll('a[href]'));
+            const normalize = (url) => {
+                try {
+                    const parsed = new URL(url, window.location.origin);
+                    return parsed.pathname.toLowerCase() + parsed.search;
+                } catch {
+                    return url || '';
+                }
+            };
+
+            const restore = () => {
+                try {
+                    const state = JSON.parse(sessionStorage.getItem(key) || '{}');
+                    if (Number.isFinite(state.scrollTop)) nav.scrollTop = state.scrollTop;
+                } catch {
+                    sessionStorage.removeItem(key);
+                }
+            };
+
+            const setActive = (activeLink) => {
+                links.forEach(link => {
+                    link.classList.remove('nav-link-active');
+                    link.classList.add('text-slate-500', 'hover:text-blue-600', 'hover:bg-blue-50/50');
+                    link.querySelectorAll('span').forEach(span => {
+                        span.classList.remove('text-white');
+                        span.classList.add('text-slate-400');
+                    });
+                });
+
+                activeLink.classList.add('nav-link-active');
+                activeLink.classList.remove('text-slate-500', 'hover:text-blue-600', 'hover:bg-blue-50/50');
+                activeLink.querySelectorAll('span').forEach(span => {
+                    span.classList.add('text-white');
+                    span.classList.remove('text-slate-400');
+                });
+            };
+
+            restore();
+
+            links.forEach(link => {
+                link.addEventListener('click', function () {
+                    const href = this.getAttribute('href');
+                    if (!href || href === '#' || this.target === '_blank') return;
+
+                    sessionStorage.setItem(key, JSON.stringify({
+                        href: normalize(this.href),
+                        scrollTop: nav.scrollTop
+                    }));
+
+                    document.documentElement.classList.add('admin-nav-navigating');
+                    setActive(this);
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

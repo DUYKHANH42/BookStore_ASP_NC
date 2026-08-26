@@ -1,0 +1,128 @@
+@model BookStore.Application.DTO.OrderFullDetailDTO
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); font-size: 14px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+        .logo { width: 120px; }
+        .store-info { text-align: right; }
+        .store-name { font-size: 24px; font-weight: 900; color: #1d4ed8; margin: 0; }
+        .store-details { font-size: 12px; color: #64748b; margin: 0; }
+        
+        .info-section { display: table; width: 100%; margin-bottom: 30px; }
+        .info-box { display: table-cell; width: 50%; vertical-align: top; }
+        .info-label { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
+        .info-content { font-weight: 600; margin: 0; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        .total-section { text-align: right; margin-top: 20px; }
+        .total-row { font-size: 18px; font-weight: 900; color: #1d4ed8; }
+
+        .footer-section { display: table; width: 100%; margin-top: 50px; }
+        .signature-box { display: table-cell; width: 50%; text-align: center; }
+        .signature-space { height: 80px; margin-top: 10px; }
+        .digital-stamp { 
+            display: inline-block;
+            border: 3px double #ef4444;
+            color: #ef4444;
+            padding: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transform: rotate(-5deg);
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-box">
+        <div class="header">
+            <div style="float: left;">
+                <img src="@(Context.Request.Scheme + "://" + Context.Request.Host)/uploads/imgs/logo_sach.png" class="logo" />
+            </div>
+            <div class="store-info" style="float: right;">
+                <p class="store-name">LUMEN BOOKSTORE</p>
+                <p class="store-details">Hệ thống quản trị sách hàng đầu</p>
+                <p class="store-details">Hotline: 1900 1234 | Email: support@lumen.vn</p>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="margin: 0; text-transform: uppercase; letter-spacing: 2px;">Hóa đơn bán hàng</h1>
+            <p style="margin: 0; color: #64748b;">Số: #@Model.OrderNumber</p>
+        </div>
+
+        <div class="info-section">
+            <div class="info-box">
+                <p class="info-label">Khách hàng</p>
+                <p class="info-content">@Model.ShippingName</p>
+                <p class="info-content" style="font-weight: normal; font-size: 12px;">SĐT: @Model.ShippingPhone</p>
+                <p class="info-content" style="font-weight: normal; font-size: 12px;">ĐC: @Model.ShippingAddress</p>
+            </div>
+            <div class="info-box" style="text-align: right;">
+                <p class="info-label">Ngày đặt hàng</p>
+                <p class="info-content">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                <p class="info-label" style="margin-top: 15px;">Thanh toán</p>
+                <p class="info-content">@Model.PaymentMethod</p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-right">Đơn giá</th>
+                    <th class="text-right">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td style="font-weight: 600;">@item.ProductName</td>
+                        <td class="text-center">@item.Quantity</td>
+                        <td class="text-right">@item.Price.ToString("N0")</td>
+                        <td class="text-right" style="font-weight: 600;">@item.SubTotal.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <p style="margin-bottom: 5px; color: #64748b;">TỔNG CỘNG THANH TOÁN</p>
+            <p class="total-row">@Model.TotalPrice.ToString("N0") VNĐ</p>
+        </div>
+
+        <div class="footer-section">
+            <div class="signature-box">
+                <p style="font-weight: bold;">Khách hàng ký tên</p>
+                <p style="font-size: 10px; color: #94a3b8;">(Ký và ghi rõ họ tên)</p>
+                <div class="signature-space"></div>
+            </div>
+            <div class="signature-box">
+                <p style="font-weight: bold;">Đại diện cửa hàng</p>
+                <div class="signature-space">
+                    <div class="digital-stamp">
+                        ĐÃ XÁC THỰC<br />
+                        LUMEN BOOKSTORE<br />
+                        @DateTime.Now.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

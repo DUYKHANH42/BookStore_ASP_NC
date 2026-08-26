@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bao cao dong bo validation va nav admin</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --blue: #2563eb;
+            --green: #059669;
+            --amber: #d97706;
+            --red: #dc2626;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        main {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        h2 {
+            margin: 28px 0 12px;
+            font-size: 20px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #dbeafe;
+            color: var(--blue);
+        }
+
+        ul {
+            padding-left: 22px;
+            margin: 10px 0 0;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        code {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 13px;
+        }
+
+        .ok { color: var(--green); font-weight: 700; }
+        .warn { color: var(--amber); font-weight: 700; }
+        .risk { color: var(--red); font-weight: 700; }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="header">
+            <span class="badge">Admin UX / Validation</span>
+            <h1>Bao cao dong bo validation va trang thai nav admin</h1>
+            <p class="subtitle">Ngay lap: 27/05/2026. Pham vi: chuan hoa loi nhap lieu inline, giam popup validation, giu trang thai menu admin khi dieu huong MVC.</p>
+        </section>
+
+        <section class="grid">
+            <div class="card">
+                <h2>Ket qua chinh</h2>
+                <ul>
+                    <li><span class="ok">Hoan thanh:</span> bo native validation popup bang <code>novalidate</code>.</li>
+                    <li><span class="ok">Hoan thanh:</span> loi input hien duoi truong nhap, vien do, dong bo tone admin.</li>
+                    <li><span class="ok">Hoan thanh:</span> dropdown Choices.js duoc style loi rieng, khong vo layout.</li>
+                    <li><span class="ok">Hoan thanh:</span> nav admin luu scroll va active link vao <code>sessionStorage</code>.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>File da xu ly</h2>
+                <ul>
+                    <li><code>wwwroot/admin/js/validation-helper.js</code></li>
+                    <li><code>wwwroot/admin/js/product-management.js</code></li>
+                    <li><code>wwwroot/admin/js/category-management.js</code></li>
+                    <li><code>wwwroot/admin/js/staff-management.js</code></li>
+                    <li><code>wwwroot/admin/js/customer-management.js</code></li>
+                    <li><code>wwwroot/admin/js/profile-management.js</code></li>
+                    <li><code>wwwroot/admin/js/inventory-management-v2.js</code></li>
+                    <li><code>wwwroot/admin/js/order-management.js</code></li>
+                    <li><code>wwwroot/admin/js/dashboard.js</code></li>
+                    <li><code>Areas/Admin/Views/FlashSale/Index.cshtml</code></li>
+                    <li><code>Areas/Admin/Views/Shared/_Layout.cshtml</code></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Chi tiet thay doi validation</h2>
+            <ul>
+                <li>Tao helper dung chung <code>ValidationHelper.validateForm()</code> de doc <code>required</code>, <code>min</code>, <code>max</code>, <code>minlength</code>, <code>maxlength</code>, email va hien loi inline.</li>
+                <li>Giu lai thuoc tinh HTML validation tren view de lam metadata, nhung tat popup trinh duyet bang <code>novalidate</code>.</li>
+                <li>Chuyen loi nhap lieu o san pham, danh muc, nhan su, khach hang, ho so, nhap kho va flash sale ve inline/toastr.</li>
+                <li>Thay <code>alert</code>/<code>confirm</code> cu o khach hang, don hang bang toastr/Swal dong bo giao dien admin.</li>
+                <li>Chuyen canh bao tai dashboard tu <code>alert</code> sang toastr de khong pha trai nghiem admin.</li>
+                <li>Backend ModelState van duoc map ve dung field bang <code>ValidationHelper.showErrors()</code>.</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Chi tiet thay doi nav admin</h2>
+            <ul>
+                <li>Load <code>validation-helper.js</code> truoc section script rieng cua tung trang de cac page script goi helper on dinh hon.</li>
+                <li>Khi click menu admin, he thong cap nhat active link ngay tai client de tranh cam giac menu bi nhay truoc khi trang moi render.</li>
+                <li>Luu <code>scrollTop</code> cua sidebar vao <code>sessionStorage</code> va khoi phuc sau khi trang load lai.</li>
+                <li>Giam thoi gian transition trong luc dieu huong bang class <code>admin-nav-navigating</code>.</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Loi tiem an va luu y</h2>
+            <ul>
+                <li><span class="warn">MVC van reload trang:</span> nav chi giam giat bang active/scroll state. Muon khong reload can chuyen thanh PJAX/HTMX/AJAX partial routing.</li>
+                <li><span class="warn">Flash Sale con nhieu logic inline trong view:</span> nen tach ra file JS rieng de de test va bao tri.</li>
+                <li><span class="warn">Mot so loi nghiep vu backend:</span> van nen dung toastr/Swal thay vi gan sai vao field khi loi khong thuoc input cu the.</li>
+                <li><span class="risk">Can test UI truc quan:</span> cac form co layout dac biet co the can tinh chinh vi tri span loi sau khi render voi du lieu that.</li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Huong phat trien</h2>
+            <ul>
+                <li>Chuyen validation rule sang data attributes ro rang hon, vi du <code>data-required-message</code>, <code>data-match</code>, <code>data-number-message</code>.</li>
+                <li>Them unit/UI smoke test cho cac form quan trong: product, staff, customer reset password, inventory import.</li>
+                <li>Xay dung partial navigation cho admin de load noi dung chinh ma khong reload sidebar/header.</li>
+                <li>Thong nhat he thong message: inline cho input, toastr cho ket qua tac vu, Swal cho xac nhan nguy hiem.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

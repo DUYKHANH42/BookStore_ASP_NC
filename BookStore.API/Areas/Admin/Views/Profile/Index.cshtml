@@ -1,0 +1,115 @@
+@model BookStore.Application.DTO.AdminProfileDTO
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/profile-management.css" />
+}
+
+<div class="profile-container space-y-8">
+    <!-- Header — cùng pattern Customer/Staff -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Hồ sơ của tôi</h2>
+            <p class="text-slate-500 font-medium">Quản lý thông tin cá nhân và bảo mật tài khoản admin.</p>
+        </div>
+    </div>
+
+    <!-- Summary card -->
+    <div class="glass-card p-8 md:p-10 rounded-[2.5rem] premium-shadow flex flex-col sm:flex-row items-center gap-8">
+        <div class="profile-avatar-wrap">
+            <div id="avatarPreview" class="profile-avatar">
+                @if (!string.IsNullOrEmpty(Model.DisplayAvatar))
+                {
+                    <img src="@Model.DisplayAvatar" alt="Avatar" />
+                }
+                else
+                {
+                    <span class="initials">@Model.Initials</span>
+                }
+            </div>
+            <label for="avatarInput" class="profile-avatar-edit" title="Đổi ảnh đại diện">
+                <span class="material-symbols-outlined text-sm">photo_camera</span>
+            </label>
+            <input type="file" id="avatarInput" accept="image/*" class="hidden" />
+        </div>
+        <div class="text-center sm:text-left flex-1">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">@Model.Email</p>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight" id="displayFullName">@Model.FullName</h3>
+            <p class="text-sm font-bold text-slate-500 mt-1" id="displayDepartment">@(string.IsNullOrEmpty(Model.Department) ? "Chưa có phòng ban" : Model.Department)</p>
+            @if (Model.LastLoginAt.HasValue)
+            {
+                <p class="text-[10px] font-black text-slate-400 mt-3 uppercase tracking-widest">
+                    Đăng nhập gần nhất: @Model.LastLoginAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Thông tin cá nhân -->
+    <div class="glass-card p-8 md:p-10 rounded-[2.5rem] premium-shadow space-y-6">
+        <h4 class="profile-section-title">
+            <span class="material-symbols-outlined text-blue-600">person</span> Thông tin cá nhân
+        </h4>
+        <form id="profileForm" class="space-y-5">
+            <div class="space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Họ và tên</label>
+                <input type="text" id="fullName" value="@Model.FullName" required
+                       class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Số điện thoại</label>
+                    <input type="tel" id="phoneNumber" value="@Model.PhoneNumber"
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Phòng ban</label>
+                    <input type="text" id="department" value="@Model.Department" placeholder="VD: Kinh doanh, Kho vận..."
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-premium">
+                    Lưu thông tin
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Đổi mật khẩu -->
+    <div class="glass-card p-8 md:p-10 rounded-[2.5rem] premium-shadow space-y-6">
+        <h4 class="profile-section-title">
+            <span class="material-symbols-outlined text-rose-600">lock</span> Đổi mật khẩu
+        </h4>
+        <form id="passwordForm" class="space-y-5">
+            <div class="space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Mật khẩu hiện tại</label>
+                <input type="password" id="currentPassword" required autocomplete="current-password"
+                       class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Mật khẩu mới</label>
+                    <input type="password" id="newPassword" required minlength="8" autocomplete="new-password"
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Xác nhận mật khẩu mới</label>
+                    <input type="password" id="confirmPassword" required minlength="8" autocomplete="new-password"
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-black transition-premium shadow-xl shadow-slate-900/20">
+                    Đổi mật khẩu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/admin/js/profile-management.js"></script>
+}

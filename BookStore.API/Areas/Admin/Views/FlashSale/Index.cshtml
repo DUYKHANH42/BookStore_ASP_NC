@@ -1,0 +1,848 @@
+@using BookStore.Application.DTO
+@model PagedResultDTO<FlashSaleCampaignDTO>
+@{
+    ViewData["Title"] = "Quản lý Flash Sale & Kết hợp Sale";
+}
+
+@section Styles {
+    <!-- Select2 for beautiful product multi-select -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-selection--single {
+            background-color: #f8fafc !important;
+            border: 1px solid #f1f5f9 !important;
+            border-radius: 1rem !important;
+            height: 56px !important;
+            padding: 0 20px !important;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal !important;
+            padding-left: 0 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 56px !important;
+            right: 15px !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #2563eb !important;
+            background-color: #ffffff !important;
+        }
+        .select2-dropdown {
+            border: 1px solid #f1f5f9 !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            overflow: hidden;
+            z-index: 99999;
+        }
+        .select2-search__field {
+            border-radius: 0.5rem !important;
+            padding: 8px 12px !important;
+        }
+        .product-select-item { display: flex; align-items: center; gap: 12px; }
+        .product-select-img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; background-color: #f1f5f9; }
+        .product-select-info { display: flex; flex-direction: column; }
+        .product-select-name { font-weight: 700; color: #1e293b; font-size: 13px; }
+        .product-select-price { font-size: 11px; color: #64748b; }
+    </style>
+}
+
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Trung tâm Flash Sale</h2>
+            <p class="text-slate-500 font-medium mt-1">Quản lý các chiến dịch Sale trung tâm (1 Campaign - Nhiều sản phẩm)</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="openBulkSaleModal()" class="px-6 py-4 bg-rose-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 hover:shadow-rose-600/40 hover:-translate-y-1 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">bolt</span> Tạo Chiến Dịch Mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-sm">
+        <form id="filterForm" class="flex flex-wrap gap-4 items-end">
+            <!-- Search -->
+            <div class="flex-1 min-w-[300px] space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tìm kiếm chiến dịch</label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">search</span>
+                    <input type="text" name="search" id="searchInput" placeholder="Tên chiến dịch..." 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="w-full md:w-64 space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Trạng thái</label>
+                <select name="status" id="statusFilter" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none shadow-sm cursor-pointer">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Đang diễn ra">Đang diễn ra</option>
+                    <option value="Sắp diễn ra">Sắp diễn ra</option>
+                    <option value="Đã kết thúc">Đã kết thúc</option>
+                    <option value="Đã tắt">Đã tắt</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white premium-shadow" id="saleListContainer">
+        @Html.Partial("_SaleListPartial", Model)
+    </div>
+</div>
+
+<!-- Bulk Sale Modal (Tailwind Native) -->
+<div id="bulkSaleModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeBulkSaleModal()">
+    <div class="bg-white rounded-[2.5rem] w-full max-w-6xl shadow-2xl animate-modalIn max-h-[90vh] flex flex-col">
+        <div class="p-8 md:p-10 overflow-y-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-rose-500">campaign</span> Tạo Chiến Dịch Flash Sale
+                    </h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Tuỳ chỉnh số lượng và mức giảm giá độc lập cho từng sản phẩm</p>
+                </div>
+                <button type="button" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all" onclick="closeBulkSaleModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="bulkSaleForm" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tên chiến dịch</label>
+                    <input type="text" name="Name" required placeholder="Ví dụ: Flash Sale Đại lễ 30/4..."
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thời gian bắt đầu</label>
+                        <input type="datetime-local" name="StartTime" required
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thời gian kết thúc</label>
+                        <input type="datetime-local" name="EndTime" required
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-4 border-t border-slate-100">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thêm sản phẩm vào chiến dịch</label>
+                    <div class="flex flex-col md:flex-row items-center gap-3">
+                        <div class="flex-1 w-full">
+                            <select id="productSearchSelect" class="w-full"></select>
+                        </div>
+                        <button type="button" onclick="addProductToGrid()" class="px-6 py-3.5 bg-slate-800 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all whitespace-nowrap h-[56px] w-full md:w-auto">
+                            Thêm sách
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <span class="material-symbols-outlined text-blue-500">percent</span>
+                        <span class="text-xs font-bold text-slate-600">Áp dụng giảm giá hàng loạt</span>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <input type="number" id="bulkDiscountPercent" placeholder="Nhập % giảm" min="0" max="100" class="w-32 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-600">
+                        <button type="button" onclick="applyBulkDiscount()" class="px-4 py-3 bg-blue-100 text-blue-700 rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-blue-200 transition-all whitespace-nowrap">Áp dụng cho tất cả</button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Product Grid -->
+                <div class="table-responsive rounded-2xl border border-slate-100 overflow-hidden mt-4">
+                    <table class="w-full text-left border-collapse" id="campaignProductsTable">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Sản phẩm</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Giá gốc</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Thiết lập Giá Sale</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Số lượng (Suất)</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="emptyRow">
+                                <td colspan="5" class="px-4 py-10 text-center text-slate-400 text-sm font-medium">
+                                    Chưa có sản phẩm nào được chọn. Hãy tìm và thêm sách ở ô bên trên.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pt-6 mt-6 border-t border-slate-50 flex justify-end gap-3">
+                    <button type="button" class="px-6 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all" onclick="closeBulkSaleModal()">Hủy</button>
+                    <button type="submit" class="px-8 py-3.5 bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">check_circle</span> Khởi tạo Chiến Dịch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Campaign Modal -->
+<div id="editCampaignModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeEditCampaignModal()">
+    <div class="bg-white rounded-[2.5rem] w-full max-w-6xl shadow-2xl animate-modalIn max-h-[90vh] flex flex-col">
+        <div class="p-8 md:p-10 overflow-y-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-amber-500">edit</span> Chỉnh sửa Chiến dịch
+                    </h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Cập nhật thời gian, trạng thái và danh sách sản phẩm</p>
+                </div>
+                <button type="button" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all" onclick="closeEditCampaignModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="editCampaignForm" class="space-y-6">
+                <input type="hidden" id="editCampaignId" value="0" />
+
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tên chiến dịch</label>
+                    <input type="text" id="editCampaignName" required placeholder="Tên chiến dịch..."
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thời gian bắt đầu</label>
+                        <input type="datetime-local" id="editCampaignStartTime" required
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thời gian kết thúc</label>
+                        <input type="datetime-local" id="editCampaignEndTime" required
+                               class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <input type="checkbox" id="editCampaignIsActive" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <label for="editCampaignIsActive" class="text-sm font-bold text-slate-700 cursor-pointer">Chiến dịch đang bật (Active)</label>
+                </div>
+
+                <div class="space-y-2 pt-4 border-t border-slate-100">
+                    <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Thêm sản phẩm vào chiến dịch</label>
+                    <div class="flex flex-col md:flex-row items-center gap-3">
+                        <div class="flex-1 w-full">
+                            <select id="editProductSearchSelect" class="w-full"></select>
+                        </div>
+                        <button type="button" onclick="addProductToEditGrid()" class="px-6 py-3.5 bg-slate-800 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all whitespace-nowrap h-[56px] w-full md:w-auto">
+                            Thêm sách
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-2xl border border-slate-100 overflow-hidden mt-4">
+                    <table class="w-full text-left border-collapse" id="editCampaignProductsTable">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Sản phẩm</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Giá gốc</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Giá Sale</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Số lượng</th>
+                                <th class="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="editEmptyRow">
+                                <td colspan="5" class="px-4 py-10 text-center text-slate-400 text-sm font-medium">Đang tải...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pt-6 mt-6 border-t border-slate-50 flex justify-end gap-3">
+                    <button type="button" class="px-6 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all" onclick="closeEditCampaignModal()">Hủy</button>
+                    <button type="submit" class="px-8 py-3.5 bg-amber-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-amber-600/20 hover:bg-amber-700 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">save</span> Cập nhật Chiến dịch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Details Modal (Tailwind Native) -->
+<div id="campaignDetailsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeCampaignDetailsModal()">
+    <div class="bg-white rounded-[2.5rem] w-full max-w-5xl shadow-2xl animate-modalIn max-h-[90vh] flex flex-col">
+        <div class="p-8 md:p-10 overflow-y-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-800 flex items-center gap-2" id="detailsModalTitle">
+                        <span class="material-symbols-outlined text-blue-500">list_alt</span> Chi tiết chiến dịch
+                    </h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Danh sách các sản phẩm áp dụng trong chiến dịch này</p>
+                </div>
+                <button type="button" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all" onclick="closeCampaignDetailsModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="campaignDetailsContent" class="min-h-[200px] flex items-center justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        let searchTimeout;
+        let selectedProducts = []; // Array of { id, name, price, imageUrl }
+        let editSelectedProducts = []; // { id, name, price, imageUrl, salePrice, saleStock, soldCount }
+        let editSelect2Initialized = false;
+
+        function resolveImageUrl(url) {
+            if (!url) return 'https://placehold.co/150x200/e2e8f0/475569?text=No+Image';
+            if (url.startsWith('http')) return url;
+            const clean = url.replace(/^\/+/, '').replace(/^uploads\//, '');
+            return '/uploads/' + clean;
+        }
+
+        const formatForInput = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+        // Tailwind modal manual toggling
+        function closeBulkSaleModal() {
+            $('#bulkSaleModal').addClass('hidden');
+        }
+
+        function closeEditCampaignModal() {
+            $('#editCampaignModal').addClass('hidden');
+        }
+        
+        function closeCampaignDetailsModal() {
+            $('#campaignDetailsModal').addClass('hidden');
+        }
+
+
+        function loadSales(page = 1) {
+            const search = $('#searchInput').val();
+            const status = $('#statusFilter').val();
+            const container = $('#saleListContainer');
+            
+            container.css('opacity', '0.5');
+            
+            $.get(`@Url.Action("Index")?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&page=${page}`, function(data) {
+                container.html(data);
+                container.css('opacity', '1');
+            });
+        }
+
+        function formatProductOption (product) {
+            if (!product.id) return product.text;
+            
+            var $container = $(
+                `<div class="product-select-item">
+                    <img src="${product.imageUrl}" class="product-select-img" />
+                    <div class="product-select-info">
+                        <span class="product-select-name">${product.name}</span>
+                        <span class="product-select-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</span>
+                    </div>
+                </div>`
+            );
+            return $container;
+        }
+
+        $(document).ready(function() {
+            // Live Search
+            $('#searchInput').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => loadSales(1), 500);
+            });
+
+            // Status Filter
+            $('#statusFilter').on('change', function() {
+                loadSales(1);
+            });
+
+            // Pagination Click
+            $(document).on('click', '.pagination-link', function(e) {
+                e.preventDefault();
+                loadSales($(this).data('page'));
+            });
+
+            // Initialize Select2 for Single Product Search
+            $('#productSearchSelect').select2({
+                theme: 'default',
+                placeholder: 'Tìm kiếm tên sách để thêm...',
+                allowClear: true,
+                minimumInputLength: 0,
+                templateResult: formatProductOption,
+                templateSelection: formatProductOption,
+                ajax: {
+                    url: '@Url.Action("SearchProducts")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return { term: params.term || '' };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: $.map(data, function(item) {
+                                return {
+                                    id: item.id,
+                                    text: item.name,
+                                    name: item.name,
+                                    price: item.price,
+                                    imageUrl: item.imageUrl
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // Edit form submit
+            $('#editCampaignForm').on('submit', function(e) {
+                e.preventDefault();
+                if (!ValidationHelper.validateForm($(this))) return;
+
+                if (editSelectedProducts.length === 0) {
+                    toastr.warning('Chiến dịch phải có ít nhất 1 sản phẩm');
+                    return;
+                }
+
+                const btn = $(this).find('button[type="submit"]');
+                const origText = btn.html();
+                btn.html('<span class="material-symbols-outlined text-lg animate-spin">refresh</span> Đang lưu...').prop('disabled', true);
+
+                const items = editSelectedProducts.map(p => ({
+                    ProductId: parseInt(p.id),
+                    SalePrice: parseFloat($(`#editCampaignProductsTable tr[data-id="${p.id}"] .sale-price-input`).val() || p.salePrice),
+                    SaleStock: parseInt($(`#editCampaignProductsTable tr[data-id="${p.id}"] .sale-stock-input`).val() || p.saleStock)
+                }));
+
+                const payload = {
+                    Id: parseInt($('#editCampaignId').val()),
+                    Name: $('#editCampaignName').val(),
+                    StartTime: $('#editCampaignStartTime').val(),
+                    EndTime: $('#editCampaignEndTime').val(),
+                    IsActive: $('#editCampaignIsActive').is(':checked'),
+                    Items: items
+                };
+
+                $.ajax({
+                    url: '@Url.Action("Update")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function(res) {
+                        btn.html(origText).prop('disabled', false);
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Thành công', text: res.message, timer: 2000, showConfirmButton: false });
+                            closeEditCampaignModal();
+                            loadSales($('.pagination-link.bg-blue-600').data('page') || 1);
+                        } else {
+                            Swal.fire('Chú ý', res.message, 'warning');
+                        }
+                    },
+                    error: function(xhr) {
+                        btn.html(origText).prop('disabled', false);
+                        const msg = xhr.responseJSON?.message || 'Lỗi hệ thống khi cập nhật';
+                        Swal.fire('Lỗi', msg, 'error');
+                    }
+                });
+            });
+
+            // Form Submit for Campaign Create
+            $('#bulkSaleForm').on('submit', function(e) {
+                e.preventDefault();
+                if (!ValidationHelper.validateForm($(this))) return;
+                
+                if (selectedProducts.length === 0) {
+                    toastr.warning('Vui lòng thêm ít nhất 1 sản phẩm vào chiến dịch');
+                    return;
+                }
+
+                const btn = $(this).find('button[type="submit"]');
+                const origText = btn.html();
+                btn.html('<span class="material-symbols-outlined text-lg animate-spin">refresh</span> Đang xử lý...').prop('disabled', true);
+
+                // Build DTO
+                const items = [];
+                $('#campaignProductsTable tbody tr:not(#emptyRow)').each(function() {
+                    const tr = $(this);
+                    items.push({
+                        ProductId: parseInt(tr.data('id')),
+                        SalePrice: parseFloat(tr.find('.sale-price-input').val() || 0),
+                        SaleStock: parseInt(tr.find('.sale-stock-input').val() || 1)
+                    });
+                });
+
+                const payload = {
+                    Name: $('input[name="Name"]').val(),
+                    StartTime: $('input[name="StartTime"]').val(),
+                    EndTime: $('input[name="EndTime"]').val(),
+                    Items: items
+                };
+
+                $.ajax({
+                    url: '@Url.Action("BulkCreate")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function(res) {
+                        btn.html(origText).prop('disabled', false);
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: res.message,
+                                customClass: { confirmButton: 'px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-none' },
+                                buttonsStyling: false
+                            });
+                            closeBulkSaleModal();
+                            $('#bulkSaleForm')[0].reset();
+                            selectedProducts = [];
+                            renderProductsGrid();
+                            $('#productSearchSelect').val(null).trigger('change');
+                            loadSales(1);
+                        } else {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Chú ý',
+                                text: res.message,
+                                customClass: { confirmButton: 'px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-none' },
+                                buttonsStyling: false
+                            });
+                        }
+                    },
+                    error: function() {
+                        btn.html(origText).prop('disabled', false);
+                        Swal.fire('Lỗi', 'Lỗi hệ thống khi thiết lập Sale', 'error');
+                    }
+                });
+            });
+        });
+
+        function addProductToGrid() {
+            const data = $('#productSearchSelect').select2('data')[0];
+            if (!data || !data.id) return;
+
+            if (selectedProducts.find(p => p.id == data.id)) {
+                Swal.fire('Chú ý', 'Sản phẩm này đã được thêm vào danh sách!', 'info');
+                return;
+            }
+
+            selectedProducts.push({
+                id: data.id,
+                name: data.name,
+                price: data.price,
+                imageUrl: data.imageUrl,
+                salePrice: data.price * 0.9, // Default 10% discount
+                saleStock: 50 // Default stock
+            });
+
+            renderProductsGrid();
+            $('#productSearchSelect').val(null).trigger('change');
+        }
+
+        function removeProduct(id) {
+            selectedProducts = selectedProducts.filter(p => p.id != id);
+            renderProductsGrid();
+        }
+
+        function renderProductsGrid() {
+            const tbody = $('#campaignProductsTable tbody');
+            tbody.empty();
+
+            if (selectedProducts.length === 0) {
+                tbody.html(`
+                    <tr id="emptyRow">
+                        <td colspan="5" class="px-4 py-10 text-center text-slate-400 text-sm font-medium">
+                            Chưa có sản phẩm nào được chọn. Hãy tìm và thêm sách ở ô bên trên.
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
+            selectedProducts.forEach(p => {
+                const priceFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price);
+                const tr = $(`
+                    <tr data-id="${p.id}" class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${p.imageUrl}" class="w-10 h-10 object-cover rounded shadow-sm border border-slate-100" />
+                                <div class="font-black text-slate-800 text-xs line-clamp-2 w-48">${p.name}</div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-black text-slate-600 text-xs">${priceFormatted}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="sale-price-input w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-600" value="${p.salePrice}" min="0" max="${p.price}" />
+                                <span class="text-xs font-bold text-slate-400">VNĐ</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="number" class="sale-stock-input w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-600 text-center" value="${p.saleStock}" min="1" />
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" onclick="removeProduct(${p.id})" class="text-rose-500 hover:text-rose-700 transition-colors p-1" title="Xóa">
+                                <span class="material-symbols-outlined text-base">close</span>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+                tbody.append(tr);
+            });
+        }
+
+        function openBulkSaleModal() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            
+            const dayAfter = new Date(tomorrow);
+            dayAfter.setDate(dayAfter.getDate() + 3);
+            
+            const formatForInput = (d) => {
+                return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+            };
+            
+            $('#bulkSaleForm input[name="StartTime"]').val(formatForInput(tomorrow));
+            $('#bulkSaleForm input[name="EndTime"]').val(formatForInput(dayAfter));
+            
+            selectedProducts = [];
+            renderProductsGrid();
+            $('#bulkDiscountPercent').val('');
+
+            $('#bulkSaleModal').removeClass('hidden');
+        }
+
+        function applyBulkDiscount() {
+            const percent = parseFloat($('#bulkDiscountPercent').val());
+            ValidationHelper.clearField($('#bulkDiscountPercent'));
+            if (isNaN(percent) || percent < 0 || percent > 100) {
+                ValidationHelper.showFieldError($('#bulkDiscountPercent'), 'Vui lòng nhập % hợp lệ (0-100)');
+                return;
+            }
+            if (selectedProducts.length === 0) {
+                toastr.warning('Chưa có sản phẩm nào trong chiến dịch để giảm giá');
+                return;
+            }
+
+            // Update all selected products
+            selectedProducts.forEach(p => {
+                p.salePrice = p.price - (p.price * (percent / 100.0));
+            });
+            
+            // Re-render
+            renderProductsGrid();
+            toastr.success(`Đã áp dụng giảm ${percent}% cho toàn bộ danh sách`);
+        }
+
+        function toggleCampaignStatus(id, btn) {
+            Swal.fire({
+                title: 'Thay đổi trạng thái?',
+                text: "Bạn có chắc muốn bật/tắt chiến dịch này?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy',
+                customClass: {
+                    confirmButton: 'px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-none mx-2',
+                    cancelButton: 'px-6 py-3 bg-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-none mx-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`@Url.Action("ToggleStatus")?id=${id}`, function(res) {
+                        if (res.success) {
+                            loadSales($('.pagination-link.bg-blue-600').data('page') || 1);
+                        } else {
+                            Swal.fire('Lỗi', 'Không thể thay đổi trạng thái', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function deleteCampaign(id) {
+            Swal.fire({
+                title: 'Xóa chiến dịch?',
+                text: "Toàn bộ sản phẩm trong chiến dịch sẽ bị gỡ Sale. Chỉ xóa khi chưa có lượt mua nào. Hành động này không thể hoàn tác!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Xóa ngay',
+                cancelButtonText: 'Hủy',
+                customClass: {
+                    confirmButton: 'px-6 py-3 bg-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-none mx-2',
+                    cancelButton: 'px-6 py-3 bg-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest outline-none border-none mx-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`@Url.Action("Delete")?id=${id}`, function(res) {
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Đã xóa', timer: 1500, showConfirmButton: false });
+                            loadSales($('.pagination-link.bg-blue-600').data('page') || 1);
+                        } else {
+                            Swal.fire('Thất bại', res.message, 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function viewCampaignDetails(id, title) {
+            $('#detailsModalTitle').html(`<span class="material-symbols-outlined text-blue-500">list_alt</span> ${title}`);
+            $('#campaignDetailsContent').html('<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>');
+            $('#campaignDetailsModal').removeClass('hidden');
+
+            $.get(`@Url.Action("GetCampaignItems")?id=${id}`, function(data) {
+                $('#campaignDetailsContent').html(data);
+            }).fail(function() {
+                $('#campaignDetailsContent').html('<p class="text-rose-500 font-bold text-center">Lỗi tải dữ liệu. Vui lòng thử lại.</p>');
+            });
+        }
+
+        function initEditProductSelect2() {
+            if (editSelect2Initialized) return;
+            $('#editProductSearchSelect').select2({
+                theme: 'default',
+                placeholder: 'Tìm kiếm tên sách để thêm...',
+                allowClear: true,
+                minimumInputLength: 0,
+                dropdownParent: $('#editCampaignModal'),
+                templateResult: formatProductOption,
+                templateSelection: formatProductOption,
+                ajax: {
+                    url: '@Url.Action("SearchProducts")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) { return { term: params.term || '' }; },
+                    processResults: function(data) {
+                        return {
+                            results: $.map(data, function(item) {
+                                return { id: item.id, text: item.name, name: item.name, price: item.price, imageUrl: item.imageUrl };
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+            editSelect2Initialized = true;
+        }
+
+        function openEditCampaignModal(id) {
+            initEditProductSelect2();
+            editSelectedProducts = [];
+            renderEditProductsGrid();
+            $('#editCampaignModal').removeClass('hidden');
+            $('#editEmptyRow td').text('Đang tải dữ liệu...');
+
+            $.get(`@Url.Action("GetCampaignForEdit")?id=${id}`, function(res) {
+                if (!res.success) {
+                    Swal.fire('Lỗi', res.message || 'Không tải được chiến dịch', 'error');
+                    closeEditCampaignModal();
+                    return;
+                }
+                const c = res.data;
+                $('#editCampaignId').val(c.id);
+                $('#editCampaignName').val(c.name);
+                $('#editCampaignStartTime').val(formatForInput(new Date(c.startTime)));
+                $('#editCampaignEndTime').val(formatForInput(new Date(c.endTime)));
+                $('#editCampaignIsActive').prop('checked', c.isActive);
+
+                editSelectedProducts = (c.items || []).map(item => ({
+                    id: item.productId,
+                    name: item.productName,
+                    price: item.originalPrice,
+                    imageUrl: resolveImageUrl(item.imageUrl),
+                    salePrice: item.salePrice,
+                    saleStock: item.saleStock,
+                    soldCount: item.soldCount || 0
+                }));
+                renderEditProductsGrid();
+            }).fail(function() {
+                Swal.fire('Lỗi', 'Không thể tải dữ liệu chiến dịch', 'error');
+                closeEditCampaignModal();
+            });
+        }
+
+        function addProductToEditGrid() {
+            const data = $('#editProductSearchSelect').select2('data')[0];
+            if (!data || !data.id) return;
+            if (editSelectedProducts.find(p => p.id == data.id)) {
+                Swal.fire('Chú ý', 'Sản phẩm này đã có trong chiến dịch!', 'info');
+                return;
+            }
+            editSelectedProducts.push({
+                id: data.id,
+                name: data.name,
+                price: data.price,
+                imageUrl: resolveImageUrl(data.imageUrl),
+                salePrice: data.price * 0.9,
+                saleStock: 50,
+                soldCount: 0
+            });
+            renderEditProductsGrid();
+            $('#editProductSearchSelect').val(null).trigger('change');
+        }
+
+        function removeEditProduct(id) {
+            const p = editSelectedProducts.find(x => x.id == id);
+            if (p && p.soldCount > 0) {
+                Swal.fire('Không thể xóa', 'Sản phẩm đã có lượt mua, không thể gỡ khỏi chiến dịch.', 'warning');
+                return;
+            }
+            editSelectedProducts = editSelectedProducts.filter(p => p.id != id);
+            renderEditProductsGrid();
+        }
+
+        function renderEditProductsGrid() {
+            const tbody = $('#editCampaignProductsTable tbody');
+            tbody.empty();
+
+            if (editSelectedProducts.length === 0) {
+                tbody.html(`<tr id="editEmptyRow"><td colspan="5" class="px-4 py-10 text-center text-slate-400 text-sm font-medium">Chưa có sản phẩm nào trong chiến dịch.</td></tr>`);
+                return;
+            }
+
+            editSelectedProducts.forEach(p => {
+                const priceFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price);
+                const minStock = p.soldCount || 0;
+                const canDelete = minStock === 0;
+                const tr = $(`
+                    <tr data-id="${p.id}" class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${p.imageUrl}" class="w-10 h-10 object-cover rounded shadow-sm border border-slate-100" />
+                                <div>
+                                    <div class="font-black text-slate-800 text-xs line-clamp-2 w-48">${p.name}</div>
+                                    ${minStock > 0 ? `<div class="text-[10px] text-emerald-600 font-bold">Đã bán: ${minStock}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-black text-slate-600 text-xs">${priceFormatted}</td>
+                        <td class="px-4 py-3">
+                            <input type="number" class="sale-price-input w-28 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-600" value="${p.salePrice}" min="0" max="${p.price}" />
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="number" class="sale-stock-input w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-blue-600 text-center" value="${p.saleStock}" min="${minStock || 1}" />
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${canDelete
+                                ? `<button type="button" onclick="removeEditProduct(${p.id})" class="text-rose-500 hover:text-rose-700 transition-colors p-1" title="Xóa"><span class="material-symbols-outlined text-base">close</span></button>`
+                                : `<span class="text-[10px] text-slate-400 font-bold">Đã bán</span>`}
+                        </td>
+                    </tr>
+                `);
+                tbody.append(tr);
+            });
+        }
+    </script>
+}

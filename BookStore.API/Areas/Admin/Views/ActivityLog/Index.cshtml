@@ -1,0 +1,187 @@
+@using BookStore.Application.DTO
+@using BookStore.Domain.Common
+@model PagedResultDTO<ActivityLogDTO>
+@{
+    ViewData["Title"] = "Nhật ký hoạt động";
+    var search = ViewBag.Search as string ?? "";
+    var filterModule = ViewBag.Module as string ?? "";
+    var filterAction = ViewBag.FilterAction as string ?? "";
+    var fromDate = ViewBag.FromDate as string ?? "";
+    var toDate = ViewBag.ToDate as string ?? "";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/activity-log.css" />
+}
+
+<div class="activity-log-container space-y-8">
+    <div>
+        <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Nhật ký hoạt động</h2>
+    </div>
+
+    <div class="glass-card p-8 rounded-[2.5rem] shadow-sm">
+        <form method="get" asp-area="Admin" asp-controller="ActivityLog" asp-action="Index" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[220px] space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Tìm kiếm</label>
+                <input type="text" name="search" value="@search" placeholder="Tên NV, mô tả, mã..."
+                       class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+            </div>
+            <div class="w-full sm:w-48 space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Module</label>
+                <select name="module" class="admin-filter-select w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none shadow-sm cursor-pointer">
+                    <option value="" selected="@string.IsNullOrEmpty(filterModule)">Tất cả</option>
+                    <option value="@ActivityModules.Order" selected="@(filterModule == ActivityModules.Order)">Đơn hàng</option>
+                    <option value="@ActivityModules.Product" selected="@(filterModule == ActivityModules.Product)">Sản phẩm</option>
+                    <option value="@ActivityModules.Inventory" selected="@(filterModule == ActivityModules.Inventory)">Tồn kho</option>
+                    <option value="@ActivityModules.FlashSale" selected="@(filterModule == ActivityModules.FlashSale)">Flash Sale</option>
+                    <option value="@ActivityModules.Customer" selected="@(filterModule == ActivityModules.Customer)">Khách hàng</option>
+                    <option value="@ActivityModules.Staff" selected="@(filterModule == ActivityModules.Staff)">Nhân sự</option>
+                    <option value="@ActivityModules.Category" selected="@(filterModule == ActivityModules.Category)">Danh mục</option>
+                    <option value="@ActivityModules.Profile" selected="@(filterModule == ActivityModules.Profile)">Hồ sơ</option>
+                    <option value="@ActivityModules.Auth" selected="@(filterModule == ActivityModules.Auth)">Đăng nhập</option>
+                </select>
+            </div>
+            <div class="w-full sm:w-44 space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Hành động</label>
+                <select name="filterAction" class="admin-filter-select w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none shadow-sm cursor-pointer">
+                    <option value="" selected="@string.IsNullOrEmpty(filterAction)">Tất cả</option>
+                    <option value="@ActivityActions.Create" selected="@(filterAction == ActivityActions.Create)">Tạo mới</option>
+                    <option value="@ActivityActions.Update" selected="@(filterAction == ActivityActions.Update)">Cập nhật</option>
+                    <option value="@ActivityActions.Delete" selected="@(filterAction == ActivityActions.Delete)">Xóa</option>
+                    <option value="@ActivityActions.StatusChange" selected="@(filterAction == ActivityActions.StatusChange)">Đổi trạng thái</option>
+                    <option value="@ActivityActions.Import" selected="@(filterAction == ActivityActions.Import)">Nhập kho</option>
+                    <option value="@ActivityActions.Login" selected="@(filterAction == ActivityActions.Login)">Đăng nhập</option>
+                    <option value="@ActivityActions.CreateAdmin" selected="@(filterAction == ActivityActions.CreateAdmin)">Tạo Admin</option>
+                    <option value="@ActivityActions.CreateEmployee" selected="@(filterAction == ActivityActions.CreateEmployee)">Tạo Employee</option>
+                </select>
+            </div>
+            <div class="w-full sm:w-40 space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Từ ngày</label>
+                <input type="date" name="fromDate" value="@fromDate"
+                       class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+            </div>
+            <div class="w-full sm:w-40 space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Đến ngày</label>
+                <input type="date" name="toDate" value="@toDate"
+                       class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+            </div>
+            <button type="submit" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 text-white hover:bg-black transition-premium shadow-lg shadow-slate-900/20">
+                <span class="material-symbols-outlined text-2xl">filter_list</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="glass-card rounded-[2.5rem] overflow-hidden bg-white premium-shadow">
+        <div class="px-8 py-4 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Tổng <span class="text-slate-900">@Model.TotalItems</span> bản ghi
+            </p>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="ps-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Thời gian</th>
+                        <th class="text-[10px] font-black uppercase tracking-widest text-slate-400">Người thực hiện</th>
+                        <th class="text-[10px] font-black uppercase tracking-widest text-slate-400">Module</th>
+                        <th class="text-[10px] font-black uppercase tracking-widest text-slate-400">Hành động</th>
+                        <th class="pe-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model?.Items == null || !Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="px-8 py-16 text-center text-slate-400 font-medium">Chưa có nhật ký phù hợp bộ lọc.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var log in Model.Items)
+                        {
+                            <tr class="hover:bg-slate-50/40 transition-colors">
+                                <td class="ps-8 py-4 whitespace-nowrap">
+                                    <div class="font-bold text-slate-800 text-xs">@log.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                                    <div class="text-[10px] font-bold text-slate-400">@log.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</div>
+                                </td>
+                                <td>
+                                    <div class="font-black text-slate-900 text-xs">@(log.ActorName ?? "—")</div>
+                                    <div class="text-[10px] text-slate-400 font-bold">
+                                        @(log.ActorRole ?? "—") · @(log.IpAddress ?? "—")
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="module-badge module-@(log.Module ?? "System")">@log.ModuleLabel</span>
+                                </td>
+                                <td>
+                                    <span class="action-badge">@log.ActionLabel</span>
+                                    @if (!string.IsNullOrEmpty(log.EntityId))
+                                    {
+                                        <div class="text-[10px] font-bold text-blue-600 mt-1">#@log.EntityId</div>
+                                    }
+                                </td>
+                                <td class="pe-8 max-w-md">
+                                    <p class="text-xs font-medium text-slate-700 leading-relaxed">@(log.Details ?? "—")</p>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model != null && Model.TotalPages > 1)
+        {
+            <div class="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    Trang @Model.CurrentPage / @Model.TotalPages
+                </p>
+                <div class="flex gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a asp-area="Admin" asp-controller="ActivityLog" asp-action="Index"
+                           asp-route-page="@(Model.CurrentPage - 1)" asp-route-search="@search" asp-route-module="@filterModule"
+                           asp-route-filterAction="@filterAction" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate"
+                           class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </a>
+                    }
+                    @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                    {
+                        <a asp-area="Admin" asp-controller="ActivityLog" asp-action="Index"
+                           asp-route-page="@i" asp-route-search="@search" asp-route-module="@filterModule"
+                           asp-route-filterAction="@filterAction" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate"
+                           class="w-11 h-11 flex items-center justify-center rounded-2xl border font-black text-sm transition-premium @(i == Model.CurrentPage ? "bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20" : "bg-white border-slate-200 text-slate-600 hover:bg-blue-50")">@i</a>
+                    }
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a asp-area="Admin" asp-controller="ActivityLog" asp-action="Index"
+                           asp-route-page="@(Model.CurrentPage + 1)" asp-route-search="@search" asp-route-module="@filterModule"
+                           asp-route-filterAction="@filterAction" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate"
+                           class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-blue-600 hover:text-white transition-premium">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.activity-log-container select.admin-filter-select').forEach(function (el) {
+            if (typeof Choices !== 'undefined' && !el.classList.contains('choices-initialized')) {
+                new Choices(el, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                    shouldSort: false,
+                    allowHTML: false
+                });
+                el.classList.add('choices-initialized');
+            }
+        });
+    });
+</script>
+}

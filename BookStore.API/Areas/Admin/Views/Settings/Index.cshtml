@@ -1,0 +1,107 @@
+@model BookStore.API.Areas.Admin.Controllers.AdminAppSettings
+@{
+    ViewData["Title"] = "Cấu hình App";
+}
+
+<div class="space-y-8 animate-fadeIn">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-3">Thiết lập hệ thống</p>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Cấu hình App</h2>
+            <p class="text-slate-500 font-medium mt-2 max-w-2xl">Quản lý thông tin cửa hàng và tài khoản ngân hàng dùng để tạo mã VietQR trong màn hình POS.</p>
+        </div>
+    </div>
+
+    <form id="settingsForm" class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <section class="xl:col-span-2 glass-card p-8 rounded-[2rem] premium-shadow space-y-8">
+            <div class="space-y-6">
+                <div class="flex items-center gap-3 text-blue-600">
+                    <span class="material-symbols-outlined">storefront</span>
+                    <span class="font-black text-xs uppercase tracking-widest">Thông tin cửa hàng</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2 md:col-span-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tên cửa hàng</label>
+                        <input name="StoreName" value="@Model.StoreName" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-blue-600" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Số điện thoại</label>
+                        <input name="StorePhone" value="@Model.StorePhone" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-blue-600" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Địa chỉ</label>
+                        <input name="StoreAddress" value="@Model.StoreAddress" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-blue-600" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6 pt-8 border-t border-slate-100">
+                <div class="flex items-center gap-3 text-emerald-600">
+                    <span class="material-symbols-outlined">account_balance</span>
+                    <span class="font-black text-xs uppercase tracking-widest">Thông tin VietQR</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Mã ngân hàng</label>
+                        <input name="BankCode" value="@Model.BankCode" required placeholder="VD: MB, VCB, TCB" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold uppercase outline-none focus:border-blue-600" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tên ngân hàng</label>
+                        <input name="BankName" value="@Model.BankName" placeholder="VD: MB Bank" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-blue-600" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Số tài khoản</label>
+                        <input name="BankAccountNumber" value="@Model.BankAccountNumber" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold outline-none focus:border-blue-600" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tên chủ tài khoản</label>
+                        <input name="BankAccountName" value="@Model.BankAccountName" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold uppercase outline-none focus:border-blue-600" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end">
+                <button type="submit" class="px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-premium">
+                    Lưu cấu hình
+                </button>
+            </div>
+        </section>
+
+        <aside class="glass-card p-8 rounded-[2rem] premium-shadow h-fit space-y-6">
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <span class="material-symbols-outlined">qr_code_2</span>
+            </div>
+            <div>
+                <h3 class="text-xl font-black text-slate-900">Dùng cho POS</h3>
+                <p class="text-sm text-slate-500 font-medium mt-2">Khi chọn Chuyển khoản ở POS, hệ thống sẽ lấy các thông tin này để sinh mã VietQR theo tổng tiền của đơn.</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-500 font-bold leading-relaxed">
+                URL mẫu: <br />
+                <code>img.vietqr.io/image/&lt;BankCode&gt;-&lt;AccountNumber&gt;-compact2.png</code>
+            </div>
+        </aside>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $('#settingsForm').on('submit', function (e) {
+            e.preventDefault();
+            const btn = $(this).find('button[type="submit"]');
+            const original = btn.html();
+            btn.prop('disabled', true).html('Đang lưu...');
+
+            $.post('/Admin/Settings/Save', $(this).serialize(), function (res) {
+                if (res.success) {
+                    window.LumenAlert ? LumenAlert.success('Đã lưu', res.message) : toastr.success(res.message);
+                } else {
+                    window.LumenAlert ? LumenAlert.error('Lỗi', res.message || 'Không thể lưu cấu hình') : toastr.error(res.message || 'Không thể lưu cấu hình');
+                }
+            }).fail(function () {
+                window.LumenAlert ? LumenAlert.error('Lỗi', 'Không thể lưu cấu hình') : toastr.error('Không thể lưu cấu hình');
+            }).always(function () {
+                btn.prop('disabled', false).html(original);
+            });
+        });
+    </script>
+}

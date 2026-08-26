@@ -1,0 +1,118 @@
+/* Premium Order Management Styles - Synchronized with Product Management */
+
+.order-container {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Filter Bar Styles */
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.filter-item {
+    flex: 1;
+    min-width: 180px;
+}
+
+.filter-item-search {
+    flex: 2;
+    min-width: 250px;
+}
+
+/* Table Styles */
+.glass-card {
+    background: white;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+    width: 100% !important;
+}
+
+.table thead th {
+    background: #fafafa;
+    border-bottom: 1px solid #f1f5f9;
+    color: #94a3b8;
+    font-weight: 800;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 1.5rem 1rem;
+}
+
+.table tbody td {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid #f8fafc;
+    color: #334155;
+    font-weight: 600;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-pending { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; }
+.status-paid { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+.status-shipping { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+.status-completed { background: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; }
+.status-cancelled { background: #fff1f2; color: #e11d48; border: 1px solid #ffe4e6; }
+
+/* Modal Custom Style (Same as Product) */
+#orderModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background-color: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(10px);
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 1rem;
+    overflow-y: auto;
+}
+
+#orderModal.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 95%;
+    max-width: 900px;
+    background: white;
+    border-radius: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#orderModal.active .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.transition-premium {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.order-number {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.02em;
+}

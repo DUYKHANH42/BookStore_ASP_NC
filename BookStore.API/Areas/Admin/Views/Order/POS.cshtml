@@ -1,0 +1,345 @@
+@{
+    ViewData["Title"] = "Tạo đơn hàng POS";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="pos-container space-y-6">
+    <div class="flex items-center justify-between">
+        <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Tạo đơn POS</h2>
+        <a href="@Url.Action("Index")" class="btn bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-300">Quay lại</a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Danh sách sản phẩm -->
+        <div class="lg:col-span-2 glass-card p-6 rounded-3xl bg-white shadow-sm space-y-4">
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" id="posSearch" placeholder="Tìm kiếm sản phẩm theo tên..." 
+                       class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3 font-bold text-slate-700 outline-none focus:border-blue-600 focus:bg-white transition-all" />
+            </div>
+
+            <div class="overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+                <div id="posProductsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Products will be loaded here via Ajax -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Giỏ hàng & Thanh toán -->
+        <div class="glass-card p-6 rounded-3xl bg-white shadow-sm flex flex-col space-y-4 h-[670px]">
+            <h3 class="text-lg font-black text-slate-900 border-b pb-2">Đơn hàng hiện tại</h3>
+            
+            <div id="posCart" class="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                <!-- Cart items will be loaded here -->
+            </div>
+
+            <div class="border-t pt-4 space-y-4">
+                <div class="space-y-2">
+                    <input type="text" id="posCustomerName" placeholder="Tên khách hàng (mặc định: Khách lẻ)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-600" />
+                    <input type="text" id="posCustomerPhone" placeholder="Số điện thoại" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-600" />
+                </div>
+                
+                <div class="flex justify-between items-center text-xl font-black">
+                    <span>Tổng tiền:</span>
+                    <span id="posTotal" class="text-blue-600">0đ</span>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Phương thức thanh toán</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" data-payment="cash" class="payment-method-btn active rounded-2xl border border-blue-600 bg-blue-50 text-blue-600 px-4 py-3 text-xs font-black uppercase tracking-widest">
+                            Tiền mặt
+                        </button>
+                        <button type="button" data-payment="bank" class="payment-method-btn rounded-2xl border border-slate-200 bg-white text-slate-500 px-4 py-3 text-xs font-black uppercase tracking-widest hover:border-blue-600">
+                            Chuyển khoản
+                        </button>
+                    </div>
+                </div>
+
+                <div id="cashPanel" class="space-y-2 rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tiền khách đưa</label>
+                    <input type="number" id="cashReceived" min="0" placeholder="Nhập số tiền khách đưa"
+                           class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-blue-600" />
+                    <div class="flex justify-between text-sm font-black">
+                        <span class="text-slate-500">Tiền trả lại</span>
+                        <span id="cashChange" class="text-emerald-600">0đ</span>
+                    </div>
+                </div>
+
+                <button id="btnCreateOrder" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-colors uppercase tracking-wider">
+                    Thanh toán
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let posCart = [];
+        let searchTimer;
+        let selectedPaymentMethod = 'cash';
+        let appSettings = null;
+
+        function formatMoney(amount) {
+            return Number(amount || 0).toLocaleString('vi-VN') + 'đ';
+        }
+
+        function getCartTotal() {
+            return posCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        }
+
+        $(document).ready(function () {
+            loadProducts('');
+            loadAppSettings();
+
+            $('#posSearch').on('input', function () {
+                clearTimeout(searchTimer);
+                const query = $(this).val();
+                searchTimer = setTimeout(() => {
+                    loadProducts(query);
+                }, 500);
+            });
+
+            $('.payment-method-btn').click(function () {
+                selectedPaymentMethod = $(this).data('payment');
+                $('.payment-method-btn')
+                    .removeClass('active border-blue-600 bg-blue-50 text-blue-600')
+                    .addClass('border-slate-200 bg-white text-slate-500');
+                $(this)
+                    .addClass('active border-blue-600 bg-blue-50 text-blue-600')
+                    .removeClass('border-slate-200 bg-white text-slate-500');
+                $('#cashPanel').toggleClass('hidden', selectedPaymentMethod !== 'cash');
+            });
+
+            $('#cashReceived').on('input', updateCashChange);
+
+            $('#btnCreateOrder').click(function () {
+                if (posCart.length === 0) {
+                    showAlert('error', 'Lỗi', 'Giỏ hàng trống!');
+                    return;
+                }
+
+                const total = getCartTotal();
+                if (selectedPaymentMethod === 'cash') {
+                    const received = Number($('#cashReceived').val() || 0);
+                    if (received < total) {
+                        showAlert('warning', 'Chưa đủ tiền', 'Tiền khách đưa nhỏ hơn tổng tiền đơn hàng.');
+                        return;
+                    }
+                    submitPOSOrder();
+                    return;
+                }
+
+                showBankTransferModal(total);
+            });
+        });
+
+        function showAlert(type, title, text) {
+            if (window.LumenAlert) {
+                if (type === 'success') return LumenAlert.success(title, text);
+                if (type === 'warning') return LumenAlert.warning(title, text);
+                return LumenAlert.error(title, text);
+            }
+            return Swal.fire(title, text, type);
+        }
+
+        function loadAppSettings() {
+            $.get('/Admin/Settings/Get', function (res) {
+                appSettings = res;
+            });
+        }
+
+        function buildVietQrUrl(total) {
+            const settings = appSettings || {};
+            const bankCode = encodeURIComponent(settings.bankCode || settings.BankCode || 'MB');
+            const accountNumber = encodeURIComponent(settings.bankAccountNumber || settings.BankAccountNumber || '');
+            const accountName = encodeURIComponent(settings.bankAccountName || settings.BankAccountName || '');
+            const description = encodeURIComponent('POS ' + new Date().getTime());
+            return `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?amount=${Math.round(total)}&addInfo=${description}&accountName=${accountName}`;
+        }
+
+        function showBankTransferModal(total) {
+            const settings = appSettings || {};
+            const accountNumber = settings.bankAccountNumber || settings.BankAccountNumber;
+            if (!accountNumber) {
+                showAlert('warning', 'Thiếu cấu hình', 'Vui lòng cấu hình số tài khoản ngân hàng trước khi thanh toán chuyển khoản.');
+                return;
+            }
+
+            const qrUrl = buildVietQrUrl(total);
+            const bankName = settings.bankName || settings.BankName || settings.bankCode || settings.BankCode || '';
+            const accountName = settings.bankAccountName || settings.BankAccountName || '';
+            const html = `
+                <div class="text-left space-y-4">
+                    <div class="flex justify-center">
+                        <img src="${qrUrl}" class="w-72 h-72 object-contain rounded-3xl border border-slate-100 shadow-lg" alt="VietQR" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="p-3 rounded-2xl bg-slate-50"><div class="text-slate-400 text-[10px] font-black uppercase">Ngân hàng</div><div class="font-black">${bankName}</div></div>
+                        <div class="p-3 rounded-2xl bg-slate-50"><div class="text-slate-400 text-[10px] font-black uppercase">Số TK</div><div class="font-black">${accountNumber}</div></div>
+                        <div class="p-3 rounded-2xl bg-slate-50 col-span-2"><div class="text-slate-400 text-[10px] font-black uppercase">Chủ TK</div><div class="font-black">${accountName}</div></div>
+                        <div class="p-3 rounded-2xl bg-blue-50 col-span-2"><div class="text-blue-600 text-[10px] font-black uppercase">Số tiền</div><div class="font-black text-blue-700 text-xl">${formatMoney(total)}</div></div>
+                    </div>
+                </div>`;
+
+            const confirm = LumenAlert.confirm({ title: 'Quét mã chuyển khoản', html, confirmButtonText: 'Đã nhận tiền', cancelButtonText: 'Hủy' });
+
+            confirm.then(result => {
+                if (result.isConfirmed) submitPOSOrder();
+            });
+        }
+
+        function submitPOSOrder() {
+                const data = {
+                    CustomerName: $('#posCustomerName').val(),
+                    CustomerPhone: $('#posCustomerPhone').val(),
+                    Items: posCart.map(i => ({ ProductId: i.id, Quantity: i.quantity, Price: i.price })),
+                    TotalPrice: getCartTotal(),
+                    PaymentMethod: selectedPaymentMethod === 'bank' ? 3 : 0
+                };
+
+                $.ajax({
+                    url: '/Admin/Order/CreatePOS',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        if (res.success) {
+                            showAlert('success', 'Thành công!', res.message).then(() => {
+                                posCart = [];
+                                renderCart();
+                                $('#posCustomerName').val('');
+                                $('#posCustomerPhone').val('');
+                                $('#cashReceived').val('');
+                                updateCashChange();
+                                loadProducts(''); // Reload products to update stock
+                            });
+                        } else {
+                            showAlert('error', 'Lỗi', res.message);
+                        }
+                    }
+                });
+        }
+
+               function loadProducts(query) {
+            $.ajax({
+                url: '/api/products?search=' + encodeURIComponent(query) + '&pageSize=20',
+                type: 'GET',
+                success: function (res) {
+                    let items = res.data || res.items || res;
+                    if (res.items && res.items.$values) items = res.items.$values;
+                    else if (res.$values) items = res.$values;
+
+                    const now = new Date();
+
+                    let html = '';
+                    items.forEach(p => {
+                        if (p.quantity <= 0) return;
+
+                        // Kiểm tra flash sale còn hiệu lực không
+                        const flash = p.flashSale;
+                        const isFlashActive = flash
+                            && flash.remainingSlots > 0
+                            && new Date(flash.startTime) <= now
+                            && new Date(flash.endTime) >= now;
+
+                        const price = isFlashActive ? flash.salePrice : p.price;
+
+                        const imgUrl = (p.imageUrl && p.imageUrl.startsWith('http'))
+                            ? p.imageUrl
+                            : ('/uploads/' + (p.imageUrl || 'default_product.png'));
+
+                        html += `
+                            <div class="flex items-center gap-3 p-3 border border-slate-100 rounded-2xl hover:border-blue-200 transition-colors cursor-pointer bg-slate-50"
+                                 onclick="addToPosCart(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${price}, ${p.quantity})">
+                                <img src="${imgUrl}" onerror="this.src='/uploads/default_product.png'" class="w-16 h-16 object-cover rounded-xl" />
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-bold text-slate-900 truncate">${p.name}</h4>
+                                    <div class="flex items-center gap-2">
+                                        <div class="text-blue-600 font-black">${price.toLocaleString('vi-VN')}đ</div>
+                                        ${isFlashActive ? `
+                                            <div class="text-xs text-slate-400 line-through">${p.price.toLocaleString('vi-VN')}đ</div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">Kho: ${p.quantity}</div>
+                                </div>
+                                <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                </button>
+                            </div>
+                        `;
+                    });
+                    $('#posProductsList').html(html || '<div class="col-span-full text-center text-slate-500">Không tìm thấy sản phẩm</div>');
+                }
+            });
+        }
+        function addToPosCart(id, name, price, stock) {
+            const existing = posCart.find(i => i.id === id);
+            if (existing) {
+                if (existing.quantity >= stock) {
+                    showAlert('warning', 'Cảnh báo', 'Không đủ tồn kho!');
+                    return;
+                }
+                existing.quantity++;
+            } else {
+                if (stock <= 0) return;
+                posCart.push({ id, name, price, quantity: 1, stock });
+            }
+            renderCart();
+        }
+
+        function updateCartItem(id, qty) {
+            const item = posCart.find(i => i.id === id);
+            if (!item) return;
+            if (qty > item.stock) {
+                showAlert('warning', 'Cảnh báo', 'Không đủ tồn kho!');
+                qty = item.stock;
+            }
+            if (qty <= 0) {
+                posCart = posCart.filter(i => i.id !== id);
+            } else {
+                item.quantity = qty;
+            }
+            renderCart();
+        }
+
+        function removeCartItem(id) {
+            posCart = posCart.filter(i => i.id !== id);
+            renderCart();
+        }
+
+        function renderCart() {
+            let html = '';
+            let total = 0;
+            posCart.forEach(i => {
+                total += i.price * i.quantity;
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="text-sm font-bold text-slate-900 truncate" title="${i.name}">${i.name}</div>
+                            <div class="text-blue-600 font-black text-sm">${i.price.toLocaleString('vi-VN')}đ</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="updateCartItem(${i.id}, ${i.quantity - 1})" class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center font-bold hover:bg-slate-300">-</button>
+                            <span class="w-6 text-center font-bold text-sm">${i.quantity}</span>
+                            <button onclick="updateCartItem(${i.id}, ${i.quantity + 1})" class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center font-bold hover:bg-slate-300">+</button>
+                            <button onclick="removeCartItem(${i.id})" class="ml-2 w-6 h-6 rounded bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-xs">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            $('#posCart').html(html || '<div class="text-center text-slate-400 mt-10">Giỏ hàng trống</div>');
+            $('#posTotal').text(formatMoney(total));
+            updateCashChange();
+        }
+
+        function updateCashChange() {
+            const received = Number($('#cashReceived').val() || 0);
+            const change = Math.max(0, received - getCartTotal());
+            $('#cashChange').text(formatMoney(change));
+        }
+    </script>
+}

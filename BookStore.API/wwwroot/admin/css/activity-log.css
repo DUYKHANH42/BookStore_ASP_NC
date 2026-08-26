@@ -1,0 +1,104 @@
+.activity-log-container {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.activity-log-container .table tbody td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #f8fafc;
+    vertical-align: top;
+}
+
+/* Select filter — đồng bộ layout admin (Choices.js) */
+.activity-log-container .choices {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.activity-log-container .choices__inner {
+    min-height: 56px !important;
+    padding: 0.75rem 1.25rem !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #f1f5f9 !important;
+    border-radius: 1rem !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+}
+
+.activity-log-container .choices.is-focused .choices__inner {
+    border-color: #2563eb !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+}
+
+.activity-log-container .choices__list--dropdown {
+    border-radius: 1rem !important;
+    border: 1px solid #f1f5f9 !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+    z-index: 200 !important;
+}
+
+.activity-log-container .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: #2563eb !important;
+    color: #fff !important;
+}
+
+/* Fallback native select khi Choices chưa load */
+.activity-log-container select.admin-filter-select {
+    min-height: 56px;
+    padding: 0.75rem 2.5rem 0.75rem 1.25rem;
+    background-color: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #334155;
+    cursor: pointer;
+}
+
+.module-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.module-Order { background: #eff6ff; color: #2563eb; }
+.module-Product { background: #f5f3ff; color: #7c3aed; }
+.module-Inventory { background: #ecfdf5; color: #059669; }
+.module-FlashSale { background: #fff7ed; color: #ea580c; }
+.module-Customer { background: #fdf2f8; color: #db2777; }
+.module-Staff { background: #f0f9ff; color: #0284c7; }
+.module-Category { background: #f8fafc; color: #475569; }
+.module-Profile { background: #fef3c7; color: #d97706; }
+.module-Auth { background: #f1f5f9; color: #334155; }
+.module-Review { background: #fce7f3; color: #be185d; }
+.module-System { background: #f1f5f9; color: #64748b; }
+
+.action-badge {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+html.dark .activity-log-container .choices__inner {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+html.dark .activity-log-container .choices__list--dropdown {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}

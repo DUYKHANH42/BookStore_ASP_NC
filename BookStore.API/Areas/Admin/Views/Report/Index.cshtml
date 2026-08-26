@@ -1,0 +1,224 @@
+@using BookStore.Application.DTO
+@model EnterpriseReportDTO
+@{
+    ViewData["Title"] = "Báo cáo chi tiết";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="/admin/css/report-management.css" />
+}
+
+<div class="report-page space-y-8">
+    <section class="report-header">
+        <div>
+            <p class="report-eyebrow">Enterprise reporting</p>
+            <h1>Báo cáo chi tiết</h1>
+            <p class="report-subtitle">Phân tích doanh thu, sản phẩm, khách hàng, đơn hàng và Flash Sale theo bộ lọc vận hành.</p>
+        </div>
+        <div class="report-actions">
+            <button type="button" id="btnExportExcel" class="report-action secondary">
+                <span class="material-symbols-outlined">table_view</span>
+                Excel
+            </button>
+            <button type="button" id="btnExportPdf" class="report-action primary">
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+                PDF
+            </button>
+        </div>
+    </section>
+
+    <section class="report-filter-panel">
+        <div class="filter-field">
+            <label>Từ ngày</label>
+            <input type="date" id="reportFromDate" value="@Model.Filter.FromDate?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="filter-field">
+            <label>Đến ngày</label>
+            <input type="date" id="reportToDate" value="@Model.Filter.ToDate?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="filter-field">
+            <label>Chu kỳ</label>
+            <select id="reportPeriod">
+                <option value="day" selected="@(Model.Filter.Period == "day" ? "selected" : null)">Ngày</option>
+                <option value="week" selected="@(Model.Filter.Period == "week" ? "selected" : null)">Tuần</option>
+                <option value="month" selected="@(Model.Filter.Period == "month" ? "selected" : null)">Tháng</option>
+                <option value="quarter" selected="@(Model.Filter.Period == "quarter" ? "selected" : null)">Quý</option>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label>Danh mục</label>
+            <select id="reportCategoryId">
+                <option value="">Tất cả danh mục</option>
+                @foreach (var item in Model.Categories)
+                {
+                    <option value="@item.Id" selected="@(Model.Filter.CategoryId == item.Id ? "selected" : null)">@item.Name</option>
+                }
+            </select>
+        </div>
+        <div class="filter-field">
+            <label>Sản phẩm</label>
+            <select id="reportProductId">
+                <option value="">Tất cả sản phẩm</option>
+                @foreach (var item in Model.Products)
+                {
+                    <option value="@item.Id" selected="@(Model.Filter.ProductId == item.Id ? "selected" : null)">@item.Name</option>
+                }
+            </select>
+        </div>
+        <div class="filter-field">
+            <label>Trạng thái</label>
+            <select id="reportStatus">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Pending" selected="@(Model.Filter.Status == "Pending" ? "selected" : null)">Chờ xử lý</option>
+                <option value="Paid" selected="@(Model.Filter.Status == "Paid" ? "selected" : null)">Đã thanh toán</option>
+                <option value="Shipping" selected="@(Model.Filter.Status == "Shipping" ? "selected" : null)">Đang giao</option>
+                <option value="Completed" selected="@(Model.Filter.Status == "Completed" ? "selected" : null)">Hoàn thành</option>
+                <option value="Cancelled" selected="@(Model.Filter.Status == "Cancelled" ? "selected" : null)">Đã hủy</option>
+            </select>
+        </div>
+        <button type="button" id="btnApplyReportFilter" class="filter-submit">
+            <span class="material-symbols-outlined">filter_alt</span>
+            Lọc báo cáo
+        </button>
+    </section>
+
+    <section class="report-kpi-grid">
+        <article class="report-kpi">
+            <span>Doanh thu thuần</span>
+            <strong id="kpiNetRevenue"></strong>
+            <small id="kpiGrowth"></small>
+        </article>
+        <article class="report-kpi">
+            <span>Tổng đơn hàng</span>
+            <strong id="kpiTotalOrders"></strong>
+            <small id="kpiAov"></small>
+        </article>
+        <article class="report-kpi">
+            <span>Tỷ lệ hủy</span>
+            <strong id="kpiCancelRate"></strong>
+            <small id="kpiCancelledOrders"></small>
+        </article>
+        <article class="report-kpi">
+            <span>Khách hàng mới</span>
+            <strong id="kpiNewCustomers"></strong>
+            <small id="kpiReturningCustomers"></small>
+        </article>
+        <article class="report-kpi">
+            <span>Số lượng đã bán</span>
+            <strong id="kpiUnitsSold"></strong>
+            <small>Tổng sản phẩm trong đơn hợp lệ</small>
+        </article>
+    </section>
+
+    <section class="report-chart-grid">
+        <article class="report-panel wide">
+            <div class="panel-title">
+                <div>
+                    <h2>Doanh thu theo kỳ</h2>
+                    <p>Theo ngày, tuần, tháng hoặc quý.</p>
+                </div>
+            </div>
+            <div class="chart-box"><canvas id="reportRevenueChart"></canvas></div>
+        </article>
+        <article class="report-panel">
+            <div class="panel-title">
+                <div>
+                    <h2>Trạng thái đơn hàng</h2>
+                    <p>Tỷ trọng đơn theo trạng thái.</p>
+                </div>
+            </div>
+            <div class="chart-box"><canvas id="reportStatusChart"></canvas></div>
+        </article>
+        <article class="report-panel">
+            <div class="panel-title">
+                <div>
+                    <h2>Khách hàng mới</h2>
+                    <p>Tăng trưởng theo tháng.</p>
+                </div>
+            </div>
+            <div class="chart-box"><canvas id="reportCustomerChart"></canvas></div>
+        </article>
+    </section>
+
+    <section class="report-table-grid">
+        <article class="report-panel">
+            <div class="panel-title">
+                <h2>Sản phẩm</h2>
+                <p>Bán chạy, bán chậm, tồn kho và sell-through.</p>
+            </div>
+            <div class="report-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Đã bán</th>
+                            <th>Doanh thu</th>
+                            <th>Tồn</th>
+                            <th>Nhận định</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productReportRows"></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="report-panel">
+            <div class="panel-title">
+                <h2>Khách hàng</h2>
+                <p>RFM đơn giản, giá trị chi tiêu và vị trí.</p>
+            </div>
+            <div class="report-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Khách hàng</th>
+                            <th>Số đơn</th>
+                            <th>Tổng chi</th>
+                            <th>RFM</th>
+                            <th>Khu vực</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerReportRows"></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="report-panel">
+            <div class="panel-title">
+                <h2>Flash Sale</h2>
+                <p>Hiệu quả chiến dịch theo sold/stock ratio và doanh thu.</p>
+            </div>
+            <div class="report-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Chiến dịch</th>
+                            <th>Đã bán</th>
+                            <th>Stock</th>
+                            <th>Tỷ lệ</th>
+                            <th>Doanh thu</th>
+                            <th>Nhận định</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flashSaleReportRows"></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="report-panel">
+            <div class="panel-title">
+                <h2>Vị trí địa lý</h2>
+                <p>Khu vực phát sinh khách hàng/đơn hàng.</p>
+            </div>
+            <div id="geoReportRows" class="geo-list"></div>
+        </article>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        window.enterpriseReportSeed = @Html.Raw(Json.Serialize(Model));
+    </script>
+    <script src="/admin/js/report-management.js"></script>
+}

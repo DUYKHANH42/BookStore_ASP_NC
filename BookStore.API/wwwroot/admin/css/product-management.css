@@ -1,0 +1,262 @@
+/* Custom styles for Admin Product Management */
+
+/* Filter Bar Optimization */
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-end;
+}
+
+.filter-item {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-item-search {
+    flex: 2;
+    min-width: 250px;
+}
+
+.filter-item-btn {
+    flex: 0 0 auto;
+}
+
+/* Premium Select Styling */
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b82f6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+select:hover {
+    border-color: #3b82f6 !important;
+}
+
+/* Cố gắng style option (tùy trình duyệt) */
+select option {
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Center Modal Animation & Style */
+#productModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background-color: rgba(15, 23, 42, 0.85); /* Đen đậm hơn để không thấy khoảng trắng */
+    backdrop-filter: blur(10px);
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 1rem;
+    overflow-y: auto;
+}
+
+#productModal.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 95%;
+    max-width: 800px;
+    max-height: 90vh;
+    background: white;
+    border-radius: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow-y: auto;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#productModal.active .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.glass-card {
+    background: white;
+    border: 1px solid #f1f5f9;
+}
+
+.transition-premium {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-shadow {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+/* Scrollbar cho Modal */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-content::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+/* Flash Sale Modal & Utility */
+.hidden {
+    display: none !important;
+}
+
+.modal-overlay {
+    z-index: 300;
+}
+
+@keyframes modalIn {
+    from { 
+        opacity: 0;
+        transform: scale(0.95) translateY(30px);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-modalIn {
+    animation: modalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Flash Sale Form Enhancements */
+#flashSaleForm input {
+    transition: all 0.2s ease;
+}
+
+#flashSaleForm input:focus {
+    box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+}
+
+/* Custom Table inside Modal */
+#flashSaleListContainer {
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 transparent;
+}
+
+#flashSaleListContainer::-webkit-scrollbar {
+    width: 4px;
+}
+
+#flashSaleListContainer::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+#flashSaleListContainer table {
+    border-spacing: 0 8px;
+    border-collapse: separate;
+}
+
+#flashSaleListContainer thead th {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+    padding: 0 1rem 1rem 1rem;
+    border: none;
+}
+
+#flashSaleListContainer tbody tr {
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+#flashSaleListContainer tbody tr:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+#flashSaleListContainer tbody td {
+    padding: 1.25rem 1rem;
+    border: none;
+    font-weight: 700;
+}
+
+#flashSaleListContainer tbody td:first-child {
+    border-radius: 1rem 0 0 1rem;
+}
+
+#flashSaleListContainer tbody td:last-child {
+    border-radius: 0 1rem 1rem 0;
+}
+
+/* Enhanced Badges */
+.badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.badge::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.bg-success { background-color: #ecfdf5 !important; color: #059669 !important; }
+.bg-success::before { background-color: #10b981; }
+
+.bg-primary { background-color: #eff6ff !important; color: #2563eb !important; }
+.bg-primary::before { background-color: #3b82f6; }
+
+.bg-warning { background-color: #fffbeb !important; color: #d97706 !important; }
+.bg-warning::before { background-color: #f59e0b; }
+
+.bg-secondary { background-color: #f1f5f9 !important; color: #475569 !important; }
+.bg-secondary::before { background-color: #64748b; }
+
+/* Action Buttons in Modal */
+.sale-action-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.sale-action-btn:hover {
+    border-color: #cbd5e1;
+    color: #1e293b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.sale-action-btn.delete:hover {
+    background: #fef2f2;
+    border-color: #fee2e2;
+    color: #ef4444;
+}
+
+.sale-action-btn.toggle-active {
+    color: #10b981;
+}

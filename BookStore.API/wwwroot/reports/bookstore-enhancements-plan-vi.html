@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kế hoạch triển khai nâng cấp BookStore</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --panel: #ffffff;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --blue: #2563eb;
+            --emerald: #10b981;
+            --rose: #e11d48;
+            --amber: #f59e0b;
+            --violet: #7c3aed;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--ink);
+            background:
+                linear-gradient(180deg, #ffffff 0%, var(--bg) 280px),
+                var(--bg);
+            line-height: 1.65;
+        }
+
+        main {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 38px 0 56px;
+        }
+
+        header {
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.88);
+            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+        }
+
+        h1, h2, h3 {
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        h1 {
+            max-width: 860px;
+            font-size: clamp(28px, 4vw, 46px);
+            letter-spacing: 0;
+        }
+
+        h2 {
+            margin-top: 34px;
+            font-size: 24px;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        p {
+            margin: 10px 0 0;
+        }
+
+        ul, ol {
+            margin: 10px 0 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        code {
+            padding: 2px 6px;
+            border-radius: 7px;
+            background: #f1f5f9;
+            color: #1e293b;
+            font-size: 0.94em;
+        }
+
+        .lead {
+            max-width: 900px;
+            color: var(--muted);
+            font-size: 17px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 30px;
+            padding: 6px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #eff6ff;
+            color: var(--blue);
+            border: 1px solid #bfdbfe;
+        }
+
+        .badge.green {
+            color: #047857;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .badge.amber {
+            color: #b45309;
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .section {
+            margin-top: 24px;
+            padding: 24px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--panel);
+            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.05);
+        }
+
+        .notice {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid;
+        }
+
+        .notice.important {
+            background: #fff1f2;
+            border-color: #fecdd3;
+        }
+
+        .notice.tip {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .notice strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .card {
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #ffffff;
+        }
+
+        .step {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+        }
+
+        .step:first-of-type {
+            margin-top: 14px;
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        .step-title {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #f8fafc;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .files {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+        }
+
+        .report-box {
+            margin-top: 12px;
+            padding: 14px;
+            border-left: 4px solid var(--blue);
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .checklist li {
+            list-style: square;
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <div class="badge">Báo cáo kế hoạch triển khai</div>
+        <h1>Kế hoạch nâng cấp và sửa lỗi BookStore</h1>
+        <p class="lead">
+            Tài liệu này là bản dịch tiếng Việt của kế hoạch triển khai 8 nhóm lỗi và yêu cầu mới.
+            Mỗi phần đều ghi rõ file sẽ tác động, hành động cần làm, lưu ý kỹ thuật, cách tôi sẽ báo cáo lại sau khi hoàn thành,
+            và checklist kiểm thử để tránh làm xong mà khó truy vết.
+        </p>
+        <div class="meta">
+            <span class="badge green">Vị trí: wwwroot/reports</span>
+            <span class="badge amber">Trạng thái: Chờ triển khai từng phần</span>
+            <span class="badge">Ngày lập: 31/05/2026</span>
+        </div>
+    </header>
+
+    <section class="section">
+        <h2>1. Các quyết định cần xác nhận</h2>
+        <div class="notice important">
+            <strong>Khóa toàn vẹn tồn kho</strong>
+            Ô nhập <code>Quantity</code> trong modal Thêm/Sửa sản phẩm của trang Quản lý sản phẩm sẽ chuyển sang
+            <code>readonly</code>. Sản phẩm mới bắt đầu với tồn kho bằng <code>0</code>. Mọi thay đổi tồn kho sau đó
+            phải đi qua Phiếu nhập kho, POS hoặc đơn hàng khách. Cách này giống luồng ERP thực tế và tránh sửa tồn kho
+            trực tiếp làm lệch dữ liệu.
+        </div>
+        <div class="notice tip">
+            <strong>Tích hợp VietQR cho POS</strong>
+            POS sẽ dùng dịch vụ <code>img.vietqr.io</code> để tạo mã chuyển khoản động. Thông tin ngân hàng được cấu hình
+            tại trang Cấu hình App trong Admin: mã ngân hàng, số tài khoản, tên chủ tài khoản, tên cửa hàng, số điện thoại
+            và địa chỉ cửa hàng.
+        </div>
+        <div class="notice important">
+            <strong>Dialog LumenAlert</strong>
+            Các popup SweetAlert gọi trực tiếp sẽ được gom qua wrapper <code>LumenAlert</code>. Wrapper này dùng bảng màu
+            Lumen Tone, hỗ trợ dark mode, bo góc lớn vừa phải, shadow đẹp và animation thống nhất toàn admin.
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>2. Nguyên tắc báo cáo sau từng phần</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Báo cáo hành động</h3>
+                <p>Sau mỗi nhóm việc, tôi sẽ báo lại đã sửa/thêm file nào, sửa hàm nào, và lý do kỹ thuật của thay đổi.</p>
+            </div>
+            <div class="card">
+                <h3>Báo cáo kiểm thử</h3>
+                <p>Tôi sẽ ghi rõ lệnh build/test đã chạy, kết quả pass/fail, lỗi còn lại nếu có, và phần nào chưa thể kiểm thủ công.</p>
+            </div>
+            <div class="card">
+                <h3>Báo cáo rủi ro</h3>
+                <p>Nếu một phần có rủi ro về dữ liệu, luồng thanh toán, log nghiệp vụ hoặc UI cũ, tôi sẽ nêu rõ để dễ quyết định.</p>
+            </div>
+        </div>
+        <div class="report-box">
+            Mẫu báo cáo sau mỗi phần: <strong>Đã làm</strong> → <strong>File tác động</strong> →
+            <strong>Cách kiểm tra</strong> → <strong>Rủi ro/cần xác nhận</strong>.
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>3. Kế hoạch triển khai chi tiết</h2>
+
+        <div class="step">
+            <div class="step-title">
+                <h3>Bước 1: Sửa validation và đồng bộ dropdown trong Quản lý sản phẩm</h3>
+                <span class="status">Chưa triển khai</span>
+            </div>
+            <div class="files">
+                File dự kiến: <code>wwwroot/admin/js/product-management.js</code>,
+                <code>Areas/Admin/Views/Product/Index.cshtml</code>
+            </div>
+            <ul>
+                <li>Đổi các lần gọi <code>ValidationHelper</code> sang kiểm tra chắc chắn qua <code>window.ValidationHelper</code>.</li>
+                <li>Thêm class <code>no-choices</code> vào select danh mục và danh mục con để tránh Choices.js bọc sai, làm jQuery lọc option không ổn định.</li>
+                <li>Khi thêm sản phẩm mới, set tồn kho mặc định là <code>0</code>, ô số lượng chỉ đọc, kèm helper text giải thích tồn kho phải qua nhập kho hoặc bán hàng.</li>
+            </ul>
+            <div class="report-box">
+                Sau bước này tôi sẽ báo: validation đã đổi ở đoạn nào, dropdown category/subcategory còn dùng native select hay không,
+                và ảnh hưởng tới luồng thêm/sửa sản phẩm.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <h3>Bước 2: Thêm Cấu hình App, VietQR và máy tính tiền mặt cho POS</h3>
+                <span class="status">Chưa triển khai</span>
+            </div>
+            <div class="files">
+                File dự kiến: <code>Areas/Admin/Controllers/SettingsController.cs</code>,
+                <code>Areas/Admin/Views/Settings/Index.cshtml</code>,
+                <code>Areas/Admin/Views/Shared/_Layout.cshtml</code>,
+                <code>Application/DTO/POSOrderDTO.cs</code>,
+                <code>Application/Services/OrderService.cs</code>,
+                <code>Areas/Admin/Views/Order/POS.cshtml</code>,
+                <code>wwwroot/admin/appsettings.json</code>
+            </div>
+            <ul>
+                <li>Tạo trang Admin Cấu hình App để đọc/ghi thông tin cửa hàng và ngân hàng.</li>
+                <li>Thêm menu Cấu hình App vào sidebar admin.</li>
+                <li>Thêm <code>PaymentMethod</code> cho POS order để phân biệt tiền mặt và chuyển khoản.</li>
+                <li>POS tiền mặt: nhập tiền khách đưa, tự tính tiền thừa theo thời gian thực.</li>
+                <li>POS chuyển khoản: lấy cấu hình ngân hàng, tạo VietQR URL theo tổng tiền và nội dung thanh toán.</li>
+                <li>Xác nhận thanh toán qua modal đẹp trước khi gửi đơn.</li>
+            </ul>
+            <div class="report-box">
+                Sau bước này tôi sẽ báo: endpoint/settings file hoạt động thế nào, POS gửi payment method ra sao,
+                VietQR URL được ghép từ dữ liệu nào, và đã kiểm tra tính tiền thừa như thế nào.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <h3>Bước 3: Chuẩn hóa popup bằng LumenAlert</h3>
+                <span class="status">Chưa triển khai</span>
+            </div>
+            <div class="files">
+                File dự kiến: <code>wwwroot/admin/js/validation-helper.js</code>,
+                <code>wwwroot/admin/js/product-management.js</code>,
+                <code>wwwroot/admin/js/inventory-management-v2.js</code>,
+                <code>wwwroot/admin/js/staff-management.js</code>,
+                <code>wwwroot/admin/js/customer-management.js</code>,
+                <code>wwwroot/admin/js/category-management.js</code>,
+                <code>Areas/Admin/Views/Order/POS.cshtml</code>
+            </div>
+            <ul>
+                <li>Tạo global <code>window.LumenAlert</code> bọc SweetAlert2.</li>
+                <li>Dùng màu chủ đạo: Blue <code>#2563eb</code>, Emerald <code>#10b981</code>, Rose <code>#e11d48</code>, Amber <code>#f59e0b</code>.</li>
+                <li>Thay các lệnh <code>Swal.fire</code> gọi trực tiếp trong các script quản trị bằng <code>LumenAlert</code>.</li>
+            </ul>
+            <div class="report-box">
+                Sau bước này tôi sẽ báo: đã thay bao nhiêu vị trí <code>Swal.fire</code>, API LumenAlert gồm những hàm nào,
+                và có chỗ nào cần giữ SweetAlert gốc vì callback phức tạp hay không.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <h3>Bước 4: Ghi nhật ký hoạt động chi tiết hơn</h3>
+                <span class="status">Chưa triển khai</span>
+            </div>
+            <div class="files">
+                File dự kiến: <code>Areas/Admin/Controllers/ProductController.cs</code>,
+                <code>Areas/Admin/Controllers/InventoryController.cs</code>,
+                <code>Application/Services/OrderService.cs</code>
+            </div>
+            <ul>
+                <li>Khi sửa sản phẩm, lấy dữ liệu cũ, so sánh với DTO mới và log rõ trường nào đổi.</li>
+                <li>Khi nhập kho, log nhà cung cấp, SKU, số lượng, giá nhập và tổng tiền phiếu nhập.</li>
+                <li>Khi tạo đơn POS, log danh sách hàng bán, thông tin khách, tổng tiền và phương thức thanh toán.</li>
+                <li>Khi đổi trạng thái đơn, log trạng thái cũ sang trạng thái mới.</li>
+            </ul>
+            <div class="report-box">
+                Sau bước này tôi sẽ báo: mẫu nội dung log trước/sau, nơi gọi activity service,
+                và cách tránh log quá dài gây khó đọc.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <h3>Bước 5: Trang Flash Sale và link Khuyến mãi ở Angular</h3>
+                <span class="status">Chưa triển khai</span>
+            </div>
+            <div class="files">
+                File dự kiến: <code>BookStore_GiaoDien/src/services/product.service.ts</code>,
+                <code>BookStore_GiaoDien/src/app/app-routing.module.ts</code>,
+                <code>BookStore_GiaoDien/src/app/product-listing/product-listing.component.ts</code>,
+                <code>BookStore_GiaoDien/src/app/app.component.html</code>
+            </div>
+            <ul>
+                <li>Thêm tham số <code>isFlashSale?: boolean</code> cho hàm lấy sản phẩm phân trang.</li>
+                <li>Thêm route <code>/sale</code> trỏ về <code>ProductListingComponent</code>.</li>
+                <li>Khi URL là <code>/sale</code>, đổi tiêu đề thành Sản phẩm khuyến mãi và gọi API với filter flash sale.</li>
+                <li>Thêm link Khuyến mãi nổi bật vào navigation desktop và mobile.</li>
+            </ul>
+            <div class="report-box">
+                Sau bước này tôi sẽ báo: route mới hoạt động thế nào, API query gửi thêm param gì,
+                và UI nav đã thêm ở desktop/mobile ra sao.
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>4. Kế hoạch xác minh</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Build tự động</h3>
+                <ul class="checklist">
+                    <li>Chạy <code>dotnet build</code> cho backend.</li>
+                    <li>Chạy <code>npm run build</code> hoặc <code>ng build</code> cho Angular.</li>
+                    <li>Ghi lại lỗi compile nếu có và sửa trước khi báo hoàn thành.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Kiểm thử admin</h3>
+                <ul class="checklist">
+                    <li>Thêm sản phẩm: kiểm tra validation, dropdown danh mục con, quantity readonly bằng 0.</li>
+                    <li>Cấu hình App: lưu thử thông tin cửa hàng và ngân hàng.</li>
+                    <li>POS tiền mặt: nhập tiền khách đưa và kiểm tra tiền thừa.</li>
+                    <li>POS chuyển khoản: mở modal QR, xác minh đúng số tiền và nội dung.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Kiểm thử nghiệp vụ</h3>
+                <ul class="checklist">
+                    <li>Kiểm tra Activity Logs sau khi thêm/sửa sản phẩm.</li>
+                    <li>Kiểm tra Activity Logs sau khi nhập kho.</li>
+                    <li>Kiểm tra Activity Logs sau khi tạo POS order.</li>
+                    <li>Kiểm tra Activity Logs sau khi đổi trạng thái đơn hàng.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Kiểm thử Angular</h3>
+                <ul class="checklist">
+                    <li>Mở trang chủ, bấm Khuyến mãi.</li>
+                    <li>Xác nhận URL là <code>/sale</code>.</li>
+                    <li>Xác nhận chỉ hiển thị sản phẩm flash sale đang hoạt động.</li>
+                    <li>Kiểm tra nav desktop và mobile không bị vỡ giao diện.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>5. Thứ tự triển khai đề xuất</h2>
+        <ol>
+            <li>Sửa validation/dropdown/readonly tồn kho vì đây là lỗi nền tảng và ít phụ thuộc.</li>
+            <li>Tạo SettingsController và trang Cấu hình App trước, sau đó mới nối POS VietQR.</li>
+            <li>Chuẩn hóa LumenAlert sau khi biết các modal POS cần những kiểu confirm nào.</li>
+            <li>Bổ sung Activity Logs chi tiết sau khi luồng POS và tồn kho đã ổn định.</li>
+            <li>Thêm trang Khuyến mãi Angular cuối cùng vì tách biệt với nghiệp vụ admin.</li>
+            <li>Chạy build backend/frontend và rà lại toàn bộ luồng thủ công.</li>
+        </ol>
+        <p class="footer-note">
+            Ghi chú: tài liệu này mới là bản kế hoạch/dịch thuật và checklist triển khai. Các thay đổi code chức năng sẽ được thực hiện theo từng phần và báo cáo riêng sau mỗi phần.
+        </p>
+    </section>
+</main>
+</body>
+</html>

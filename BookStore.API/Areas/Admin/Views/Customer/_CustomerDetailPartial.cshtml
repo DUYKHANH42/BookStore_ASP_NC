@@ -1,0 +1,70 @@
+@using BookStore.Application.DTO
+@model UserDTO
+
+<div class="p-10 space-y-8">
+    <div class="flex justify-between items-center border-b border-slate-50 pb-6">
+        <div>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">Cài đặt tài khoản</h3>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Khách hàng: @Model.FullName</p>
+        </div>
+        <button onclick="closeCustomerModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-premium">
+            <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+    </div>
+
+    <div class="space-y-8">
+        <!-- Thông tin tổng quan -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Thông tin liên hệ</h6>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                        <span class="material-symbols-outlined text-blue-500 text-lg">mail</span> @Model.Email
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                        <span class="material-symbols-outlined text-blue-500 text-lg">call</span> @Model.PhoneNumber
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Hoạt động hệ thống</h6>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                        <span class="material-symbols-outlined text-blue-500 text-lg">calendar_month</span> Tham gia: @Model.CreatedAt.ToString("dd/MM/yyyy")
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                        <span class="material-symbols-outlined text-blue-500 text-lg">shopping_cart</span> Đơn hàng: @Model.OrderCount
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form đổi mật khẩu -->
+        <div class="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <span class="material-symbols-outlined">lock_reset</span>
+                </div>
+                <div>
+                    <h5 class="text-slate-900 font-black text-sm mb-0">Cấp lại mật khẩu mới</h5>
+                    <p class="text-blue-500 text-[10px] font-bold uppercase tracking-widest">Bảo mật tài khoản khách hàng</p>
+                </div>
+            </div>
+
+            <form id="resetPasswordForm" class="space-y-4">
+                <input type="hidden" id="customerId" value="@Model.Id" />
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mật khẩu mới</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">key</span>
+                        <input type="password" id="newPassword" required placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)..." 
+                               class="w-full bg-white border border-blue-100 rounded-2xl pl-14 pr-6 py-4 font-bold text-slate-700 outline-none focus:border-blue-600 transition-all shadow-sm">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-premium shadow-xl shadow-slate-900/20 active:scale-95">
+                    Xác nhận cập nhật mật khẩu
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
