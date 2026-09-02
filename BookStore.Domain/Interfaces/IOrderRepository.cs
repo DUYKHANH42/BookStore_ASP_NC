@@ -24,5 +24,13 @@ namespace BookStore.Domain.Interfaces
 
         // 6. Kiểm tra xem người dùng đã mua sản phẩm này chưa
         Task<bool> HasPurchasedProductAsync(string userId, int productId);
+
+        Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedOrdersAsync(
+            int page, int pageSize, OrderStatus? status = null, string? search = null);
+
+        Task<(IEnumerable<Order> Items, int TotalCount)> GetUserOrdersPagedAsync(
+            string userId, int page, int pageSize);
+
+        Task<IEnumerable<Order>> GetOrdersForReportAsync(OrderStatus? status = null, string? search = null);
     }
 }

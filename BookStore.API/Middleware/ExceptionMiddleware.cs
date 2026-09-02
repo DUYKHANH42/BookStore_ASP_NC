@@ -28,21 +28,42 @@ namespace BookStore.API.Middleware
             {
                 await _next(context);
             }
+            catch (BookStore.Domain.Common.NotFoundException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                await WriteResponse(context, 404, ex.Message);
+            }
+            catch (BookStore.Domain.Common.InsufficientStockException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                await WriteResponse(context, 409, ex.Message);
+            }
+            catch (BookStore.Domain.Common.ConcurrencyException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                await WriteResponse(context, 409, ex.Message);
+            }
+            catch (BookStore.Domain.Common.BusinessException ex)
+            {
+                _logger.LogWarning(ex.Message);
+                await WriteResponse(context, 400, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-
-                var response = _env.IsDevelopment()
-                    ? new ApiException(context.Response.StatusCode, ex.Message, ex.StackTrace?.ToString())
-                    : new ApiException(context.Response.StatusCode, "Internal Server Error");
-
-                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-                var json = JsonSerializer.Serialize(response, options);
-
-                await context.Response.WriteAsync(json);
+                var message = _env.IsDevelopment() ? ex.Message : "Internal Server Error";
+                var details = _env.IsDevelopment() ? ex.StackTrace : null;
+                await WriteResponse(context, 500, message, details);
             }
+        }
+
+        private static async Task WriteResponse(HttpContext context, int statusCode, string message, string? details = null)
+        {
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = statusCode;
+            var response = new ApiException(statusCode, message, details);
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
         }
     }
 

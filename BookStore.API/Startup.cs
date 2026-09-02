@@ -100,7 +100,9 @@ namespace BookStore.API
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IFileService, CloudinaryService>();
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-            var key = System.Text.Encoding.UTF8.GetBytes(Configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_123");
+            var jwtSecret = Configuration["JWT:Secret"] 
+                ?? throw new InvalidOperationException("JWT:Secret is not configured. Application cannot start without a valid JWT signing key.");
+            var key = System.Text.Encoding.UTF8.GetBytes(jwtSecret);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
@@ -112,8 +114,8 @@ namespace BookStore.API
                 options.LoginPath = "/api/auth/login";
                 options.AccessDeniedPath = "/api/auth/forbidden";
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
-                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
                 options.Cookie.IsEssential = true;
                 options.Cookie.Path = "/";
             })
@@ -150,19 +152,16 @@ namespace BookStore.API
                 };
             });
 
+            var allowedOrigins = Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+                ?? new[] { "http://localhost:4200" };
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular",
                     builder => builder
-                        .WithOrigins(
-                            "http://localhost:4200",
-                            "http://localhost:53214",
-                            "https://book-lumen.vercel.app/"
-                        )
+                        .WithOrigins(allowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials()
-                        .SetIsOriginAllowed(options=> true));
+                        .AllowCredentials());
                         
             });
 
@@ -208,14 +207,12 @@ namespace BookStore.API
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseMiddleware<ExceptionMiddleware>();
-            app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookStore.API v1"));
             QuestPDF.Settings.License = LicenseType.Community;
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-               
-
+                app.UseSwagger();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookStore.API v1"));
             }
 
             app.UseHttpsRedirection();

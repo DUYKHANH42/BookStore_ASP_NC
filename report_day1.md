@@ -258,7 +258,8 @@ services:
     ports:
       - "5000:10000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - ConnectionStrings__DefaultConnection=Server=db;Database=BookStoreDb;User Id=sa;Password=BookStore@Str0ng!;TrustServerCertificate=True
     restart: always
@@ -273,6 +274,12 @@ services:
     volumes:
       - db_data:/var/opt/mssql
     restart: always
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "BookStore@Str0ng!" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   db_data:

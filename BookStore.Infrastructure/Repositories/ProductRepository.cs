@@ -32,6 +32,7 @@ namespace BookStore.Infrastructure.Repositories
                 .Include(b => b.SubCategory)
                 .Include(b => b.FlashSales)
                     .ThenInclude(f => f.FlashSaleCampaign) // Include Campaign
+                .AsNoTracking()
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(query.Search))

@@ -69,5 +69,62 @@ namespace BookStore.Infrastructure.Repositories
                             && o.Status != OrderStatus.Cancelled 
                             && o.OrderDetails.Any(od => od.ProductId == productId));
         }
+
+        // 7. GetPagedOrdersAsync — filter + paging tại DB
+        public async Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedOrdersAsync(
+            int page, int pageSize, OrderStatus? status = null, string? search = null)
+        {
+            var query = _context.Orders.AsNoTracking().AsQueryable();
+            
+            if (status.HasValue) 
+                query = query.Where(o => o.Status == status.Value);
+            if (!string.IsNullOrEmpty(search)) 
+                query = query.Where(o => o.OrderNumber.Contains(search));
+            
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            
+            return (items, totalCount);
+        }
+
+        // 8. GetUserOrdersPagedAsync — phân trang cho user
+        public async Task<(IEnumerable<Order> Items, int TotalCount)> GetUserOrdersPagedAsync(
+            string userId, int page, int pageSize)
+        {
+            var query = _context.Orders
+                .AsNoTracking()
+                .Where(o => o.UserId == userId);
+            
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            
+            return (items, totalCount);
+        }
+
+        // 9. GetOrdersForReportAsync — 1 query thay vì N+1
+        public async Task<IEnumerable<Order>> GetOrdersForReportAsync(
+            OrderStatus? status = null, string? search = null)
+        {
+            var query = _context.Orders
+                .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+                .Include(o => o.User)
+                .AsNoTracking()
+                .AsQueryable();
+            
+            if (status.HasValue) 
+                query = query.Where(o => o.Status == status.Value);
+            if (!string.IsNullOrEmpty(search)) 
+                query = query.Where(o => o.OrderNumber.Contains(search));
+            
+            return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+        }
     }
 }

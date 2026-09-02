@@ -4,6 +4,7 @@ using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,7 +59,7 @@ namespace BookStore.Application.Services
             {
                 var product = item.Product;
                 if (product.Quantity < item.Quantity)
-                    throw new Exception($"Sản phẩm {product.Name} không đủ số lượng trong kho.");
+                    throw new InsufficientStockException(product.Name);
 
                 int remainingToBuy = item.Quantity;
                 var activeSale = await _unitOfWork.FlashSales.GetActiveSaleByProductIdAsync(product.Id);
@@ -109,7 +110,8 @@ namespace BookStore.Application.Services
             order.TotalPrice = total;
             await _unitOfWork.Orders.AddAsync(order);
             await _unitOfWork.Carts.ClearCartAsync(userId);
-            await _unitOfWork.SaveChangesAsync();
+            try { await _unitOfWork.SaveChangesAsync(); }
+            catch (DbUpdateConcurrencyException) { throw new ConcurrencyException(); }
 
             return new OrderDTO
             {
@@ -267,45 +269,21 @@ namespace BookStore.Application.Services
         // HÀM CHO ADMIN: Lấy danh sách đơn hàng có phân trang và lọc
         public async Task<PagedResultDTO<OrderDTO>> GetPagedOrdersAsync(int page, int pageSize, string status = "", string search = "")
         {
-            var query = await _unitOfWork.Orders.GetAllAsync();
-
-            // Lọc theo trạng thái
-            if (!string.IsNullOrEmpty(status))
+            OrderStatus? orderStatus = null;
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, true, out var parsed))
+                orderStatus = parsed;
+            var (items, totalCount) = await _unitOfWork.Orders.GetPagedOrdersAsync(
+                page, pageSize, orderStatus, string.IsNullOrEmpty(search) ? null : search);
+            var orders = items.Select(o => new OrderDTO
             {
-                if (Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
-                {
-                    query = query.Where(o => o.Status == orderStatus);
-                }
-            }
-
-            // Lọc theo từ khóa tìm kiếm (Mã đơn hàng)
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(o => o.OrderNumber.Contains(search, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var totalItems = query.Count();
-            
-            var orders = query
-                .OrderByDescending(o => o.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(o => new OrderDTO
-                {
-                    Id = o.Id,
-                    OrderNumber = o.OrderNumber,
-                    TotalPrice = o.TotalPrice,
-                    Status = o.Status.ToString(),
-                    CreatedAt = o.CreatedAt
-                }).ToList();
-
+                Id = o.Id, OrderNumber = o.OrderNumber,
+                TotalPrice = o.TotalPrice, Status = o.Status.ToString(), CreatedAt = o.CreatedAt
+            }).ToList();
             return new PagedResultDTO<OrderDTO>
             {
-                Items = orders,
-                TotalItems = totalItems,
-                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
-                CurrentPage = page,
-                PageSize = pageSize
+                Items = orders, TotalItems = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+                CurrentPage = page, PageSize = pageSize
             };
         }
 
@@ -340,28 +318,17 @@ namespace BookStore.Application.Services
 
         public async Task<PagedResultDTO<OrderDTO>> GetUserOrdersPagedAsync(string userId, int page = 1, int pageSize = 5)
         {
-            var orders = await _unitOfWork.Orders.GetUserOrderHistoryAsync(userId);
-            var query = orders.OrderByDescending(o => o.CreatedAt);
-
-            var totalItems = query.Count();
-            var items = query.Skip((page - 1) * pageSize)
-                             .Take(pageSize)
-                             .Select(o => new OrderDTO
-                             {
-                                 Id = o.Id,
-                                 OrderNumber = o.OrderNumber,
-                                 TotalPrice = o.TotalPrice,
-                                 Status = o.Status.ToString(),
-                                 CreatedAt = o.CreatedAt
-                             }).ToList();
-
+            var (items, totalCount) = await _unitOfWork.Orders.GetUserOrdersPagedAsync(userId, page, pageSize);
+            var orders = items.Select(o => new OrderDTO
+            {
+                Id = o.Id, OrderNumber = o.OrderNumber,
+                TotalPrice = o.TotalPrice, Status = o.Status.ToString(), CreatedAt = o.CreatedAt
+            }).ToList();
             return new PagedResultDTO<OrderDTO>
             {
-                Items = items,
-                TotalItems = totalItems,
-                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
-                CurrentPage = page,
-                PageSize = pageSize
+                Items = orders, TotalItems = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+                CurrentPage = page, PageSize = pageSize
             };
         }
 
@@ -388,51 +355,28 @@ namespace BookStore.Application.Services
         // HÀM CHO BÁO CÁO: Lấy toàn bộ đơn hàng kèm chi tiết
         public async Task<IEnumerable<OrderFullDetailDTO>> GetAllOrdersForReportAsync(string status = "", string search = "")
         {
-            var query = await _unitOfWork.Orders.GetAllAsync();
-
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
+            OrderStatus? orderStatus = null;
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, true, out var parsed))
+                orderStatus = parsed;
+            var orders = await _unitOfWork.Orders.GetOrdersForReportAsync(
+                orderStatus, string.IsNullOrEmpty(search) ? null : search);
+            return orders.Select(o => new OrderFullDetailDTO
             {
-                query = query.Where(o => o.Status == orderStatus);
-            }
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(o => o.OrderNumber.Contains(search, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var orders = query.OrderByDescending(o => o.CreatedAt).ToList();
-            var result = new List<OrderFullDetailDTO>();
-
-            foreach (var order in orders)
-            {
-                // Lấy chi tiết cho từng đơn hàng (Để có đầy đủ thông tin sản phẩm)
-                var detailedOrder = await _unitOfWork.Orders.GetOrderByIdWithDetailsAsync(order.Id);
-                if (detailedOrder != null)
+                Id = o.Id, OrderNumber = o.OrderNumber,
+                UserId = o.UserId ?? "Guest", CreatedAt = o.CreatedAt,
+                Status = o.Status.ToString(), TotalPrice = o.TotalPrice,
+                PaymentMethod = o.PaymentMethod.ToString(),
+                ShippingName = o.ShippingName, ShippingPhone = o.ShippingPhone,
+                ShippingAddress = o.ShippingAddress,
+                Items = o.OrderDetails.Select(od => new OrderItemDetailDTO
                 {
-                    result.Add(new OrderFullDetailDTO
-                    {
-                        Id = detailedOrder.Id,
-                        OrderNumber = detailedOrder.OrderNumber,
-                        UserId = detailedOrder.UserId ?? "Guest",
-                        CreatedAt = detailedOrder.CreatedAt,
-                        Status = detailedOrder.Status.ToString(),
-                        TotalPrice = detailedOrder.TotalPrice,
-                        PaymentMethod = detailedOrder.PaymentMethod.ToString(),
-                        ShippingName = detailedOrder.ShippingName,
-                        ShippingPhone = detailedOrder.ShippingPhone,
-                        ShippingAddress = detailedOrder.ShippingAddress,
-                        Items = detailedOrder.OrderDetails.Select(od => new OrderItemDetailDTO
-                        {
-                            ProductId = od.ProductId,
-                            ProductName = od.Product?.Name ?? "N/A",
-                            Price = od.Price,
-                            Quantity = od.Quantity
-                        }).ToList()
-                    });
-                }
-            }
-            return result;
+                    ProductId = od.ProductId, ProductName = od.Product?.Name ?? "N/A",
+                    Price = od.Price, Quantity = od.Quantity
+                }).ToList()
+            }).ToList();
         }
+
+
 
         public async Task<bool> CancelExpiredOrderAsync(int orderId)
         {

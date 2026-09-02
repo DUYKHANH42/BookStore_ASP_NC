@@ -1,6 +1,7 @@
-﻿using BookStore.Domain.Common;
+using BookStore.Domain.Common;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 
@@ -31,6 +32,9 @@ namespace BookStore.Domain.Entities
         public SubCategory? SubCategory { get; set; }
         public virtual ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
         public virtual ICollection<FlashSale> FlashSales { get; set; } = new List<FlashSale>();
+
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
     }
 }
 
