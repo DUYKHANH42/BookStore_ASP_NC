@@ -10,6 +10,11 @@ namespace BookStore.Infrastructure.Persistence.Configurations
         {
             builder.Property(p => p.RowVersion)
                    .IsRowVersion();
+
+            builder.HasIndex(p => p.CategoryId).HasDatabaseName("IX_Products_CategoryId");
+            builder.HasIndex(p => p.SubCategoryId).HasDatabaseName("IX_Products_SubCategoryId");
+            builder.HasIndex(p => p.IsActive).HasDatabaseName("IX_Products_IsActive");
+            builder.HasIndex(p => new { p.IsActive, p.CreatedAt }).HasDatabaseName("IX_Products_IsActive_CreatedAt");
         }
     }
 }

@@ -1,6 +1,7 @@
 using BookStore.Application.DTO;
 using BookStore.Application.Interfaces;
 using BookStore.Application.Services;
+using BookStore.Application.Services.Payment;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -17,41 +18,50 @@ namespace BookStore.Tests
     {
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;
         private readonly Mock<IZaloPayService> _mockZaloPay;
+        private readonly Mock<IVnPayService> _mockVnPay;
         private readonly Mock<IPayOSService> _mockPayOS;
         private readonly Mock<INotificationService> _mockNotification;
         private readonly Mock<IFlashSaleRepository> _mockFlashSales;
         private readonly Mock<ICartRepository> _mockCartRepo;
         private readonly Mock<IOrderRepository> _mockOrderRepo;
         private readonly Mock<IStockHistoryRepository> _mockStockHistoryRepo;
+        private readonly Mock<IUserStore<ApplicationUser>> _mockUserStore;
         private readonly Mock<UserManager<ApplicationUser>> _mockUserManager;
-        private readonly Mock<IVnPayService> _mockVnPay; 
+        private readonly PaymentGatewayFactory _paymentGatewayFactory;
         private readonly OrderService _orderService;
 
         public OrderServiceTests()
         {
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockZaloPay = new Mock<IZaloPayService>();
-            _mockPayOS = new Mock<IPayOSService>();
             _mockVnPay = new Mock<IVnPayService>();
+            _mockPayOS = new Mock<IPayOSService>();
             _mockNotification = new Mock<INotificationService>();
             _mockFlashSales = new Mock<IFlashSaleRepository>();
             _mockCartRepo = new Mock<ICartRepository>();
             _mockOrderRepo = new Mock<IOrderRepository>();
             _mockStockHistoryRepo = new Mock<IStockHistoryRepository>();
-            _mockUserManager = new Mock<UserManager<ApplicationUser>>();
+            _mockUserStore = new Mock<IUserStore<ApplicationUser>>();
+            _mockUserManager = new Mock<UserManager<ApplicationUser>>(_mockUserStore.Object, null!, null!, null!, null!, null!, null!, null!, null!);
 
             // Setup UOW to return mocked repositories
             _mockUnitOfWork.Setup(u => u.FlashSales).Returns(_mockFlashSales.Object);
             _mockUnitOfWork.Setup(u => u.Carts).Returns(_mockCartRepo.Object);
             _mockUnitOfWork.Setup(u => u.Orders).Returns(_mockOrderRepo.Object);
             _mockUnitOfWork.Setup(u => u.StockHistories).Returns(_mockStockHistoryRepo.Object);
-            
+
+            var gateways = new List<IPaymentGateway>
+            {
+                new ZaloPayGateway(_mockZaloPay.Object),
+                new VNPayGateway(_mockVnPay.Object),
+                new PayOSGateway(_mockPayOS.Object)
+            };
+            _paymentGatewayFactory = new PaymentGatewayFactory(gateways);
 
             _orderService = new OrderService(
                 _mockUnitOfWork.Object,
+                _paymentGatewayFactory,
                 _mockZaloPay.Object,
-                _mockPayOS.Object,
-                _mockVnPay.Object,
                 _mockNotification.Object,
                 _mockUserManager.Object);
         }

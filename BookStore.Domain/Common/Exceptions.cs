@@ -1,3 +1,5 @@
+using System;
+
 namespace BookStore.Domain.Common
 {
     public class BusinessException : Exception
@@ -16,6 +18,20 @@ namespace BookStore.Domain.Common
     {
         public InsufficientStockException(string productName)
             : base($"Sản phẩm '{productName}' không đủ số lượng trong kho.") { }
+
+        public InsufficientStockException(string productName, int requested, int available)
+            : base($"Sản phẩm {productName} không đủ số lượng. Yêu cầu: {requested}, Còn: {available}") { }
+    }
+
+    public class ConflictException : BusinessException
+    {
+        public ConflictException(string message) : base(message) { }
+    }
+
+    public class ForbiddenException : Exception
+    {
+        public ForbiddenException(string message = "You do not have permission to perform this action.")
+            : base(message) { }
     }
 
     public class ConcurrencyException : BusinessException

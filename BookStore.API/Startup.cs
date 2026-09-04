@@ -1,6 +1,7 @@
 using System;
 using BookStore.Application.Interfaces;
 using BookStore.Application.Services;
+using BookStore.Application.Services.Payment;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using BookStore.Infrastructure.Identity;
@@ -36,7 +37,6 @@ namespace BookStore.API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
@@ -68,6 +68,13 @@ namespace BookStore.API
             services.AddScoped<IShippingAddressRepository, ShippingAddressRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ProductService>();
+
+            // Payment Strategy Registration
+            services.AddScoped<IPaymentGateway, ZaloPayGateway>();
+            services.AddScoped<IPaymentGateway, VNPayGateway>();
+            services.AddScoped<IPaymentGateway, PayOSGateway>();
+            services.AddScoped<PaymentGatewayFactory>();
+
             services.AddScoped<OrderService>();
             services.AddScoped<FlashSaleService>();
             services.AddScoped<InvoiceService>();
@@ -203,7 +210,6 @@ namespace BookStore.API
             services.AddHostedService<OrderCleanupService>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseMiddleware<ExceptionMiddleware>();
@@ -229,12 +235,11 @@ namespace BookStore.API
                 endpoints.MapControllers();
                 endpoints.MapHub<BookStore.API.Hubs.NotificationHub>("/notificationHub");
                 endpoints.MapAreaControllerRoute(
-        name: "admin_default",
-        areaName: "Admin",
-        pattern: "Admin/{controller=Home}/{action=Index}/{id?}"
-    );
+                    name: "admin_default",
+                    areaName: "Admin",
+                    pattern: "Admin/{controller=Home}/{action=Index}/{id?}"
+                );
                 endpoints.MapFallbackToFile("index.html");
-
             });
         }
     }
