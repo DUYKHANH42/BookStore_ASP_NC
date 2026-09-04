@@ -4,6 +4,7 @@ using BookStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookStore.Infrastructure.Migrations
 {
     [DbContext(typeof(BookStoreDbContext))]
-    partial class BookStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904041715_AddProductRowVersion")]
+    partial class AddProductRowVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -524,17 +527,9 @@ namespace BookStore.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId")
-                        .HasDatabaseName("IX_Products_CategoryId");
+                    b.HasIndex("CategoryId");
 
-                    b.HasIndex("IsActive")
-                        .HasDatabaseName("IX_Products_IsActive");
-
-                    b.HasIndex("SubCategoryId")
-                        .HasDatabaseName("IX_Products_SubCategoryId");
-
-                    b.HasIndex("IsActive", "CreatedAt")
-                        .HasDatabaseName("IX_Products_IsActive_CreatedAt");
+                    b.HasIndex("SubCategoryId");
 
                     b.ToTable("Products");
                 });
@@ -661,12 +656,6 @@ namespace BookStore.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_StockHistory_CreatedAt");
-
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("IX_StockHistory_ProductId");
 
                     b.ToTable("StockHistories");
                 });
@@ -877,7 +866,7 @@ namespace BookStore.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("OrderNumber")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
@@ -902,22 +891,9 @@ namespace BookStore.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_Orders_CreatedAt");
-
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("OrderNumber")
-                        .HasDatabaseName("IX_Orders_OrderNumber");
-
-                    b.HasIndex("Status")
-                        .HasDatabaseName("IX_Orders_Status");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_Orders_UserId");
-
-                    b.HasIndex("Status", "CreatedAt")
-                        .HasDatabaseName("IX_Orders_Status_CreatedAt");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
@@ -1039,7 +1015,7 @@ namespace BookStore.Infrastructure.Migrations
                     b.HasOne("Order", "Order")
                         .WithMany("OrderDetails")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BookStore.Domain.Entities.Product", "Product")

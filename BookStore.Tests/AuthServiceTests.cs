@@ -6,6 +6,7 @@ using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace BookStore.Tests
         private readonly Mock<IFileService> _mockFileService;
         private readonly Mock<IConfiguration> _mockConfig;
         private readonly Mock<IRedisService> _mockRedisService;
+        private readonly Mock<ILogger<AuthService>> _mockLogger;
         private readonly AuthService _authService;
 
         public AuthServiceTests()
@@ -30,13 +32,15 @@ namespace BookStore.Tests
             _mockFileService = new Mock<IFileService>();
             _mockConfig = new Mock<IConfiguration>();
             _mockRedisService = new Mock<IRedisService>();
+            _mockLogger = new Mock<ILogger<AuthService>>();
 
             _authService = new AuthService(
                 _mockIdentityService.Object, 
                 _mockMailService.Object, 
                 _mockFileService.Object, 
                 _mockConfig.Object,
-                _mockRedisService.Object);
+                _mockRedisService.Object,
+                _mockLogger.Object);
         }
 
         [Fact]
@@ -80,6 +84,7 @@ namespace BookStore.Tests
             var result = await _authService.LoginAsync(loginDto);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.IsSuccess);
             Assert.Equal("fake-jwt-token", result.Token);
         }
