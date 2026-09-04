@@ -20,17 +20,28 @@ namespace BookStore.API.Services
         {
             if (file == null) return string.Empty;
 
-            var contentPath = _environment.WebRootPath;
-            var path = Path.Combine(contentPath, "uploads", folderName);
-
-            if (!Directory.Exists(path))
+            var rootPath = Path.GetFullPath(_environment.WebRootPath);
+            if (!rootPath.EndsWith(Path.DirectorySeparatorChar))
             {
-                Directory.CreateDirectory(path);
+                rootPath += Path.DirectorySeparatorChar;
+            }
+
+            var targetDir = Path.GetFullPath(Path.Combine(rootPath, "uploads", folderName));
+
+            // Prevent Path Traversal in folderName
+            if (!targetDir.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase) && !targetDir.Equals(rootPath.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Invalid folder path.");
+            }
+
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
             }
 
             var ext = Path.GetExtension(file.FileName);
             var fileName = $"{Guid.NewGuid()}{ext}";
-            var fileNameWithPath = Path.Combine(path, fileName);
+            var fileNameWithPath = Path.Combine(targetDir, fileName);
 
             using var stream = new FileStream(fileNameWithPath, FileMode.Create);
             await file.CopyToAsync(stream);
@@ -44,11 +55,26 @@ namespace BookStore.API.Services
 
             try 
             {
-                var contentPath = _environment.WebRootPath;
-                var path = Path.Combine(contentPath, fileUrlOrName.Replace("/", "\\")); // Generic fallback
-                if (System.IO.File.Exists(path))
+                var rootPath = Path.GetFullPath(_environment.WebRootPath);
+                if (!rootPath.EndsWith(Path.DirectorySeparatorChar))
                 {
-                    System.IO.File.Delete(path);
+                    rootPath += Path.DirectorySeparatorChar;
+                }
+
+                var normalizedRelativePath = fileUrlOrName.Replace("/", Path.DirectorySeparatorChar.ToString())
+                                                         .Replace("\\", Path.DirectorySeparatorChar.ToString())
+                                                         .TrimStart(Path.DirectorySeparatorChar);
+                var fullPath = Path.GetFullPath(Path.Combine(rootPath, normalizedRelativePath));
+
+                // Path Traversal check: Ensure fullPath is inside WebRootPath
+                if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Task.FromResult(false);
+                }
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
                     return Task.FromResult(true);
                 }
             }
