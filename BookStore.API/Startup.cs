@@ -212,6 +212,7 @@ namespace BookStore.API
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseMiddleware<SecurityHeadersMiddleware>();
             app.UseMiddleware<ExceptionMiddleware>();
             QuestPDF.Settings.License = LicenseType.Community;
             if (env.IsDevelopment())
