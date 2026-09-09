@@ -1,5 +1,6 @@
 using BookStore.Application.DTO;
 using BookStore.Application.Interfaces;
+using BookStore.Application.Services.Payment;
 using BookStore.Domain.Common;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
@@ -15,28 +16,25 @@ namespace BookStore.Application.Services
     public class OrderService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly PaymentGatewayFactory _paymentGatewayFactory;
         private readonly IZaloPayService _zaloPayService;
-        private readonly IPayOSService _payOSService;
-        private readonly IVnPayService _vnPayService;
         private readonly INotificationService _notificationService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public OrderService(
             IUnitOfWork unitOfWork,
+            PaymentGatewayFactory paymentGatewayFactory,
             IZaloPayService zaloPayService,
-            IPayOSService payOSService,
-            IVnPayService vnPayService,
-            INotificationService notificationService, UserManager<ApplicationUser> userManager)
+            INotificationService notificationService,
+            UserManager<ApplicationUser> userManager)
         {
             _unitOfWork = unitOfWork;
+            _paymentGatewayFactory = paymentGatewayFactory;
             _zaloPayService = zaloPayService;
-            _payOSService = payOSService;
-            _vnPayService = vnPayService;
             _notificationService = notificationService;
             _userManager = userManager;
         }
 
-        // HÀM CỦA BẠN: Đặt hàng, trừ tồn kho và ghi log
         public async Task<OrderDTO?> PlaceOrderAsync(string userId, CheckoutDTO checkoutDto, string operatorName = "System")
         {
             var cart = await _unitOfWork.Carts.GetCartByUserIdAsync(userId);
@@ -59,7 +57,7 @@ namespace BookStore.Application.Services
             {
                 var product = item.Product;
                 if (product.Quantity < item.Quantity)
-                    throw new InsufficientStockException(product.Name);
+                    throw new InsufficientStockException(product.Name, item.Quantity, product.Quantity);
 
                 int remainingToBuy = item.Quantity;
                 var activeSale = await _unitOfWork.FlashSales.GetActiveSaleByProductIdAsync(product.Id);
@@ -103,15 +101,21 @@ namespace BookStore.Application.Services
                     ChangeQuantity = -item.Quantity,
                     Reason = $"Bán hàng (Đơn hàng {order.OrderNumber})",
                     CreatedAt = TimeHelper.GetVnTime(),
-                    ChangedBy = user.FullName,
+                    ChangedBy = user?.FullName ?? operatorName,
                 });
             }
 
             order.TotalPrice = total;
             await _unitOfWork.Orders.AddAsync(order);
             await _unitOfWork.Carts.ClearCartAsync(userId);
-            try { await _unitOfWork.SaveChangesAsync(); }
-            catch (DbUpdateConcurrencyException) { throw new ConcurrencyException(); }
+            try
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConcurrencyException();
+            }
 
             return new OrderDTO
             {
@@ -137,28 +141,30 @@ namespace BookStore.Application.Services
 
                 string? paymentUrl = null;
 
-                if (checkoutDto.PaymentMethod == PaymentMethod.ZaloPay)
+                if (checkoutDto.PaymentMethod != PaymentMethod.COD)
                 {
-                    paymentUrl = await _zaloPayService.CreateOrderAsync(orderDto.Id, orderDto.TotalPrice, orderDto.OrderNumber);
+                    var gateway = _paymentGatewayFactory.GetGateway(checkoutDto.PaymentMethod);
+                    if (gateway == null)
+                    {
+                        await _unitOfWork.RollbackAsync();
+                        return new CheckoutResultDTO { Success = false, Message = $"Phương thức {checkoutDto.PaymentMethod} không được hỗ trợ." };
+                    }
+
+                    try
+                    {
+                        paymentUrl = await gateway.CreatePaymentAsync(orderDto.Id, orderDto.TotalPrice, orderDto.OrderNumber, httpContext);
+                    }
+                    catch (NotSupportedException ex)
+                    {
+                        await _unitOfWork.RollbackAsync();
+                        return new CheckoutResultDTO { Success = false, Message = ex.Message };
+                    }
+
                     if (string.IsNullOrEmpty(paymentUrl))
                     {
                         await _unitOfWork.RollbackAsync();
-                        return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch ZaloPay." };
+                        return new CheckoutResultDTO { Success = false, Message = $"Không thể khởi tạo giao dịch {checkoutDto.PaymentMethod}." };
                     }
-                }
-                else if (checkoutDto.PaymentMethod == PaymentMethod.VNPay)
-                {
-                    paymentUrl = _vnPayService.CreatePaymentUrl(httpContext, orderDto.Id, orderDto.TotalPrice, $"ThanhToanDonHang_{orderDto.OrderNumber}");
-                    if (string.IsNullOrEmpty(paymentUrl))
-                    {
-                        await _unitOfWork.RollbackAsync();
-                        return new CheckoutResultDTO { Success = false, Message = "Không thể khởi tạo giao dịch VNPay." };
-                    }
-                }
-                else if (checkoutDto.PaymentMethod == PaymentMethod.PayOS)
-                {
-                    await _unitOfWork.RollbackAsync();
-                    return new CheckoutResultDTO { Success = false, Message = "Phương thức thanh toán PayOS hiện đang bảo trì." };
                 }
 
                 await _unitOfWork.CommitAsync();
@@ -176,10 +182,10 @@ namespace BookStore.Application.Services
                     PaymentUrl = paymentUrl
                 };
             }
-            catch (Exception ex)
+            catch
             {
                 await _unitOfWork.RollbackAsync();
-                throw; // Để Global Exception Middleware bắt lại
+                throw;
             }
         }
 
@@ -193,7 +199,6 @@ namespace BookStore.Application.Services
             var dataJson = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(dataStr);
             string app_trans_id = dataJson.app_trans_id;
             
-            // Format app_trans_id: yyMMdd_ORD-Number_Guid
             var parts = app_trans_id.Split('_');
             if (parts.Length <= 1) return (false, "Invalid trans id");
 
@@ -206,7 +211,6 @@ namespace BookStore.Application.Services
                 await _unitOfWork.Orders.UpdateAsync(order);
                 await _unitOfWork.SaveChangesAsync();
 
-                // Thông báo cho Admin qua SignalR
                 await _notificationService.SendAdminNotificationAsync(
                     "Thanh toán thành công",
                     $"Đơn hàng {order.OrderNumber} đã thanh toán thành công qua ZaloPay.", 
@@ -216,8 +220,34 @@ namespace BookStore.Application.Services
             return (true, "success");
         }
 
-        // HÀM CHO ADMIN: Cập nhật trạng thái đơn hàng và xử lý HOÀN KHO (TÍCH HỢP HOÀN SALE)
-        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, string operatorName = "Admin")
+        private async Task RestoreStockForCancelledOrder(Order order, string operatorName)
+        {
+            foreach (var detail in order.OrderDetails)
+            {
+                var product = detail.Product ?? await _unitOfWork.Products.GetByIdAsync(detail.ProductId);
+                if (product == null) continue;
+
+                product.Quantity += detail.Quantity;
+
+                if (detail.FlashSaleId.HasValue)
+                {
+                    var flashSale = await _unitOfWork.FlashSales.GetByIdAsync(detail.FlashSaleId.Value);
+                    if (flashSale != null)
+                        flashSale.SoldCount = Math.Max(0, flashSale.SoldCount - detail.Quantity);
+                }
+
+                await _unitOfWork.StockHistories.AddAsync(new StockHistory
+                {
+                    ProductId = product.Id,
+                    ChangeQuantity = detail.Quantity,
+                    Reason = $"Hoàn kho & Sale (Hủy đơn hàng {order.OrderNumber})",
+                    CreatedAt = TimeHelper.GetVnTime(),
+                    ChangedBy = operatorName
+                });
+            }
+        }
+
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, string operatorName = StockConstants.AdminOperator)
         {
             if (Enum.TryParse<OrderStatus>(status, true, out var newStatus))
             {
@@ -226,37 +256,9 @@ namespace BookStore.Application.Services
 
                 if (order.Status == OrderStatus.Cancelled) return false;
 
-                // XỬ LÝ HOÀN KHO KHI HỦY ĐƠN
                 if (newStatus == OrderStatus.Cancelled)
                 {
-                    foreach (var detail in order.OrderDetails)
-                    {
-                        if (detail.Product != null)
-                        {
-                            detail.Product.Quantity += detail.Quantity;
-                            
-                            // HOÀN LẠI SUẤT SALE CHÍNH XÁC
-                            if (detail.FlashSaleId.HasValue)
-                            {
-                                var flashSale = await _unitOfWork.FlashSales.GetByIdAsync(detail.FlashSaleId.Value);
-                                if (flashSale != null)
-                                {
-                                    flashSale.SoldCount = Math.Max(0, flashSale.SoldCount - detail.Quantity);
-                                    // Bỏ logic bật/tắt IsActive vì giờ nó phụ thuộc Campaign
-                                }
-                            }
-
-                            var stockLog = new StockHistory
-                            {
-                                ProductId = detail.ProductId,
-                                ChangeQuantity = detail.Quantity,
-                                Reason = $"Hoàn kho & Sale (Hủy đơn hàng {order.OrderNumber})",
-                                CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
-                                ChangedBy = operatorName
-                            };
-                            await _unitOfWork.StockHistories.AddAsync(stockLog);
-                        }
-                    }
+                    await RestoreStockForCancelledOrder(order, operatorName);
                 }
 
                 order.Status = newStatus;
@@ -266,7 +268,6 @@ namespace BookStore.Application.Services
             return false;
         }
 
-        // HÀM CHO ADMIN: Lấy danh sách đơn hàng có phân trang và lọc
         public async Task<PagedResultDTO<OrderDTO>> GetPagedOrdersAsync(int page, int pageSize, string status = "", string search = "")
         {
             OrderStatus? orderStatus = null;
@@ -287,7 +288,6 @@ namespace BookStore.Application.Services
             };
         }
 
-        // HÀM CHO ADMIN & PDF: Lấy chi tiết đơn hàng
         public async Task<OrderFullDetailDTO?> GetOrderDetailsAsync(int orderId)
         {
             var order = await _unitOfWork.Orders.GetOrderByIdWithDetailsAsync(orderId);
@@ -344,15 +344,12 @@ namespace BookStore.Application.Services
                 return (false, "Chỉ có thể hủy đơn hàng khi đang ở trạng thái chờ xác nhận.");
             }
 
-            // Gọi logic cập nhật trạng thái chung để hoàn kho
             var result = await UpdateOrderStatusAsync(orderId, "Cancelled", "Customer: " + userId);
             
             if (result) return (true, "Đã hủy đơn hàng thành công.");
             return (false, "Có lỗi xảy ra khi hủy đơn hàng.");
         }
 
-
-        // HÀM CHO BÁO CÁO: Lấy toàn bộ đơn hàng kèm chi tiết
         public async Task<IEnumerable<OrderFullDetailDTO>> GetAllOrdersForReportAsync(string status = "", string search = "")
         {
             OrderStatus? orderStatus = null;
@@ -376,8 +373,6 @@ namespace BookStore.Application.Services
             }).ToList();
         }
 
-
-
         public async Task<bool> CancelExpiredOrderAsync(int orderId)
         {
             await _unitOfWork.BeginTransactionAsync();
@@ -386,35 +381,8 @@ namespace BookStore.Application.Services
                 var order = await _unitOfWork.Orders.GetOrderByIdWithDetailsAsync(orderId);
                 if (order == null || order.Status != OrderStatus.Pending) return false;
 
-                // 1. Cập nhật trạng thái đơn hàng
                 order.Status = OrderStatus.Cancelled;
-
-                // 2. Hoàn lại tồn kho cho từng sản phẩm
-                foreach (var detail in order.OrderDetails)
-                {
-                    var product = await _unitOfWork.Products.GetByIdAsync(detail.ProductId);
-                    if (product != null)
-                    {
-                        var oldQty = product.Quantity;
-                        product.Quantity += detail.Quantity;
-                        if (detail.FlashSaleId.HasValue)
-                        {
-                            var flashSale = await _unitOfWork.FlashSales.GetByIdAsync(detail.FlashSaleId.Value);
-                            if (flashSale != null)
-                                flashSale.SoldCount = Math.Max(0, flashSale.SoldCount - detail.Quantity);
-                        }
-                        // Ghi log lịch sử kho (Hệ thống tự động hoàn kho)
-                        var history = new StockHistory
-                        {
-                            ProductId = product.Id,
-                            ChangeQuantity = detail.Quantity,
-                            Reason = $"Hoàn kho tự động cho đơn hàng quá hạn #{order.OrderNumber}",
-                            ChangedBy = "System-Cleanup",
-                            CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime()
-                        };
-                        await _unitOfWork.StockHistories.AddAsync(history);
-                    }
-                }
+                await RestoreStockForCancelledOrder(order, StockConstants.SystemCleanup);
 
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitAsync();
@@ -426,6 +394,7 @@ namespace BookStore.Application.Services
                 return false;
             }
         }
+
         public async Task<(bool Success, string Message, int OrderId, string OrderNumber, string ActivityDetails)> CreatePOSOrderAsync(POSOrderDTO request, string operatorName)
         {
             await _unitOfWork.BeginTransactionAsync();
@@ -442,7 +411,7 @@ namespace BookStore.Application.Services
                     ShippingPhone = request.CustomerPhone,
                     ShippingAddress = "Mua tại cửa hàng",
                     PaymentMethod = request.PaymentMethod,
-                    Status = OrderStatus.Completed, // Đã thanh toán
+                    Status = OrderStatus.Completed,
                     CreatedAt = TimeHelper.GetVnTime(),
                     TotalPrice = request.TotalPrice
                 };
@@ -451,10 +420,10 @@ namespace BookStore.Application.Services
                 foreach (var item in request.Items)
                 {
                     var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
-                    if (product == null) throw new Exception($"Không tìm thấy sản phẩm ID {item.ProductId}");
+                    if (product == null) throw new NotFoundException("Product", item.ProductId);
 
                     if (product.Quantity < item.Quantity)
-                        throw new Exception($"Sản phẩm {product.Name} không đủ số lượng trong kho.");
+                        throw new InsufficientStockException(product.Name, item.Quantity, product.Quantity);
 
                     var detail = new OrderDetail
                     {
@@ -464,17 +433,16 @@ namespace BookStore.Application.Services
                     };
                     order.OrderDetails.Add(detail);
                     soldSummaries.Add($"{product.Name} x{item.Quantity} ({item.Price:N0}đ)");
-                    // trừ số lượng sản phẩm trong sale nếu có thêm sp sale vào đơn POS
+
                     var activeSale = await _unitOfWork.FlashSales.GetActiveSaleByProductIdAsync(item.ProductId);
                     if (activeSale != null && item.Price == activeSale.SalePrice)
                     {
-                        // RemainingSlots = SaleStock - SoldCount (NotMapped), chỉ cần tăng SoldCount
                         if (activeSale.RemainingSlots < item.Quantity)
-                            throw new Exception($"Sản phẩm '{product.Name}' đã hết suất Flash Sale.");
+                            throw new BusinessException($"Sản phẩm '{product.Name}' đã hết suất Flash Sale.");
 
                         activeSale.SoldCount += item.Quantity;
                     }
-                    // Trừ tồn kho
+
                     product.Quantity -= item.Quantity;
 
                     var stockLog = new StockHistory
@@ -482,11 +450,10 @@ namespace BookStore.Application.Services
                         ProductId = product.Id,
                         ChangeQuantity = -item.Quantity,
                         Reason = $"Bán tại POS (Đơn hàng {order.OrderNumber})",
-                        CreatedAt = BookStore.Domain.Common.TimeHelper.GetVnTime(),
+                        CreatedAt = TimeHelper.GetVnTime(),
                         ChangedBy = operatorName
                     };
                     await _unitOfWork.StockHistories.AddAsync(stockLog);
-                   
                 }
 
                 await _unitOfWork.Orders.AddAsync(order);
@@ -507,4 +474,3 @@ namespace BookStore.Application.Services
         }
     }
 }
-

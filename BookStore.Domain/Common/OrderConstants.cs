@@ -8,4 +8,10 @@ namespace BookStore.Domain.Common
         public const string Shipping = "Shipping";
         public const string Completed = "Completed";
     }
+
+    public static class StockConstants
+    {
+        public const string SystemCleanup = "System-Cleanup";
+        public const string AdminOperator = "Admin";
+    }
 }

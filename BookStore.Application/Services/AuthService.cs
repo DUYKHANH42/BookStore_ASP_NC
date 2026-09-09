@@ -5,6 +5,7 @@ using BookStore.Domain.Entities;
 using BookStore.Domain.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Linq;
@@ -20,17 +21,24 @@ namespace BookStore.Application.Services
         private readonly IFileService _fileService;
         private readonly IConfiguration _configuration;
         private readonly IRedisService _redisService;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IAuthService identityService, IMailService mailService, IFileService fileService, IConfiguration configuration, IRedisService redisService)
+        public AuthService(
+            IAuthService identityService,
+            IMailService mailService,
+            IFileService fileService,
+            IConfiguration configuration,
+            IRedisService redisService,
+            ILogger<AuthService> logger)
         {
             _identityService = identityService;
             _mailService = mailService;
             _fileService = fileService;
             _configuration = configuration;
             _redisService = redisService;
+            _logger = logger;
         }
 
-        // Logic Đăng ký
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
         {
             var user = new ApplicationUser
@@ -56,15 +64,12 @@ namespace BookStore.Application.Services
             return new AuthResponseDto { IsSuccess = true, Message = "Đăng ký thành công!" };
         }
 
-        // Logic Đăng nhập
         public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)
         {
-            // Gọi tầng Infrastructure xử lý xác thực và tạo Token
             var authModel = await _identityService.LoginAsync(loginDto.Email, loginDto.Password);
 
             if (authModel == null) return null;
 
-            // Mapping từ Domain Model (AuthModel) sang DTO trả về cho Angular
             return new AuthResponseDto
             {
                 IsSuccess = true,
@@ -86,6 +91,7 @@ namespace BookStore.Application.Services
         {
             return await _identityService.IsEmailUniqueAsync(email);
         }
+
         public async Task<AuthResponseDto?> RefreshTokenAsync(TokenRequestDto dto)
         {
             var authModel = await _identityService.RefreshTokenAsync(dto.AccessToken, dto.RefreshToken);
@@ -112,6 +118,7 @@ namespace BookStore.Application.Services
                 await _redisService.RemoveAsync($"RefreshToken:{userId}");
             }
         }
+
         public async Task<AuthResponseDto> UpdateProfileAsync(string userId, UpdateProfileDto dto)
         {
             var user = await _identityService.GetUserByIdAsync(userId);
@@ -123,13 +130,11 @@ namespace BookStore.Application.Services
             {
                 try
                 {
-                    // Xóa ảnh cũ nếu có
                     if (!string.IsNullOrEmpty(user.AvtUrl))
                     {
                         await _fileService.DeleteFileAsync(user.AvtUrl);
                     }
 
-                    // Lưu ảnh mới
                     var newAvtUrl = await _fileService.SaveFileAsync(dto.AvatarFile, "avatars");
                     if (!string.IsNullOrEmpty(newAvtUrl))
                     {
@@ -142,7 +147,7 @@ namespace BookStore.Application.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[AuthService] Error updating avatar: {ex.Message}");
+                    _logger.LogError(ex, "Error updating avatar for user {UserId}: {Message}", userId, ex.Message);
                     return new AuthResponseDto { IsSuccess = false, Message = "Lỗi khi xử lý tải lên ảnh đại diện." };
                 }
             }
@@ -163,6 +168,7 @@ namespace BookStore.Application.Services
                 Message = "Cập nhật thành công"
             };
         }
+
         public async Task<AuthResponseDto> ChangePasswordAsync(string userId, ChangePasswordDto dto)
         {
             var user = await _identityService.GetUserByIdAsync(userId);
@@ -172,14 +178,13 @@ namespace BookStore.Application.Services
 
             if (!result.Succeeded)
             {
-                // Lấy lỗi đầu tiên từ Identity (ví dụ: mật khẩu cũ sai, hoặc mật khẩu mới quá yếu)
                 var error = result.Errors.FirstOrDefault()?.Description ?? "Đổi mật khẩu thất bại";
                 return new AuthResponseDto { IsSuccess = false, Message = error };
             }
 
             return new AuthResponseDto { IsSuccess = true, Message = "Đổi mật khẩu thành công!" };
         }
-        // 1. Xử lý yêu cầu quên mật khẩu
+
         public async Task<AuthResponseDto> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
             var user = await _identityService.FindByEmailAsync(dto.Email);
@@ -196,8 +201,6 @@ namespace BookStore.Application.Services
             string content = $@"
 <div style='font-family: ""Plus Jakarta Sans"", Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; line-height: 1.6;'>
     <div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;'>
-        
-        <!-- Header với Logo thực tế -->
         <div style='background-color: #0f172a; padding: 40px 30px; text-align: center;'>
              <img src='{baseUrl}/imgs/logo_sach.png' alt='Lumen BookStore' style='height: 60px; width: auto;' />
         </div>
@@ -207,8 +210,6 @@ namespace BookStore.Application.Services
             
             <div style='margin: 40px 0; text-align: center;'>
                 <p style='color: #64748b; font-size: 14px; margin-bottom: 25px;'>Vui lòng nhấn vào nút bên dưới để tiến hành đặt mật khẩu mới:</p>
-                
-                <!-- Nút bấm nổi bật -->
                 <a href='{resetLink}' style='display: inline-block; background-color: #2563eb; color: #ffffff; padding: 18px 40px; border-radius: 18px; font-weight: 900; font-size: 13px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);'>Đặt lại mật khẩu ngay</a>
             </div>
             <div style='margin-top: 40px; padding-top: 25px; border-top: 1px solid #f1f5f9;'>
@@ -216,7 +217,6 @@ namespace BookStore.Application.Services
                 <p style='color: #94a3b8; font-size: 12px;'>• Nếu bạn không yêu cầu thay đổi này, hãy bỏ qua email này. Tài khoản của bạn vẫn sẽ được bảo mật.</p>
             </div>
         </div>
-        <!-- Footer -->
         <div style='background-color: #f8fafc; padding: 25px; text-align: center;'>
             <p style='color: #cbd5e1; font-size: 11px; margin: 0;'>© 2026 Lumen BookStore. Hành trình tri thức của bạn.</p>
         </div>
@@ -225,7 +225,6 @@ namespace BookStore.Application.Services
 
             await _mailService.SendEmailAsync(user.Email!, subject, content);
 
-
             return new AuthResponseDto
             {
                 IsSuccess = true,
@@ -233,7 +232,6 @@ namespace BookStore.Application.Services
             };
         }
 
-        // 2. Xử lý cập nhật mật khẩu mới
         public async Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto dto)
         {
             var user = await _identityService.FindByEmailAsync(dto.Email);
@@ -260,6 +258,7 @@ namespace BookStore.Application.Services
 
             return new AuthResponseDto { IsSuccess = true, Message = "Mật khẩu đã được cập nhật thành công!" };
         }
+
         public async Task<AuthResponseDto?> GetProfileAsync(string userId)
         {
             var user = await _identityService.GetUserByIdAsync(userId);
