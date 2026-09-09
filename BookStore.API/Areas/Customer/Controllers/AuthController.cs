@@ -202,15 +202,40 @@ namespace BookStore.API.Areas.Customer.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
+            // 1. Sign out authentication cookie
             await HttpContext.SignOutAsync("Cookies");
 
+            // 2. Lấy userId từ JWT Bearer, từ Cookie scheme hoặc từ refreshToken
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                var cookieAuth = await HttpContext.AuthenticateAsync("Cookies");
+                userId = cookieAuth.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            }
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                var refreshToken = Request.Cookies["refreshToken"];
+                if (!string.IsNullOrEmpty(refreshToken))
+                {
+                    var parts = refreshToken.Split(':');
+                    if (parts.Length > 0) userId = parts[0];
+                }
+            }
+
+            // 3. Xóa session, refresh token & vô hiệu hóa access token trong Redis/MemoryCache
             if (!string.IsNullOrEmpty(userId))
             {
                 await _authAppService.LogoutAsync(userId);
             }
 
+            // 4. Xóa các cookies liên quan
             Response.Cookies.Delete("refreshToken", BuildRefreshTokenCookieOptions());
+            Response.Cookies.Delete("BookStore.Admin.Cookie", new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                Path = "/",
+                HttpOnly = true
+            });
 
             return Ok(new { success = true, message = "Đã đăng xuất thành công." });
         }

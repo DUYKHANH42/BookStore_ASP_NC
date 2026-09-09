@@ -116,6 +116,7 @@ namespace BookStore.Application.Services
             if (!string.IsNullOrEmpty(userId))
             {
                 await _redisService.RemoveAsync($"RefreshToken:{userId}");
+                await _redisService.RemoveAsync($"TokenVersion:{userId}");
             }
         }
 

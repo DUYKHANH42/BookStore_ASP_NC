@@ -1,3 +1,7 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var clientUrl = Configuration["AppSettings:ClientUrl"] ?? "/";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -514,7 +518,7 @@
             </nav>
 
             <div class="p-6 lg:p-8 space-y-3">
-                <a href="https://book-lumen.vercel.app/ " class="flex items-center justify-center gap-3 px-6 py-3.5 lg:py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
+                <a href="@clientUrl" class="flex items-center justify-center gap-3 px-6 py-3.5 lg:py-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-600 transition-premium font-black text-[10px] uppercase tracking-widest text-slate-400 group">
                     <span class="material-symbols-outlined text-lg group-hover:translate-x-[-4px] transition-premium">arrow_back</span>
                     Quay về Client
                 </a>
@@ -879,18 +883,18 @@
                     $.ajax({
                         url: '/api/auth/logout',
                         type: 'POST',
-                        success: function (res) {
-                            // Xóa token ở client app nếu có (localStorage)
-                                const theme = localStorage.getItem('theme');
-                                const lang = localStorage.getItem('lang');
-
-                                localStorage.clear();
-
-                                window.location.href = '/api/auth/login';
+                        xhrFields: {
+                            withCredentials: true
                         },
-                        error: function () {
-                            // Fallback nếu API lỗi vẫn redirect
-                            window.location.href = '/api/auth/login';
+                        complete: function () {
+                            // Xóa sạch toàn bộ session & storage ở trình duyệt
+                            const darkMode = localStorage.getItem('admin-dark-mode');
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            if (darkMode) localStorage.setItem('admin-dark-mode', darkMode);
+
+                            // Chuyển hướng về trang đăng nhập
+                            window.location.href = '@clientUrl/login';
                         }
                     });
                 }
