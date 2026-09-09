@@ -135,7 +135,16 @@ namespace BookStore.Application.Services
             if (removeResult.Succeeded || removeResult.Errors.Any(e => e.Code == "UserHasNoPassword"))
             {
                 var addResult = await _userManager.AddPasswordAsync(user, newPassword);
-                return addResult.Succeeded;
+                if (addResult.Succeeded)
+                {
+                    // Revoke existing JWT & Refresh Token sessions by updating TokenVersion and purging Redis token
+                    user.TokenVersion++;
+                    var redisService = _serviceProvider.GetRequiredService<BookStore.Domain.Interfaces.IRedisService>();
+                    await redisService.SetAsync($"TokenVersion:{user.Id}", user.TokenVersion);
+                    await redisService.RemoveAsync($"RefreshToken:{user.Id}");
+                    await _userManager.UpdateAsync(user);
+                    return true;
+                }
             }
 
             return false;
