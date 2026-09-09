@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: 'https://bookstore-asp-nc.onrender.com/api',
-  uploadUrl: 'https://bookstore-asp-nc.onrender.com/uploads',
+  apiUrl: 'http://13.228.219.111/api',
+  uploadUrl: 'http://13.228.219.111/uploads',
   production: true
 };
