@@ -22,6 +22,8 @@ namespace BookStore.API
                 var services = scope.ServiceProvider;
                 try
                 {
+                    var context = services.GetRequiredService<BookStoreDbContext>();
+                    context.Database.Migrate();
                     await DbInitializer.SeedAdminUser(services);
 
                 }
