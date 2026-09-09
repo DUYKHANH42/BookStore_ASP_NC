@@ -66,33 +66,48 @@ namespace BookStore.API.Areas.Customer.Controllers
 
             if (result.Roles != null && result.Roles.Contains("Admin"))
             {
-                var claims = new List<Claim> {
-                    new Claim(ClaimTypes.Name, result.FullName!),
-                    new Claim(ClaimTypes.Email, result.Email!),
-                    new Claim(ClaimTypes.NameIdentifier, result.UserId!),
-                };
-                foreach (var role in result.Roles) claims.Add(new Claim(ClaimTypes.Role, role));
-
-                var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
-                var authProperties = new AuthenticationProperties
+                try
                 {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
-                };
-                await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
+                    var adminName = result.FullName ?? result.Email ?? "Admin";
+                    var adminEmail = result.Email ?? "";
+                    var adminId = result.UserId ?? "";
 
-                if (!string.IsNullOrEmpty(result.UserId))
+                    var claims = new List<Claim> {
+                        new Claim(ClaimTypes.Name, adminName),
+                        new Claim(ClaimTypes.Email, adminEmail),
+                        new Claim(ClaimTypes.NameIdentifier, adminId),
+                    };
+                    foreach (var role in result.Roles)
+                    {
+                        if (!string.IsNullOrEmpty(role))
+                            claims.Add(new Claim(ClaimTypes.Role, role));
+                    }
+
+                    var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    };
+                    await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
+
+                    if (!string.IsNullOrEmpty(result.UserId))
+                    {
+                        await _adminProfileService.RecordLoginAsync(result.UserId);
+                        await _activityLog.LogAsync(
+                            ActivityModules.Auth,
+                            ActivityActions.Login,
+                            $"Admin đăng nhập: {adminEmail}",
+                            entityType: "ApplicationUser",
+                            entityId: result.UserId,
+                            actorId: result.UserId,
+                            actorName: adminName,
+                            actorRole: UserRoles.Admin);
+                    }
+                }
+                catch (Exception)
                 {
-                    await _adminProfileService.RecordLoginAsync(result.UserId);
-                    await _activityLog.LogAsync(
-                        ActivityModules.Auth,
-                        ActivityActions.Login,
-                        $"Admin đăng nhập: {result.Email}",
-                        entityType: "ApplicationUser",
-                        entityId: result.UserId,
-                        actorId: result.UserId,
-                        actorName: result.FullName,
-                        actorRole: UserRoles.Admin);
+                    // Tránh làm hỏng luồng login của Admin nếu cookie authentication hoặc logging gặp lỗi
                 }
             }
 

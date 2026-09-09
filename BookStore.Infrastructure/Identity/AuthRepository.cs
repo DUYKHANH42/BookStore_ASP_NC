@@ -200,32 +200,39 @@ namespace BookStore.Infrastructure.Identity
         {
             var userRoles = await _userManager.GetRolesAsync(user);
 
-            // Ensure TokenVersion is in Redis
+            // Ensure TokenVersion is in Redis/Cache
             await _redisService.SetAsync($"TokenVersion:{user.Id}", user.TokenVersion);
 
+            var fullName = !string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : (!string.IsNullOrWhiteSpace(user.UserName) ? user.UserName : user.Email ?? "User");
+            var email = user.Email ?? user.UserName ?? "";
+
             var authClaims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.FullName),
-        new Claim(ClaimTypes.Email, user.Email!),
-        new Claim(ClaimTypes.NameIdentifier, user.Id),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim("TokenVersion", user.TokenVersion.ToString())
-    };
+            {
+                new Claim(ClaimTypes.Name, fullName),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("TokenVersion", user.TokenVersion.ToString())
+            };
 
             foreach (var userRole in userRoles)
             {
-                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                if (!string.IsNullOrEmpty(userRole))
+                {
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                }
             }
 
             // Access Token usually lives for a short time (e.g. 15 mins)
             var expirationTime = BookStore.Domain.Common.TimeHelper.GetVnTime().AddMinutes(15);
 
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!));
+            var jwtSecret = _configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_2024_@123";
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: expirationTime, // Dùng biến vừa tạo
+                expires: expirationTime,
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );

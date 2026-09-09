@@ -14,19 +14,27 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Server=db;Database=BookStoreDb;User Id=sa;Password=BookStore@Str0ng!;TrustServerCertificate=True
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
       # --- App ---
       - AppSettings__BaseUrl=http://13.228.219.111
       - AppSettings__ClientUrl=http://13.228.219.111
       - AppSettings__UseSecureCookie=false
-      # --- JWT: Issuer = API server, Audience = frontend ---
+      # --- JWT ---
       - JWT__ValidIssuer=http://13.228.219.111
       - JWT__ValidAudience=http://13.228.219.111
+      - JWT__Secret=Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_2024_@123
       # --- CORS: cho phép cả EC2 lẫn Vercel (nếu cần) ---
       - Cors__AllowedOrigins__0=http://13.228.219.111
       - Cors__AllowedOrigins__1=https://book-lumen.vercel.app
+    restart: always
+
+  redis:
+    image: redis:alpine
     restart: always
 
   db:
