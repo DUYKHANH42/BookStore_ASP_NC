@@ -27,15 +27,18 @@ namespace BookStore.API.Areas.Customer.Controllers
         private readonly AuthService _authAppService;
         private readonly AdminProfileService _adminProfileService;
         private readonly IActivityLogService _activityLog;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
 
         public AuthController(
             AuthService authAppService,
             AdminProfileService adminProfileService,
-            IActivityLogService activityLog)
+            IActivityLogService activityLog,
+            Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _authAppService = authAppService;
             _adminProfileService = adminProfileService;
             _activityLog = activityLog;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -49,9 +52,8 @@ namespace BookStore.API.Areas.Customer.Controllers
         [HttpGet("login")]
         public IActionResult Login()
         {
-            //return Redirect("http://localhost:53214/login");
-            return Redirect("https://book-lumen.vercel.app/login");
-
+            var clientUrl = _configuration["AppSettings:ClientUrl"] ?? "http://localhost:4200";
+            return Redirect($"{clientUrl.TrimEnd('/')}/login");
         }
 
         [HttpPost("login")]
@@ -97,14 +99,7 @@ namespace BookStore.API.Areas.Customer.Controllers
             // Set Refresh Token in HttpOnly Cookie
             if (!string.IsNullOrEmpty(result.RefreshToken))
             {
-                var cookieOptions = new Microsoft.AspNetCore.Http.CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddDays(7)
-                };
-                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
+                Response.Cookies.Append("refreshToken", result.RefreshToken, BuildRefreshTokenCookieOptions());
                 result.RefreshToken = null; // Do not return in response body
             }
 
@@ -130,14 +125,7 @@ namespace BookStore.API.Areas.Customer.Controllers
 
             if (!string.IsNullOrEmpty(result.RefreshToken))
             {
-                var cookieOptions = new Microsoft.AspNetCore.Http.CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddDays(7)
-                };
-                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
+                Response.Cookies.Append("refreshToken", result.RefreshToken, BuildRefreshTokenCookieOptions());
                 result.RefreshToken = null;
             }
 
@@ -207,15 +195,29 @@ namespace BookStore.API.Areas.Customer.Controllers
                 await _authAppService.LogoutAsync(userId);
             }
 
-            Response.Cookies.Delete("refreshToken", new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None
-            });
-
+            Response.Cookies.Delete("refreshToken", BuildRefreshTokenCookieOptions());
 
             return Ok(new { success = true, message = "Đã đăng xuất thành công." });
+        }
+
+        /// <summary>
+        /// Tạo CookieOptions cho refresh token.
+        /// - Nếu API chạy HTTPS (Secure=true trong config): SameSite=None, Secure=true (cross-site cookie).
+        /// - Nếu API chạy HTTP (Secure=false hoặc không cấu hình): SameSite=Lax, Secure=false.
+        /// </summary>
+        private Microsoft.AspNetCore.Http.CookieOptions BuildRefreshTokenCookieOptions()
+        {
+            var isSecure = bool.TryParse(_configuration["AppSettings:UseSecureCookie"], out var val) && val;
+            return new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = isSecure,
+                SameSite = isSecure
+                    ? Microsoft.AspNetCore.Http.SameSiteMode.None
+                    : Microsoft.AspNetCore.Http.SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddDays(7),
+                Path = "/"
+            };
         }
     }
 }
