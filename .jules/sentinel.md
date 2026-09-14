@@ -1,0 +1,4 @@
+## 2026-09-14 - Public Exposure of Admin Configuration Files in wwwroot
+**Vulnerability:** Custom administrative configuration files containing sensitive business/banking details (`admin_appsettings.json`) were stored inside `wwwroot/admin/` via `WebRootPath`. This allowed unauthenticated public access via ASP.NET Core Static File Middleware (`app.UseStaticFiles()`).
+**Learning:** Storing writable application configuration files in `wwwroot` makes them accessible to any HTTP request without hitting ASP.NET Core controller routing or authorization filters.
+**Prevention:** Always store custom runtime configurations outside `wwwroot` using `_env.ContentRootPath` (e.g., `App_Data/admin_appsettings.json`) so they cannot be served directly as static files, and enforce access exclusively through authorized controller actions (`[Authorize(Roles = "Admin")]`).
