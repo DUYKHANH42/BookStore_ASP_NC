@@ -41,19 +41,42 @@ namespace BookStore.API.Areas.Admin.Controllers
         {
             get
             {
-                var folder = Path.Combine(_env.WebRootPath, "admin");
+                // Security: Store configuration in ContentRootPath/App_Data to prevent public static file exposure via wwwroot
+                var folder = Path.Combine(_env.ContentRootPath, "App_Data");
                 if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-                return Path.Combine(folder, "appsettings.json");
+                return Path.Combine(folder, "admin_appsettings.json");
             }
         }
 
         private async Task<AdminAppSettings> LoadSettingsAsync()
         {
+            var legacyPath = Path.Combine(_env.WebRootPath, "admin", "appsettings.json");
+
             if (!System.IO.File.Exists(SettingsPath))
             {
-                var defaults = new AdminAppSettings();
-                await SaveSettingsAsync(defaults);
-                return defaults;
+                // Security migration: Move legacy settings from public wwwroot to secure App_Data and delete public file
+                if (System.IO.File.Exists(legacyPath))
+                {
+                    try
+                    {
+                        var legacyContent = await System.IO.File.ReadAllTextAsync(legacyPath);
+                        await System.IO.File.WriteAllTextAsync(SettingsPath, legacyContent);
+                        System.IO.File.Delete(legacyPath);
+                    }
+                    catch { }
+                }
+
+                if (!System.IO.File.Exists(SettingsPath))
+                {
+                    var defaults = new AdminAppSettings();
+                    await SaveSettingsAsync(defaults);
+                    return defaults;
+                }
+            }
+            else if (System.IO.File.Exists(legacyPath))
+            {
+                // Ensure legacy public file is removed if secure file already exists
+                try { System.IO.File.Delete(legacyPath); } catch { }
             }
 
             var json = await System.IO.File.ReadAllTextAsync(SettingsPath);
