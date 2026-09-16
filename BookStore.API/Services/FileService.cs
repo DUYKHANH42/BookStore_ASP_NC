@@ -44,11 +44,25 @@ namespace BookStore.API.Services
 
             try 
             {
-                var contentPath = _environment.WebRootPath;
-                var path = Path.Combine(contentPath, fileUrlOrName.Replace("/", "\\")); // Generic fallback
-                if (System.IO.File.Exists(path))
+                var contentPath = Path.GetFullPath(_environment.WebRootPath);
+                if (!contentPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
                 {
-                    System.IO.File.Delete(path);
+                    contentPath += Path.DirectorySeparatorChar;
+                }
+
+                // Sanitize and resolve the target path to prevent Path Traversal (CWE-22)
+                var relativePath = fileUrlOrName.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+                var fullPath = Path.GetFullPath(Path.Combine(contentPath, relativePath));
+
+                // Ensure the requested file path stays within WebRootPath boundaries
+                if (!fullPath.StartsWith(contentPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Task.FromResult(false);
+                }
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
                     return Task.FromResult(true);
                 }
             }
