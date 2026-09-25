@@ -41,6 +41,7 @@ namespace BookStore.API.Areas.Customer.Controllers
             _configuration = configuration;
         }
 
+        [EnableRateLimiting("auth-limiter")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
@@ -56,6 +57,7 @@ namespace BookStore.API.Areas.Customer.Controllers
             return Redirect($"{clientUrl.TrimEnd('/')}/login");
         }
 
+        [EnableRateLimiting("auth-limiter")]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
