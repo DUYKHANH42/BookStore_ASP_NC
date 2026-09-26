@@ -226,7 +226,8 @@ namespace BookStore.Infrastructure.Identity
             // Access Token usually lives for a short time (e.g. 15 mins)
             var expirationTime = BookStore.Domain.Common.TimeHelper.GetVnTime().AddMinutes(15);
 
-            var jwtSecret = _configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_2024_@123";
+            var jwtSecret = _configuration["JWT:Secret"]
+                ?? throw new InvalidOperationException("JWT:Secret is not configured. Application cannot issue tokens without a valid JWT signing key.");
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
             var token = new JwtSecurityToken(
