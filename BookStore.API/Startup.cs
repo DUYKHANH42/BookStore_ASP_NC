@@ -190,6 +190,12 @@ namespace BookStore.API
                     opt.PermitLimit = 3;
                     opt.QueueLimit = 0;
                 });
+                options.AddFixedWindowLimiter("auth-limiter", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.PermitLimit = 5;
+                    opt.QueueLimit = 0;
+                });
                 options.RejectionStatusCode = 429;
             });
             services.Configure<PayOSConfig>(Configuration.GetSection("PayOS"));
