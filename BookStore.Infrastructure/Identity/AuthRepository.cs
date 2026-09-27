@@ -169,12 +169,18 @@ namespace BookStore.Infrastructure.Identity
         // Hàm bổ trợ để đọc Token hết hạn
         private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
         {
+            var jwtSecret = _configuration["JWT:Secret"];
+            if (string.IsNullOrEmpty(jwtSecret))
+            {
+                throw new InvalidOperationException("JWT:Secret configuration is missing.");
+            }
+
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateAudience = false,
                 ValidateIssuer = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
                 ValidateLifetime = false // Quan trọng: Không kiểm tra thời gian hết hạn ở đây
             };
 
@@ -226,7 +232,11 @@ namespace BookStore.Infrastructure.Identity
             // Access Token usually lives for a short time (e.g. 15 mins)
             var expirationTime = BookStore.Domain.Common.TimeHelper.GetVnTime().AddMinutes(15);
 
-            var jwtSecret = _configuration["JWT:Secret"] ?? "Chuoi_Bi_Mat_Sieu_Cap_Vip_Pro_2024_@123";
+            var jwtSecret = _configuration["JWT:Secret"];
+            if (string.IsNullOrEmpty(jwtSecret))
+            {
+                throw new InvalidOperationException("JWT:Secret configuration is missing. Token generation aborted.");
+            }
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
             var token = new JwtSecurityToken(
