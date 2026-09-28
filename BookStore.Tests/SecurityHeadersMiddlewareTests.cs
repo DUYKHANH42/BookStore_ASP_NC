@@ -23,6 +23,8 @@ namespace BookStore.Tests
             Assert.Equal("DENY", context.Response.Headers["X-Frame-Options"]);
             Assert.Equal("1; mode=block", context.Response.Headers["X-XSS-Protection"]);
             Assert.Equal("strict-origin-when-cross-origin", context.Response.Headers["Referrer-Policy"]);
+            Assert.True(context.Response.Headers.ContainsKey("Content-Security-Policy"));
+            Assert.Contains("default-src 'self'", context.Response.Headers["Content-Security-Policy"].ToString());
         }
     }
 }
