@@ -16,12 +16,28 @@ namespace BookStore.API.Services
             _environment = environment;
         }
 
+        private string GetNormalizedRootPath()
+        {
+            var rootPath = Path.GetFullPath(_environment.WebRootPath ?? Directory.GetCurrentDirectory());
+            if (!rootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                rootPath += Path.DirectorySeparatorChar;
+            }
+            return rootPath;
+        }
+
         public async Task<string> SaveFileAsync(IFormFile file, string folderName)
         {
             if (file == null) return string.Empty;
 
-            var contentPath = _environment.WebRootPath;
-            var path = Path.Combine(contentPath, "uploads", folderName);
+            var rootPath = GetNormalizedRootPath();
+            var path = Path.GetFullPath(Path.Combine(rootPath, "uploads", folderName ?? string.Empty));
+
+            // Prevent Path Traversal (CWE-22) outside WebRootPath
+            if (!path.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Invalid upload folder path.", nameof(folderName));
+            }
 
             if (!Directory.Exists(path))
             {
@@ -44,11 +60,19 @@ namespace BookStore.API.Services
 
             try 
             {
-                var contentPath = _environment.WebRootPath;
-                var path = Path.Combine(contentPath, fileUrlOrName.Replace("/", "\\")); // Generic fallback
-                if (System.IO.File.Exists(path))
+                var rootPath = GetNormalizedRootPath();
+                var normalizedRelPath = fileUrlOrName.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+                var fullPath = Path.GetFullPath(Path.Combine(rootPath, normalizedRelPath));
+
+                // Prevent Path Traversal (CWE-22) outside WebRootPath
+                if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    System.IO.File.Delete(path);
+                    return Task.FromResult(false);
+                }
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
                     return Task.FromResult(true);
                 }
             }

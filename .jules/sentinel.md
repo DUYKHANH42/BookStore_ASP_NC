@@ -1,0 +1,4 @@
+## 2026-09-04 - Path Traversal (CWE-22) Mitigation in File Operations
+**Vulnerability:** `FileService` performed path concatenation using `Path.Combine` on user-supplied file names or directory paths without normalizing the result or verifying that the destination path remained bounded within `WebRootPath`. This allowed directory traversal attacks using relative paths (`../`) to delete or access arbitrary system files.
+**Learning:** `Path.Combine` does not automatically prevent directory traversal if relative path tokens like `..` are included. Furthermore, string prefix checking on canonical paths requires a trailing directory separator on the root path to avoid matching partial directory names.
+**Prevention:** Always resolve the full canonical path using `Path.GetFullPath` and enforce prefix matching against `Path.GetFullPath(rootPath)` with a trailing separator (`Path.DirectorySeparatorChar`).
