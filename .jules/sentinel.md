@@ -1,0 +1,4 @@
+## 2026-09-04 - Path Traversal (CWE-22) and Unrestricted File Upload (CWE-434) in FileService
+**Vulnerability:** `FileService.DeleteFileAsync` accepted arbitrary relative file paths (e.g. `../../appsettings.json`) without validating canonical path boundaries against `WebRootPath`, enabling arbitrary file deletion. `FileService.SaveFileAsync` lacked file extension validation, allowing potential upload of executable or script files.
+**Learning:** Joining paths without `Path.GetFullPath` validation against expected root folders allows path traversal. In addition, file upload services must explicitly enforce extension whitelisting.
+**Prevention:** Always validate canonical paths via `Path.GetFullPath` and ensure `fullPath.StartsWith(webRootPath)` before file deletion or save operations. Restrict allowed upload file extensions to an explicit whitelist (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`).
