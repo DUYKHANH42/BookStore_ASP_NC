@@ -41,9 +41,9 @@ namespace BookStore.API.Areas.Admin.Controllers
         {
             get
             {
-                var folder = Path.Combine(_env.WebRootPath, "admin");
+                var folder = Path.Combine(_env.ContentRootPath, "App_Data");
                 if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-                return Path.Combine(folder, "appsettings.json");
+                return Path.Combine(folder, "admin_appsettings.json");
             }
         }
 
