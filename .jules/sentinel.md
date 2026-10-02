@@ -1,0 +1,4 @@
+## 2026-10-02 - Secure Storage of Admin App Configuration
+**Vulnerability:** Admin custom app settings (`appsettings.json`) containing sensitive store and bank account metadata were stored inside `wwwroot/admin/` (`WebRootPath`). Because ASP.NET Core `UseStaticFiles()` middleware serves any file within `wwwroot` publicly without authorization checks, unauthenticated users could access and download sensitive admin configuration data via direct HTTP requests.
+**Learning:** Storing dynamic configuration or private files inside `WebRootPath` (`wwwroot`) exposes them to public static file downloading even if the managing controller requires admin authentication.
+**Prevention:** Always store runtime configuration files and non-public data under `ContentRootPath` (e.g. in `App_Data`) rather than `WebRootPath` so static file middleware cannot serve them publicly.
