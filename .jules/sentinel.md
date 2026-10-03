@@ -1,0 +1,4 @@
+## 2026-03-31 - Path Traversal and Unrestricted File Upload in FileService
+**Vulnerability:** `FileService` allowed arbitrary file upload extensions (e.g., `.exe`, `.cshtml`, `.php`) and lacked path sanitization when saving or deleting files, enabling Path Traversal (CWE-22) and Unrestricted File Upload (CWE-434).
+**Learning:** `Path.Combine` does not prevent path traversal if user-controlled input contains relative path markers (`../`, `..\`). Furthermore, cross-platform path separators (Windows `\` vs Unix `/`) must be normalized before directory checks because Unix treats `\` as a literal character in file names.
+**Prevention:** Whitelist allowed file extension types (`.jpg`, `.png`, etc.) and sanitize paths using `Path.GetFullPath` combined with `IsSubPathOf` checks against the canonical root directory.
