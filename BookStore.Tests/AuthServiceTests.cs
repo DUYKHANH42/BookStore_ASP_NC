@@ -88,5 +88,20 @@ namespace BookStore.Tests
             Assert.True(result.IsSuccess);
             Assert.Equal("fake-jwt-token", result.Token);
         }
+
+        [Fact]
+        public void LoginAction_ShouldHaveRateLimitingAttributeWithLoginPolicy()
+        {
+            // Arrange
+            var method = typeof(BookStore.API.Areas.Customer.Controllers.AuthController).GetMethod("Login", new[] { typeof(LoginDto) });
+
+            // Act
+            var attribute = method?.GetCustomAttributes(typeof(Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute), false)
+                .GetValue(0) as Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute;
+
+            // Assert
+            Assert.NotNull(attribute);
+            Assert.Equal("login", attribute.PolicyName);
+        }
     }
 }
