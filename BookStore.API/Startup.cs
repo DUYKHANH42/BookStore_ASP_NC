@@ -184,6 +184,12 @@ namespace BookStore.API
             services.AddHttpClient<IZaloPayService, ZaloPayService>();
             services.AddRateLimiter(options =>
             {
+                options.AddFixedWindowLimiter("login", opt =>
+                {
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.PermitLimit = 5;
+                    opt.QueueLimit = 0;
+                });
                 options.AddFixedWindowLimiter("forgot-password", opt =>
                 {
                     opt.Window = TimeSpan.FromMinutes(10);
