@@ -3,6 +3,7 @@ using BookStore.Application.Services;
 using BookStore.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -18,10 +19,12 @@ namespace BookStore.API.Areas.Customer.Controllers
     public class OrderController : ControllerBase
     {
         private readonly OrderService _orderService;
+        private readonly IConfiguration _configuration;
 
-        public OrderController(OrderService orderService)
+        public OrderController(OrderService orderService, IConfiguration configuration)
         {
             _orderService = orderService;
+            _configuration = configuration;
         }
 
         [HttpPost("checkout")]
@@ -71,7 +74,8 @@ namespace BookStore.API.Areas.Customer.Controllers
         public async Task<IActionResult> VNPayCallback()
         {
             // Logic xử lý kết quả trả về từ VNPay (Thành công/Thất bại)
-            return Redirect("http://localhost:53214/profile");
+            var clientUrl = _configuration["AppSettings:ClientUrl"] ?? "http://localhost:4200";
+            return Redirect($"{clientUrl.TrimEnd('/')}/profile");
         }
         [HttpGet("history")]
         public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 5)
