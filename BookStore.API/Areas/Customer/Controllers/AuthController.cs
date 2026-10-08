@@ -56,6 +56,7 @@ namespace BookStore.API.Areas.Customer.Controllers
             return Redirect($"{clientUrl.TrimEnd('/')}/login");
         }
 
+        [EnableRateLimiting("login")]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
