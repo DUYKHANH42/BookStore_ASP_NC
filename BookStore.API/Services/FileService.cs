@@ -40,15 +40,28 @@ namespace BookStore.API.Services
 
         public Task<bool> DeleteFileAsync(string fileUrlOrName)
         {
-            if (string.IsNullOrEmpty(fileUrlOrName)) return Task.FromResult(false);
+            if (string.IsNullOrWhiteSpace(fileUrlOrName)) return Task.FromResult(false);
 
             try 
             {
-                var contentPath = _environment.WebRootPath;
-                var path = Path.Combine(contentPath, fileUrlOrName.Replace("/", "\\")); // Generic fallback
-                if (System.IO.File.Exists(path))
+                var basePath = Path.GetFullPath(_environment.WebRootPath);
+                if (!basePath.EndsWith(Path.DirectorySeparatorChar.ToString()))
                 {
-                    System.IO.File.Delete(path);
+                    basePath += Path.DirectorySeparatorChar;
+                }
+
+                var relativePath = fileUrlOrName.TrimStart('/', '\\').Replace("/", Path.DirectorySeparatorChar.ToString());
+                var fullPath = Path.GetFullPath(Path.Combine(basePath, relativePath));
+
+                // Security check: Prevent path traversal (Directory Traversal) outside WebRootPath
+                if (!fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Task.FromResult(false);
+                }
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
                     return Task.FromResult(true);
                 }
             }
